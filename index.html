@@ -3,108 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Armado de Pagos Cloud</title>
+    <title>C&M Gestión de Pagos</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
     <style>
-        /* --- ESTILOS VISUALES (MODO OSCURO) --- */
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; }
+        /* ESTILOS (Dark Theme) */
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 150px; display: flex; flex-direction: column; align-items: center; }
         
-        /* PANTALLA DE LOGUEO */
-        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
-        .login-box { background: #1e1e1e; padding: 40px; border-radius: 15px; border: 1px solid #333; text-align: center; width: 90%; max-width: 350px; }
-        .login-input { background: #333; color: #fff; border: 1px solid #555; padding: 15px; font-size: 1.2rem; text-align: center; letter-spacing: 2px; width: 100%; border-radius: 8px; margin: 20px 0; text-transform: uppercase; box-sizing: border-box; }
+        /* HEADER CON LOGO */
+        .app-header { width: 100%; background: #1e1e1e; padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; position: sticky; top: 0; z-index: 100; }
+        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-img { height: 45px; border-radius: 8px; border: 1px solid #444; }
+        .app-info { display:flex; flex-direction:column; }
+        .app-name { font-weight: 800; font-size: 1rem; color: #fff; line-height:1.1; }
+        .app-sub { font-size: 0.75rem; color: #BB86FC; }
+        
+        .user-badge { text-align: right; }
+        .user-email { color: #ccc; font-size: 0.75rem; }
+        .group-tag { background: #00e676; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: inline-block; margin-top: 2px; }
 
-        /* HEADER Y TABS */
-        .header { width: 100%; background-color: #1e1e1e; padding: 10px 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
-        .app-title { font-weight: 800; font-size: 1.1rem; color:#fff; text-decoration: none; }
-        .group-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 15px; background: #333; color: #00e676; border: 1px solid #00e676; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
-
+        /* PANTALLAS LOGIN / GRUPO */
+        #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .auth-btn:hover { transform: translateY(-2px); }
+        .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        
+        /* GENERAL UI */
         .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
-        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; transition: 0.3s; font-size: 0.95rem; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; }
         .tab.active { background: #BB86FC; color: #000; font-weight: 800; }
-        
         .view { display: none; width: 95%; max-width: 1400px; margin: 0 auto; flex-direction: column; gap: 15px; }
         .view.active { display: flex; }
 
-        /* DASHBOARD */
-        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
         .dash-card { background: #1e1e1e; padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; }
-        .dash-title { font-size: 0.75rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
-        .dash-value { font-size: 1.3rem; font-weight: bold; color: #fff; font-family: monospace; }
-        .dash-net { color: #BB86FC; } .dash-gross { color: #00e676; } .dash-debt { color: #ff5252; }
+        .dash-val { font-size: 1.1rem; font-weight: bold; font-family: monospace; margin-top:5px; }
+        .c-g { color: #00e676; } .c-r { color: #ff5252; } .c-p { color: #BB86FC; }
 
-        /* TABLA PRINCIPAL */
-        .grid-container { overflow-x: auto; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; position: relative; max-height: 65vh; }
-        .grid-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
-        .grid-table th { background: #252525; color: #ccc; padding: 12px; font-size: 0.85rem; text-transform: uppercase; position: sticky; top: 0; z-index: 20; border-bottom: 2px solid #444; text-align: center; cursor: pointer; }
-        .grid-table th.active-sort { color: #BB86FC; border-bottom: 2px solid #BB86FC; }
-        .grid-table td { padding: 0; border-bottom: 1px solid #333; border-right: 1px solid #333; height: 60px; vertical-align: middle; }
+        /* TABLA */
+        .grid-con { overflow-x: auto; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; min-height: 300px; }
+        table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
+        th { background: #252525; position: sticky; top: 0; padding: 10px; color: #aaa; border-bottom: 2px solid #444; z-index: 20; }
+        td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 55px; vertical-align: middle; }
+        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 30; min-width: 160px; max-width: 160px; }
         
-        .col-fixed { position: sticky; left: 0; background: #1e1e1e; z-index: 30; min-width: 180px; max-width: 180px; border-right: 2px solid #444 !important; }
-        .row-total { background: #2a2a2a; font-weight: bold; border-top: 2px solid #555; }
-        .row-total td { height: 40px; color: #fff; text-align: center; font-family: monospace; }
-        .row-total .col-fixed { background: #2a2a2a; color: #BB86FC; text-align: right; padding-right: 10px; z-index: 35; }
+        /* FOOTER */
+        .footer { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:10px; align-items:center; }
+        .cafe-row { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 400px; }
+        
+        /* UTILIDADES */
+        .btn { padding: 10px; width: 100%; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-p { background: #BB86FC; color: #000; }
+        .btn-s { background: #333; color: #ccc; border: 1px solid #555; }
+        input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; background: #151515; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
+        .fab { position: fixed; bottom: 120px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 60; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
+        .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; }
 
-        .expense-name { padding: 5px 10px 0 10px; font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; color: #fff; }
-        .expense-meta { font-size: 0.7rem; color: #777; padding: 0 10px 5px; display: flex; gap: 5px; align-items: center; }
-        .expense-cat-badge { background: #333; padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; }
-        
-        .cell-content { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; padding: 2px; box-sizing: border-box; }
-        .cell-content:hover { background: rgba(255,255,255,0.08); }
         .status-paid { background: rgba(0, 230, 118, 0.15); border-left: 3px solid #00e676; }
-        .status-pending { background: rgba(255, 215, 64, 0.1); border-left: 3px solid #ffd740; }
-        .status-overdue { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; }
-        .cell-day { font-size: 0.65rem; color: #aaa; }
-        .cell-amount { font-weight: bold; font-size: 0.9rem; color: #eee; }
-        .cell-bank { font-size: 0.6rem; color: #000; background: #BB86FC; padding: 1px 4px; border-radius: 8px; margin-top: 2px; font-weight: bold; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-
-        /* CUENTAS */
-        .account-card-wrapper { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
-        .account-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
-        .acc-name { font-weight: bold; font-size: 1rem; color: #fff; }
-        .acc-balance { font-size: 1.1rem; color: #00e676; font-weight: bold; font-family: monospace; text-align: right; }
-        .acc-projected { font-size: 0.8rem; color: #BB86FC; text-align: right; margin-top: 2px; }
-        
-        /* BOTONES UI */
-        .fab { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; box-shadow: 0 4px 20px rgba(187, 134, 252, 0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 50; }
-        .btn { padding: 12px; width: 100%; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; }
-        .btn-primary { background: #BB86FC; color: #000; }
-        .btn-sec { background: #333; color: #ccc; border: 1px solid #555; }
-        .btn-danger { background: #ff5252; color: #fff; }
-        .icon-btn { cursor:pointer; margin-left:5px; opacity:0.7; } .icon-btn:hover { opacity:1; }
-
-        /* MODALES */
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
-        .modal-content { background: #252525; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid #444; max-height: 90vh; overflow-y: auto; }
-        input, select { width: 100%; padding: 12px; margin-bottom: 15px; background: #151515; border: 1px solid #444; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
-        
-        /* FILTROS */
-        .filter-bar { padding: 5px 0 15px 0; display: flex; gap: 10px; overflow-x: auto; align-items: center; }
-        .filter-chip { background: #333; padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; border: 1px solid #444; transition: 0.2s; }
-        .filter-chip.active { background: #BB86FC; color: #000; border-color: #BB86FC; font-weight: bold; }
-        
-        .cat-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; margin-bottom: 5px; border-radius: 5px; }
+        .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; }
     </style>
 </head>
 <body>
 
-    <div id="loginOverlay">
-        <div class="login-box">
-            <h1 style="color:#BB86FC; margin-bottom: 5px;">☁️ Pagos Cloud</h1>
-            <p style="color:#aaa; margin-bottom: 20px;">Tu oficina en cualquier lugar</p>
-            <input type="text" id="groupIdInput" class="login-input" placeholder="NOMBRE DEL GRUPO">
-            <button class="btn btn-primary" onclick="connectToGroup()">CONECTAR</button>
-            <p id="loginMsg" style="color:#ff5252; font-size:0.9rem; margin-top:15px; min-height:20px;"></p>
+    <div id="authScreen">
+        <div class="auth-box">
+            <img src="logo.jpg" style="height:70px; border-radius:10px; margin-bottom:15px; border:1px solid #444;">
+            <h2 style="color:#BB86FC; margin:0;">C&M Pagos</h2>
+            <p style="color:#aaa; font-size:0.9rem;">Accede a tu panel de control</p>
+            
+            <input type="email" id="email" placeholder="Correo electrónico">
+            <input type="password" id="password" placeholder="Contraseña">
+            <button class="auth-btn btn-p" onclick="loginEmail()">Iniciar Sesión</button>
+            <button class="auth-btn btn-s" onclick="registerEmail()">Crear Cuenta</button>
+            
+            <div style="margin:20px 0; border-top:1px solid #333; padding-top:15px; color:#555; font-size:0.8rem;">O CONTINUA CON</div>
+            <button class="auth-btn btn-google" onclick="loginGoogle()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20"> Google
+            </button>
+            <p id="authMsg" style="color:#ff5252; margin-top:10px; font-size:0.9rem;"></p>
         </div>
     </div>
 
-    <div class="header">
-        <a href="#" class="app-title">C&M Pagos</a>
-        <div class="group-badge" id="dispGroupId">...</div>
+    <div id="groupScreen" style="display:none;">
+        <div class="auth-box">
+            <h2 style="color:#BB86FC;">Seleccionar Grupo</h2>
+            <p style="color:#aaa;">Ingresa el nombre de tu grupo/familia</p>
+            <input type="text" id="groupNameInput" placeholder="Ej: MATTEI_CASA" style="text-transform:uppercase; text-align:center; font-size:1.2rem; letter-spacing:1px;">
+            
+            <div id="pinArea" style="display:none; background:#2a2a2a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #444;">
+                <p style="margin:0 0 5px 0; font-size:0.9rem; color:#ffb74d;">🔒 Grupo Privado</p>
+                <p style="margin:0 0 10px 0; font-size:0.8rem; color:#ccc;">Este grupo ya existe. Ingresa el PIN para unirte.</p>
+                <input type="text" id="groupPinInput" placeholder="0000" style="text-align:center; letter-spacing:5px; font-size:1.5rem; width:100px; margin:0 auto;">
+            </div>
+
+            <button class="auth-btn btn-p" onclick="checkGroup()">ENTRAR</button>
+            <button class="auth-btn btn-s" style="margin-top:20px;" onclick="logout()">Cerrar Sesión</button>
+            <p id="groupMsg" style="color:#ff5252; margin-top:10px; font-size:0.9rem;"></p>
+        </div>
+    </div>
+
+    <div class="app-header">
+        <div class="logo-area">
+            <img src="logo.jpg" class="logo-img" alt="Logo">
+            <div class="app-info">
+                <span class="app-name">C&M</span>
+                <span class="app-sub">Gestión de Pagos</span>
+            </div>
+        </div>
+        <div class="user-badge">
+            <div class="user-email" id="dispUserEmail">...</div>
+            <div class="group-tag" id="dispGroupName">...</div>
+        </div>
     </div>
 
     <div class="tabs">
@@ -115,427 +130,286 @@
 
     <div id="view-planilla" class="view active">
         <div class="dashboard-grid">
-            <div class="dash-card">
-                <div class="dash-title">Total Fondos</div>
-                <div class="dash-value dash-gross" id="totalAssets">$0</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-title" id="dashTitleDebt">A Pagar</div>
-                <div class="dash-value dash-debt" id="totalLiabilities">$0</div>
-            </div>
-            <div class="dash-card">
-                <div class="dash-title">Proyección</div>
-                <div class="dash-value dash-net" id="globalProjected">$0</div>
-            </div>
+            <div class="dash-card"><div class="dash-val c-g" id="dTotal">$0</div><div style="font-size:0.7rem; color:#aaa">FONDOS</div></div>
+            <div class="dash-card"><div class="dash-val c-r" id="dDebt">$0</div><div style="font-size:0.7rem; color:#aaa">DEUDA</div></div>
+            <div class="dash-card"><div class="dash-val c-p" id="dNet">$0</div><div style="font-size:0.7rem; color:#aaa">NETO</div></div>
         </div>
 
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#252525; padding:10px 15px; border-radius:8px; border:1px solid #333;">
-            <button class="btn-sec" style="width:auto; margin:0;" onclick="changeYear(-1)">&lt;&lt;</button>
-            <span style="font-weight:bold; font-size:1.1rem;" id="displayYear">2026</span>
-            <button class="btn-sec" style="width:auto; margin:0;" onclick="changeYear(1)">&gt;&gt;</button>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#252525; padding:5px 15px; border-radius:8px; margin-bottom:10px;">
+            <button class="btn-s" style="width:auto; margin:0" onclick="changeYear(-1)">&lt;</button>
+            <span style="font-weight:bold;" id="dispYear">2026</span>
+            <button class="btn-s" style="width:auto; margin:0" onclick="changeYear(1)">&gt;</button>
         </div>
 
-        <div class="filter-bar" id="categoryFilters"></div>
-
-        <div class="grid-container">
-            <table class="grid-table">
-                <thead><tr id="gridHeader"></tr></thead>
-                <tbody id="gridBody"></tbody>
-                <tfoot id="gridFooter"></tfoot>
-            </table>
+        <div class="grid-con">
+            <table id="mainTable"></table>
         </div>
         
-        <div style="text-align:right; margin-top:10px;">
-            <button class="btn-sec" style="width:auto;" onclick="exportToExcel()">📊 Exportar a Excel</button>
+        <div style="text-align:right; margin-top:5px;">
+             <button class="btn-s" style="width:auto; font-size:0.8rem;" onclick="exportExcel()">📥 Descargar Excel</button>
         </div>
     </div>
 
     <div id="view-cuentas" class="view">
-        <div style="background:#222; padding:15px; border-radius:10px; border-left:4px solid #BB86FC;">
-            <strong style="color:#BB86FC">Gestión de Fondos</strong>
-            <p style="font-size:0.85rem; color:#ccc; margin:5px 0 0 0;">Aquí cargas tu dinero real (Bancos, Efectivo).</p>
-        </div>
-        <button class="btn btn-primary" onclick="openModalAccount()">+ Nueva Cuenta</button>
-        <div id="accountsList" style="margin-top:20px;"></div>
+        <button class="btn btn-p" onclick="openModalAcc()">+ Nueva Cuenta</button>
+        <div id="accList" style="margin-top:15px;"></div>
     </div>
 
     <div id="view-config" class="view">
         <div class="dash-card" style="text-align:left;">
-            <h3 style="color:#BB86FC;">Datos de Sesión</h3>
-            <p>Estás conectado al grupo: <strong id="confGroup" style="color:#fff;">...</strong></p>
-            <p style="font-size:0.9rem; color:#aaa;">Cualquier persona con este nombre de grupo puede ver y editar los datos.</p>
-            <button class="btn btn-sec" onclick="location.reload()">Cerrar Sesión / Cambiar Grupo</button>
-        </div>
-    </div>
-
-    <button class="fab" onclick="openModalExpense()">+</button>
-
-    <div id="modalExpense" class="modal">
-        <div class="modal-content">
-            <h3>Nuevo Gasto / Servicio</h3>
-            <label>Nombre (ej: Luz):</label>
-            <input type="text" id="expName">
-            <label>Categoría:</label>
-            <select id="expCat"></select>
-            <label>Comentarios / Usuario / Clave:</label>
-            <input type="text" id="expComment">
-            <button class="btn btn-primary" onclick="saveExpense()">Guardar</button>
-            <button class="btn btn-sec" onclick="closeModal('modalExpense')">Cancelar</button>
-        </div>
-    </div>
-
-    <div id="modalCats" class="modal">
-        <div class="modal-content">
-            <h3 style="color:#BB86FC">Editar Categorías</h3>
-            <div id="catList" style="max-height:200px; overflow-y:auto; margin-bottom:15px; border:1px solid #333; padding:5px;"></div>
-            <div style="display:flex; gap:10px;">
-                <input type="text" id="newCatName" placeholder="Nueva..." style="margin-bottom:0;">
-                <button class="btn btn-primary" style="width:auto; margin:0;" onclick="addCategory()">+</button>
+            <h3 style="color:#BB86FC">Mi Grupo</h3>
+            <p>Nombre: <strong id="confGName" style="color:#fff">...</strong></p>
+            <p>Creador: <strong id="confOwner" style="color:#fff">...</strong></p>
+            
+            <div style="background:#2a2a2a; padding:15px; border-radius:10px; text-align:center; border:1px dashed #555; margin:20px 0;">
+                <p style="margin:0; color:#aaa; font-size:0.75rem; text-transform:uppercase;">PIN DE INVITACIÓN</p>
+                <div id="confPin" style="font-size:2.5rem; font-weight:bold; color:#00e676; letter-spacing:5px; margin:5px 0;">****</div>
+                <p style="margin:0; font-size:0.8rem; color:#777;">Comparte este PIN para que otros se unan.</p>
             </div>
-            <button class="btn btn-sec" onclick="closeModal('modalCats')" style="margin-top:20px;">Cerrar</button>
+            
+            <hr style="border-color:#333; margin:20px 0;">
+            <button class="btn btn-s" onclick="location.reload()">Cambiar de Grupo</button>
+            <button class="btn btn-s" style="border-color:#ff5252; color:#ff5252" onclick="logout()">Cerrar Sesión</button>
         </div>
     </div>
 
-    <div id="modalCell" class="modal">
-        <div class="modal-content">
-            <h3 id="cellTitle">Planificar</h3>
-            <label>Importe ($):</label>
-            <input type="number" id="cellAmount" style="font-size:1.5rem; color:#BB86FC;">
-            <label>Día Vencimiento:</label>
-            <input type="number" id="cellDay">
-            <div style="background:#333; padding:10px; border-radius:8px; margin-bottom:15px;">
-                <label>Pagar con:</label>
-                <select id="cellAccount" style="margin-bottom:0;"><option value="">-- Sin Asignar --</option></select>
-            </div>
-            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; background:#2e7d32; padding:10px; border-radius:8px;">
-                <input type="checkbox" id="cellPaid" style="width:25px; height:25px; margin:0;">
-                <label for="cellPaid" style="margin:0; color:#fff; cursor:pointer;">¡YA ESTÁ PAGADO!</label>
-            </div>
-            <button class="btn btn-primary" onclick="saveCell()">Guardar</button>
-            <div style="display:flex; gap:10px;">
-                <button class="btn btn-sec" onclick="closeModal('modalCell')">Cancelar</button>
-                <button class="btn btn-danger" onclick="clearCell()">Borrar</button>
-            </div>
+    <div class="footer">
+        <div class="cafe-row">
+            <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" style="flex:2; background:linear-gradient(45deg, #009EE3, #00B1EA); color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">☕ Invitar Cafecito</a>
+            <a href="https://wa.me/5492615734341?text=Hola!%20Te%20acabo%20de%20invitar%20un%20cafecito%20en%20la%20App" target="_blank" style="flex:1; background:#25D366; color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">🔔 Avisar</a>
         </div>
+        <div style="font-size:0.7rem; color:#666; font-style:italic;">Ayudame a seguir desarrollando aplicaciones como esta ✨</div>
     </div>
 
-    <div id="modalAccount" class="modal">
-        <div class="modal-content">
-            <h3>Cuenta / Banco</h3>
-            <label>Nombre:</label>
-            <input type="text" id="accName">
-            <label>Saldo Real ($):</label>
-            <input type="number" id="accBalance" style="color:#00e676; font-size:1.2rem;">
-            <button class="btn btn-primary" onclick="saveAccount()">Guardar</button>
-            <button class="btn btn-sec" onclick="closeModal('modalAccount')">Cancelar</button>
-        </div>
-    </div>
+    <button class="fab" onclick="openModalExp()">+</button>
 
+    <div id="modExp" class="modal"><div class="modal-box"><h3>Nuevo Gasto</h3><input id="meName" placeholder="Nombre (ej: Luz)"><select id="meCat"><option>Hogar</option><option>Oficina</option><option>Personal</option><option>Auto</option><option>Tarjetas</option></select><button class="btn btn-p" onclick="saveExp()">Guardar</button><button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button></div></div>
+    
+    <div id="modCell" class="modal"><div class="modal-box"><h3>Detalle Pago</h3><label>Monto</label><input type="number" id="mcAmt" style="font-size:1.5rem;color:#BB86FC"><label>Día Venc.</label><input type="number" id="mcDay"><label>Pagar con:</label><select id="mcAcc"><option value="">--</option></select><div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;"><input type="checkbox" id="mcPaid" style="width:20px; margin:0;"><label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label></div><button class="btn btn-p" onclick="saveCell()">Guardar</button><button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button><button class="btn btn-s" style="color:red; border-color:red;" onclick="delCell()">Borrar</button></div></div>
+
+    <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="number" id="maBal" placeholder="Saldo Inicial"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
 
 <script>
-    // -------------------------------------------------------------
-    // ⚠️ PEGA AQUÍ TUS CLAVES DE FIREBASE (PASO OBLIGATORIO)
-    // -------------------------------------------------------------
-const firebaseConfig = {
-  apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
-  authDomain: "armadopagos.firebaseapp.com",
-  projectId: "armadopagos",
-  storageBucket: "armadopagos.firebasestorage.app",
-  messagingSenderId: "482082107729",
-  appId: "1:482082107729:web:e4f29ee165ca1437e76370"
-};
-    // -------------------------------------------------------------
+    // -----------------------------------------------------------
+    // ⚠️ PEGA AQUI TUS CLAVES DE FIREBASE (OBLIGATORIO) 
+    // -----------------------------------------------------------
+    const firebaseConfig = {
+        apiKey: "PEGA_TU_API_KEY_AQUI",
+        authDomain: "TU_PROYECTO.firebaseapp.com",
+        projectId: "TU_PROJECT_ID",
+        storageBucket: "...",
+        messagingSenderId: "...",
+        appId: "..."
+    };
+    // -----------------------------------------------------------
 
-    // VARIABLES GLOBALES
-    let db;
-    let currentGroupId = null;
-    let unsubscribe = null;
+    try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error(e); }
+    const auth = firebase.auth();
+    const db = firebase.firestore();
     
-    // DATOS EN MEMORIA (Se sobrescriben con lo de la nube)
-    let expenses = [];
-    let payments = {}; 
-    let accounts = [];
-    let categories = ["Hogar", "Oficina", "Personal", "Auto", "Tarjetas", "Otros"];
+    let currentUser = null;
+    let currentGroup = null;
+    let appData = { expenses:[], payments:{}, accounts:[] };
+    let year = 2026;
+    let selCell = null;
 
-    let viewYear = new Date().getFullYear(); 
-    let selectedCell = null; 
-    let currentFilter = 'all';
-    let editingAccountId = null;
-    let editingExpenseId = null;
-    let sortMonthIndex = new Date().getMonth();
-
-    // INICIALIZAR
-    try {
-        firebase.initializeApp(firebaseConfig);
-        db = firebase.firestore();
-    } catch(e) { console.error("Error Firebase", e); }
-
-    // --- CONEXIÓN ---
-    function connectToGroup() {
-        const input = document.getElementById('groupIdInput').value.trim().toUpperCase();
-        if(input.length < 3) return document.getElementById('loginMsg').innerText = "Nombre muy corto (mínimo 3 letras)";
-
-        currentGroupId = input;
-        document.getElementById('loginMsg').innerText = "Conectando...";
-        
-        // Conexión en tiempo real
-        unsubscribe = db.collection('pagos_app_completa').doc(currentGroupId)
-            .onSnapshot((doc) => {
-                document.getElementById('loginOverlay').style.display = 'none';
-                document.getElementById('dispGroupId').innerText = currentGroupId;
-                document.getElementById('confGroup').innerText = currentGroupId;
-
-                if (doc.exists) {
-                    const data = doc.data();
-                    expenses = data.expenses || [];
-                    payments = data.payments || {};
-                    accounts = data.accounts || [];
-                    categories = data.categories || ["Hogar", "Oficina", "Personal", "Auto", "Tarjetas", "Otros"];
-                } else {
-                    // Si es nuevo, guardamos estructura inicial
-                    saveDataCloud();
-                }
-                refreshUI();
-            }, (error) => {
-                document.getElementById('loginMsg').innerText = "Error: " + error.message;
-            });
-    }
-
-    function saveDataCloud() {
-        if(!currentGroupId || !db) return;
-        const dataToSave = { expenses, payments, accounts, categories, lastUpdate: new Date().toISOString() };
-        db.collection('pagos_app_completa').doc(currentGroupId).set(dataToSave)
-            .catch((e) => alert("Error guardando: " + e.message));
-    }
-
-    function refreshUI() {
-        renderCategoryUI();
-        renderGrid();
-        renderAccounts();
-    }
-
-    // --- LOGICA DE UI (Idéntica a la versión original) ---
-    function changeYear(delta) { viewYear += delta; renderGrid(); }
-    function getMonthName(i) { const d=new Date(viewYear, i, 1); return d.toLocaleDateString('es-ES',{month:'short'}).toUpperCase()+'-'+viewYear.toString().substring(2); }
-    function setSortMonth(i) { sortMonthIndex = i; renderGrid(); }
-
-    function renderCategoryUI() {
-        const div = document.getElementById('categoryFilters');
-        let html = `<div class="filter-chip ${currentFilter==='all'?'active':''}" onclick="filterCategory('all')">Todos</div>`;
-        categories.forEach(cat => {
-            html += `<div class="filter-chip ${currentFilter===cat?'active':''}" onclick="filterCategory('${cat}')">${cat}</div>`;
-        });
-        html += `<div class="filter-chip" style="background:#222; border-style:dashed;" onclick="openModalCats()">⚙️</div>`;
-        div.innerHTML = html;
-        
-        const sel = document.getElementById('expCat');
-        sel.innerHTML = '';
-        categories.forEach(cat => sel.innerHTML += `<option value="${cat}">${cat}</option>`);
-    }
-
-    function renderGrid() {
-        document.getElementById('displayYear').innerText = viewYear;
-        const head = document.getElementById('gridHeader');
-        const body = document.getElementById('gridBody');
-        const foot = document.getElementById('gridFooter');
-
-        // Headers
-        let hHtml = '<th class="col-fixed">Concepto</th>';
-        for(let i=0; i<12; i++) {
-            const act = i===sortMonthIndex ? 'active-sort' : '';
-            hHtml += `<th class="${act}" onclick="setSortMonth(${i})">${getMonthName(i)}</th>`;
+    // --- AUTENTICACIÓN ---
+    auth.onAuthStateChanged(user => {
+        if(user) {
+            currentUser = user;
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('groupScreen').style.display = 'flex';
+            document.getElementById('dispUserEmail').innerText = user.email.split('@')[0];
+        } else {
+            document.getElementById('authScreen').style.display = 'flex';
+            document.getElementById('groupScreen').style.display = 'none';
+            document.querySelector('.app-header').style.display = 'none';
         }
-        head.innerHTML = hHtml;
+    });
 
-        // Data processing
-        let mTotals = new Array(12).fill(0);
-        let list = expenses.filter(e => currentFilter==='all' || e.cat===currentFilter);
-        
-        // Sort
-        list.sort((a,b) => {
-            const pA = payments[`${a.id}_${viewYear}_${sortMonthIndex}`] || {day:99};
-            const pB = payments[`${b.id}_${viewYear}_${sortMonthIndex}`] || {day:99};
-            return (pA.day||99) - (pB.day||99);
-        });
+    function loginEmail() {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        auth.signInWithEmailAndPassword(e, p).catch(e => document.getElementById('authMsg').innerText=e.message);
+    }
+    function registerEmail() {
+        const e = document.getElementById('email').value;
+        const p = document.getElementById('password').value;
+        auth.createUserWithEmailAndPassword(e, p).catch(e => document.getElementById('authMsg').innerText=e.message);
+    }
+    function loginGoogle() {
+        const provider = new firebase.auth.GoogleAuthProvider();
+        auth.signInWithPopup(provider).catch(e => document.getElementById('authMsg').innerText=e.message);
+    }
+    function logout() { auth.signOut().then(() => location.reload()); }
 
-        body.innerHTML = '';
-        list.forEach(exp => {
-            let row = `<tr><td class="col-fixed">
-                <span class="expense-name">${exp.name}</span>
-                <div class="expense-meta">
-                    <span class="expense-cat-badge">${exp.cat}</span>
-                    <span class="icon-btn" onclick="editExpense(${exp.id})">✏️</span>
-                    <span class="icon-btn" style="color:#ff5252" onclick="deleteExpense(${exp.id})">✖</span>
-                </div>
-            </td>`;
-            
-            for(let i=0; i<12; i++) {
-                const k = `${exp.id}_${viewYear}_${i}`;
-                const p = payments[k] || {};
-                const amt = p.amount ? `$${parseInt(p.amount).toLocaleString()}` : '';
-                const day = p.day ? `Día ${p.day}` : '';
-                const acc = getAccountName(p.accId);
+    // --- LOGICA DE GRUPOS (Seguridad) ---
+    function checkGroup() {
+        const name = document.getElementById('groupNameInput').value.trim().toUpperCase();
+        if(name.length < 3) return document.getElementById('groupMsg').innerText = "Nombre muy corto";
+        const pinInput = document.getElementById('groupPinInput').value.trim();
+
+        document.getElementById('groupMsg').innerText = "Verificando...";
+
+        db.collection('groups').doc(name).get().then(doc => {
+            if(doc.exists) {
+                // El grupo existe
+                const gInfo = doc.data();
+                const isMember = gInfo.members.includes(currentUser.email);
                 
-                if(p.amount) mTotals[i] += parseFloat(p.amount);
-                
-                let st = '';
-                if(p.paid) st = 'status-paid';
-                else if(p.amount) {
-                    const now = new Date();
-                    if(viewYear===now.getFullYear() && i<=now.getMonth() && now.getDate()>(p.day||31)) st='status-overdue';
-                    else st='status-pending';
+                if(isMember) {
+                    enterGroup(name, gInfo);
+                } else {
+                    // No es miembro, pedir PIN
+                    document.getElementById('pinArea').style.display = 'block';
+                    document.getElementById('groupMsg').innerText = "";
+                    
+                    if(pinInput === gInfo.pin) {
+                        // PIN OK -> Agregar a miembros
+                        db.collection('groups').doc(name).update({
+                            members: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
+                        }).then(() => enterGroup(name, gInfo));
+                    } else if(pinInput.length > 0) {
+                        document.getElementById('groupMsg').innerText = "PIN INCORRECTO";
+                    }
                 }
-
-                row += `<td class="${st}"><div class="cell-content" onclick="openCell(${exp.id}, ${i})">
-                    <span class="cell-day">${day}</span>
-                    <span class="cell-amount">${amt}</span>
-                    ${acc ? `<span class="cell-bank">${acc}</span>` : ''}
-                </div></td>`;
+            } else {
+                // El grupo NO existe -> Crear
+                if(confirm("El grupo no existe. ¿Crearlo y ser el Dueño?")) {
+                    const newPin = Math.floor(1000 + Math.random() * 9000).toString();
+                    const newGroup = {
+                        owner: currentUser.email,
+                        members: [currentUser.email],
+                        pin: newPin,
+                        createdAt: new Date().toISOString()
+                    };
+                    db.collection('groups').doc(name).set(newGroup).then(() => {
+                        enterGroup(name, newGroup);
+                    });
+                } else {
+                    document.getElementById('groupMsg').innerText = "";
+                }
             }
-            body.innerHTML += row + '</tr>';
         });
-
-        // Footer
-        let fHtml = '<tr class="row-total"><td class="col-fixed">TOTALES</td>';
-        mTotals.forEach(t => fHtml += `<td>$${t.toLocaleString()}</td>`);
-        foot.innerHTML = fHtml + '</tr>';
-        
-        calculateDashboard();
     }
 
-    function calculateDashboard() {
-        let debt = 0;
+    function enterGroup(name, info) {
+        currentGroup = name;
+        document.getElementById('groupScreen').style.display = 'none';
+        document.querySelector('.app-header').style.display = 'flex';
+        document.getElementById('dispGroupName').innerText = name;
+        
+        // Datos Config
+        document.getElementById('confGName').innerText = name;
+        document.getElementById('confOwner').innerText = info.owner;
+        document.getElementById('confPin').innerText = info.pin;
+
+        // Cargar Datos
+        db.collection('data').doc(name).onSnapshot(doc => {
+            if(doc.exists) {
+                appData = doc.data();
+                if(!appData.expenses) appData.expenses = [];
+                if(!appData.payments) appData.payments = {};
+                if(!appData.accounts) appData.accounts = [];
+            } else {
+                saveData(); // Crear doc vacío
+            }
+            renderAll();
+        });
+    }
+
+    function saveData() {
+        if(!currentGroup) return;
+        db.collection('data').doc(currentGroup).set(appData);
+    }
+
+    // --- RENDERIZADO UI ---
+    function renderAll() { renderGrid(); renderAcc(); calcDash(); }
+    
+    function renderGrid() {
+        const t = document.getElementById('mainTable');
+        t.innerHTML = `<thead><tr><th class="col-fix">Concepto</th>${[...Array(12)].map((_,i)=>`<th>${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}</tr></thead>`;
+        let body = '<tbody>';
+        
+        // Ordenar gastos (opcional: por nombre)
+        appData.expenses.forEach(e => {
+            body += `<tr><td class="col-fix"><b>${e.name}</b><br><span style="font-size:0.7rem;color:#aaa">${e.cat}</span></td>`;
+            for(let i=0; i<12; i++) {
+                const k = `${e.id}_${year}_${i}`;
+                const p = appData.payments[k] || {};
+                const st = p.paid ? 'status-paid' : (p.amt ? 'status-pend' : '');
+                body += `<td class="${st}"><div onclick="openCell(${e.id},${i})" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;">${p.amt ? '$'+parseInt(p.amt).toLocaleString() : ''}<span style="font-size:0.6rem">${p.day?'Día '+p.day:''}</span></div></td>`;
+            }
+            body += '</tr>';
+        });
+        t.innerHTML += body + '</tbody>';
+    }
+
+    function renderAcc() {
+        const l = document.getElementById('accList'); l.innerHTML = '';
+        const s = document.getElementById('mcAcc'); s.innerHTML = '<option value="">--</option>';
+        appData.accounts.forEach(a => {
+            s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
+            l.innerHTML += `<div class="dash-card" style="margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;"><div><b>${a.name}</b></div><div style="color:#00e676">$${parseInt(a.bal).toLocaleString()} <span onclick="delAcc(${a.id})" style="color:red; cursor:pointer; margin-left:10px;">✖</span></div></div>`;
+        });
+    }
+
+    function calcDash() {
+        let debt=0, assets=0;
         const now = new Date();
-        const m = now.getMonth();
-        const y = now.getFullYear();
-
-        expenses.forEach(e => {
-            const p = payments[`${e.id}_${y}_${m}`];
-            if(p && p.amount && !p.paid) debt += parseFloat(p.amount);
+        // Deuda de este mes
+        appData.expenses.forEach(e => {
+            const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
+            const p = appData.payments[k];
+            if(p && p.amt && !p.paid) debt += parseInt(p.amt);
         });
-
-        let assets = accounts.reduce((s, a) => s + (parseFloat(a.balance)||0), 0);
-        let net = assets - debt;
-
-        document.getElementById('totalAssets').innerText = `$${assets.toLocaleString()}`;
-        document.getElementById('totalLiabilities').innerText = `$${debt.toLocaleString()}`;
-        document.getElementById('dashTitleDebt').innerText = `A PAGAR (${getMonthName(m)})`;
-        document.getElementById('globalProjected').innerText = `$${net.toLocaleString()}`;
-        document.getElementById('globalProjected').className = net<0 ? 'dash-value dash-debt' : 'dash-value dash-gross';
+        appData.accounts.forEach(a => assets += parseInt(a.bal));
+        document.getElementById('dTotal').innerText = '$'+assets.toLocaleString();
+        document.getElementById('dDebt').innerText = '$'+debt.toLocaleString();
+        document.getElementById('dNet').innerText = '$'+(assets-debt).toLocaleString();
     }
-
-    function renderAccounts() {
-        const list = document.getElementById('accountsList');
-        const sel = document.getElementById('cellAccount');
-        list.innerHTML = '';
-        sel.innerHTML = '<option value="">-- Sin Asignar --</option>';
-        
-        const now = new Date();
-        
-        accounts.forEach(acc => {
-            // Proyección simple: Saldo - Gastos asignados no pagados de este mes
-            let pending = 0;
-            expenses.forEach(e => {
-                const p = payments[`${e.id}_${now.getFullYear()}_${now.getMonth()}`];
-                if(p && !p.paid && p.accId == acc.id) pending += parseFloat(p.amount);
-            });
-            let final = (acc.balance||0) - pending;
-
-            sel.innerHTML += `<option value="${acc.id}">${acc.name} ($${final.toLocaleString()})</option>`;
-            
-            list.innerHTML += `
-            <div class="account-card-wrapper">
-                <div class="account-row">
-                    <div>
-                        <div class="acc-name">🏦 ${acc.name}</div>
-                        <div style="font-size:0.8rem; color:#aaa; margin-top:5px;">Proyectado: $${final.toLocaleString()}</div>
-                    </div>
-                    <div>
-                        <div class="acc-balance">$${parseFloat(acc.balance).toLocaleString()}</div>
-                        <div style="text-align:right; margin-top:5px;">
-                            <span class="icon-btn" onclick="editAccount(${acc.id})">✏️</span>
-                            <span class="icon-btn" style="color:#ff5252" onclick="deleteAccount(${acc.id})">✖</span>
-                        </div>
-                    </div>
-                </div>
-            </div>`;
-        });
-    }
-
-    function getAccountName(id) { if(!id) return null; const a=accounts.find(x=>x.id==id); return a?a.name:null; }
 
     // --- CRUD ---
-    function openModalExpense() { editingExpenseId=null; document.getElementById('expName').value=''; document.getElementById('expComment').value=''; renderCategoryUI(); document.getElementById('modalExpense').style.display='flex'; }
-    function editExpense(id) { editingExpenseId=id; const e=expenses.find(x=>x.id===id); if(e){ document.getElementById('expName').value=e.name; document.getElementById('expCat').value=e.cat; document.getElementById('expComment').value=e.comment||''; document.getElementById('modalExpense').style.display='flex'; } }
-    function saveExpense() {
-        const name = document.getElementById('expName').value;
-        const cat = document.getElementById('expCat').value;
-        const comment = document.getElementById('expComment').value;
-        if(!name) return;
-        
-        if(editingExpenseId) { const e=expenses.find(x=>x.id===editingExpenseId); e.name=name; e.cat=cat; e.comment=comment; }
-        else { expenses.push({id:Date.now(), name, cat, comment}); }
-        saveDataCloud(); closeModal('modalExpense');
+    function openModalExp() { document.getElementById('modExp').style.display='flex'; }
+    function saveExp() {
+        const n=document.getElementById('meName').value;
+        if(n) { appData.expenses.push({id:Date.now(), name:n, cat:document.getElementById('meCat').value}); saveData(); closeModal('modExp'); document.getElementById('meName').value=''; }
     }
-    function deleteExpense(id) { if(confirm("¿Eliminar gasto y todo su historial?")) { expenses=expenses.filter(e=>e.id!==id); saveDataCloud(); } }
+    function openModalAcc() { document.getElementById('modAcc').style.display='flex'; }
+    function saveAcc() {
+        const n=document.getElementById('maName').value; const b=document.getElementById('maBal').value;
+        if(n) { appData.accounts.push({id:Date.now(), name:n, bal:b||0}); saveData(); closeModal('modAcc'); document.getElementById('maName').value=''; }
+    }
+    function delAcc(id) { if(confirm("¿Borrar?")) { appData.accounts = appData.accounts.filter(a=>a.id!==id); saveData(); } }
 
-    function openCell(eid, mid) {
-        selectedCell = {eid, mid};
-        const k = `${eid}_${viewYear}_${mid}`;
-        const p = payments[k] || {};
-        document.getElementById('cellTitle').innerText = `Planificar ${getMonthName(mid)}`;
-        document.getElementById('cellAmount').value = p.amount||'';
-        document.getElementById('cellDay').value = p.day||'';
-        document.getElementById('cellAccount').value = p.accId||'';
-        document.getElementById('cellPaid').checked = p.paid||false;
-        document.getElementById('modalCell').style.display='flex';
+    function openCell(eid, m) {
+        selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
+        document.getElementById('mcAmt').value = p.amt||'';
+        document.getElementById('mcDay').value = p.day||'';
+        document.getElementById('mcAcc').value = p.accId||'';
+        document.getElementById('mcPaid').checked = p.paid||false;
+        document.getElementById('modCell').style.display='flex';
     }
     function saveCell() {
-        const k = `${selectedCell.eid}_${viewYear}_${selectedCell.mid}`;
-        const amt = parseFloat(document.getElementById('cellAmount').value);
-        const day = parseInt(document.getElementById('cellDay').value);
-        const acc = document.getElementById('cellAccount').value;
-        const pd = document.getElementById('cellPaid').checked;
-        
-        if(!amt && !day && !pd) delete payments[k];
-        else payments[k] = { amount:amt||0, day:day||0, accId:acc, paid:pd };
-        saveDataCloud(); closeModal('modalCell');
+        const k = `${selCell.eid}_${year}_${selCell.m}`;
+        const amt = document.getElementById('mcAmt').value;
+        if(amt) {
+            appData.payments[k] = { 
+                amt: amt, 
+                day: document.getElementById('mcDay').value,
+                accId: document.getElementById('mcAcc').value,
+                paid: document.getElementById('mcPaid').checked
+            };
+        } else delete appData.payments[k];
+        saveData(); closeModal('modCell');
     }
-    function clearCell() {
-        const k = `${selectedCell.eid}_${viewYear}_${selectedCell.mid}`;
-        delete payments[k]; saveDataCloud(); closeModal('modalCell');
-    }
+    function delCell() { delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
 
-    function openModalAccount() { editingAccountId=null; document.getElementById('accName').value=''; document.getElementById('accBalance').value=''; document.getElementById('modalAccount').style.display='flex'; }
-    function editAccount(id) { editingAccountId=id; const a=accounts.find(x=>x.id==id); if(a){ document.getElementById('accName').value=a.name; document.getElementById('accBalance').value=a.balance; document.getElementById('modalAccount').style.display='flex'; } }
-    function saveAccount() {
-        const name = document.getElementById('accName').value;
-        const bal = parseFloat(document.getElementById('accBalance').value);
-        if(!name) return;
-        if(editingAccountId) { const a=accounts.find(x=>x.id==editingAccountId); a.name=name; a.balance=bal||0; }
-        else { accounts.push({id:Date.now(), name, balance:bal||0}); }
-        saveDataCloud(); closeModal('modalAccount');
-    }
-    function deleteAccount(id) { if(confirm("¿Borrar cuenta?")) { accounts=accounts.filter(a=>a.id!=id); saveDataCloud(); } }
-
-    // Categorias
-    function openModalCats() { renderCatList(); document.getElementById('modalCats').style.display='flex'; }
-    function renderCatList() { 
-        const l=document.getElementById('catList'); l.innerHTML=''; 
-        categories.forEach((c,i) => l.innerHTML+=`<div class="cat-item"><span>${c}</span><span class="icon-btn" style="color:red" onclick="delCat(${i})">✖</span></div>`);
-    }
-    function addCategory() { const v=document.getElementById('newCatName').value; if(v && !categories.includes(v)) { categories.push(v); saveDataCloud(); renderCatList(); renderCategoryUI(); } }
-    function delCat(i) { if(confirm("¿Borrar categoría?")) { categories.splice(i,1); saveDataCloud(); renderCatList(); renderCategoryUI(); } }
-
-    // Utils
-    function switchTab(t) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); event.target.classList.add('active'); if(t==='planilla') renderGrid(); if(t==='cuentas') renderAccounts(); }
-    function filterCategory(c) { currentFilter=c; renderCategoryUI(); renderGrid(); }
+    // UTILS
+    function switchTab(t) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); event.target.classList.add('active'); if(t==='planilla') renderAll(); }
+    function changeYear(d) { year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id) { document.getElementById(id).style.display='none'; }
-    function exportToExcel() { 
-        const ws = XLSX.utils.table_to_sheet(document.querySelector('table')); 
-        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Pagos"); 
-        XLSX.writeFile(wb, `Pagos_${currentGroupId}_${viewYear}.xlsx`); 
-    }
+    function exportExcel() { const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
 </script>
 </body>
 </html>
