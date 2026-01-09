@@ -3,58 +3,239 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gestor de Pagos</title>
-    <style>
-        /* ESTILOS DE LA APP - DISEÑO OSCURO */
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
-        .container { background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; width: 100%; max-width: 500px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
-        h2 { color: #BB86FC; margin-top: 0; text-align: center; }
-        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; box-sizing: border-box; background: #2c2c2c; color: white; font-size: 1rem; }
-        button { background: #BB86FC; color: #000; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
-        button:hover { opacity: 0.9; transform: scale(1.02); }
-        .btn-delete { background: #cf6679; width: auto; padding: 5px 15px; font-size: 0.8rem; margin-left: 10px; }
-        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
-        .item:last-child { border-bottom: none; }
-        .total-row { font-size: 1.2rem; font-weight: bold; color: #03dac6; text-align: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid #333; }
-        #loginScreen { text-align: center; }
-        #appScreen { display: none; }
-    </style>
+    <title>Armado de Pagos Cloud</title>
     
+    <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        /* --- ESTILOS VISUALES (MODO OSCURO) --- */
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 80px; display: flex; flex-direction: column; align-items: center; }
+        
+        /* PANTALLA DE LOGUEO */
+        #loginOverlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .login-box { background: #1e1e1e; padding: 40px; border-radius: 15px; border: 1px solid #333; text-align: center; width: 90%; max-width: 350px; }
+        .login-input { background: #333; color: #fff; border: 1px solid #555; padding: 15px; font-size: 1.2rem; text-align: center; letter-spacing: 2px; width: 100%; border-radius: 8px; margin: 20px 0; text-transform: uppercase; box-sizing: border-box; }
+
+        /* HEADER Y TABS */
+        .header { width: 100%; background-color: #1e1e1e; padding: 10px 20px; position: sticky; top: 0; z-index: 100; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; }
+        .app-title { font-weight: 800; font-size: 1.1rem; color:#fff; text-decoration: none; }
+        .group-badge { font-size: 0.75rem; padding: 5px 12px; border-radius: 15px; background: #333; color: #00e676; border: 1px solid #00e676; font-weight: bold; letter-spacing: 1px; text-transform: uppercase; }
+
+        .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
+        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; transition: 0.3s; font-size: 0.95rem; }
+        .tab.active { background: #BB86FC; color: #000; font-weight: 800; }
+        
+        .view { display: none; width: 95%; max-width: 1400px; margin: 0 auto; flex-direction: column; gap: 15px; }
+        .view.active { display: flex; }
+
+        /* DASHBOARD */
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 15px; }
+        .dash-card { background: #1e1e1e; padding: 15px; border-radius: 12px; border: 1px solid #333; text-align: center; }
+        .dash-title { font-size: 0.75rem; color: #aaa; text-transform: uppercase; margin-bottom: 5px; }
+        .dash-value { font-size: 1.3rem; font-weight: bold; color: #fff; font-family: monospace; }
+        .dash-net { color: #BB86FC; } .dash-gross { color: #00e676; } .dash-debt { color: #ff5252; }
+
+        /* TABLA PRINCIPAL */
+        .grid-container { overflow-x: auto; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; position: relative; max-height: 65vh; }
+        .grid-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1000px; }
+        .grid-table th { background: #252525; color: #ccc; padding: 12px; font-size: 0.85rem; text-transform: uppercase; position: sticky; top: 0; z-index: 20; border-bottom: 2px solid #444; text-align: center; cursor: pointer; }
+        .grid-table th.active-sort { color: #BB86FC; border-bottom: 2px solid #BB86FC; }
+        .grid-table td { padding: 0; border-bottom: 1px solid #333; border-right: 1px solid #333; height: 60px; vertical-align: middle; }
+        
+        .col-fixed { position: sticky; left: 0; background: #1e1e1e; z-index: 30; min-width: 180px; max-width: 180px; border-right: 2px solid #444 !important; }
+        .row-total { background: #2a2a2a; font-weight: bold; border-top: 2px solid #555; }
+        .row-total td { height: 40px; color: #fff; text-align: center; font-family: monospace; }
+        .row-total .col-fixed { background: #2a2a2a; color: #BB86FC; text-align: right; padding-right: 10px; z-index: 35; }
+
+        .expense-name { padding: 5px 10px 0 10px; font-weight: bold; font-size: 0.9rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; color: #fff; }
+        .expense-meta { font-size: 0.7rem; color: #777; padding: 0 10px 5px; display: flex; gap: 5px; align-items: center; }
+        .expense-cat-badge { background: #333; padding: 1px 5px; border-radius: 4px; font-size: 0.65rem; }
+        
+        .cell-content { width: 100%; height: 100%; display: flex; flex-direction: column; justify-content: center; align-items: center; cursor: pointer; transition: 0.2s; padding: 2px; box-sizing: border-box; }
+        .cell-content:hover { background: rgba(255,255,255,0.08); }
+        .status-paid { background: rgba(0, 230, 118, 0.15); border-left: 3px solid #00e676; }
+        .status-pending { background: rgba(255, 215, 64, 0.1); border-left: 3px solid #ffd740; }
+        .status-overdue { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; }
+        .cell-day { font-size: 0.65rem; color: #aaa; }
+        .cell-amount { font-weight: bold; font-size: 0.9rem; color: #eee; }
+        .cell-bank { font-size: 0.6rem; color: #000; background: #BB86FC; padding: 1px 4px; border-radius: 8px; margin-top: 2px; font-weight: bold; max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* CUENTAS */
+        .account-card-wrapper { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
+        .account-row { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
+        .acc-name { font-weight: bold; font-size: 1rem; color: #fff; }
+        .acc-balance { font-size: 1.1rem; color: #00e676; font-weight: bold; font-family: monospace; text-align: right; }
+        .acc-projected { font-size: 0.8rem; color: #BB86FC; text-align: right; margin-top: 2px; }
+        
+        /* BOTONES UI */
+        .fab { position: fixed; bottom: 30px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; box-shadow: 0 4px 20px rgba(187, 134, 252, 0.5); cursor: pointer; display: flex; align-items: center; justify-content: center; z-index: 50; }
+        .btn { padding: 12px; width: 100%; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 1rem; }
+        .btn-primary { background: #BB86FC; color: #000; }
+        .btn-sec { background: #333; color: #ccc; border: 1px solid #555; }
+        .btn-danger { background: #ff5252; color: #fff; }
+        .icon-btn { cursor:pointer; margin-left:5px; opacity:0.7; } .icon-btn:hover { opacity:1; }
+
+        /* MODALES */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 200; justify-content: center; align-items: center; backdrop-filter: blur(2px); }
+        .modal-content { background: #252525; padding: 25px; border-radius: 15px; width: 90%; max-width: 400px; border: 1px solid #444; max-height: 90vh; overflow-y: auto; }
+        input, select { width: 100%; padding: 12px; margin-bottom: 15px; background: #151515; border: 1px solid #444; color: #fff; border-radius: 8px; box-sizing: border-box; font-size: 1rem; }
+        
+        /* FILTROS */
+        .filter-bar { padding: 5px 0 15px 0; display: flex; gap: 10px; overflow-x: auto; align-items: center; }
+        .filter-chip { background: #333; padding: 6px 15px; border-radius: 20px; font-size: 0.85rem; cursor: pointer; white-space: nowrap; border: 1px solid #444; transition: 0.2s; }
+        .filter-chip.active { background: #BB86FC; color: #000; border-color: #BB86FC; font-weight: bold; }
+        
+        .cat-item { display: flex; justify-content: space-between; align-items: center; background: #333; padding: 10px; margin-bottom: 5px; border-radius: 5px; }
+    </style>
 </head>
 <body>
 
-    <div id="loginScreen" class="container">
-        <h2>🔐 Acceso a Pagos</h2>
-        <p style="color:#aaa;">Ingresa un nombre de grupo (ej: CASA, OFICINA) para compartir los datos.</p>
-        <input type="text" id="groupInput" placeholder="Nombre del Grupo (ej: FLIA_PEREZ)" style="text-transform:uppercase; text-align:center;">
-        <button onclick="conectar()">INGRESAR</button>
+    <div id="loginOverlay">
+        <div class="login-box">
+            <h1 style="color:#BB86FC; margin-bottom: 5px;">☁️ Pagos Cloud</h1>
+            <p style="color:#aaa; margin-bottom: 20px;">Tu oficina en cualquier lugar</p>
+            <input type="text" id="groupIdInput" class="login-input" placeholder="NOMBRE DEL GRUPO">
+            <button class="btn btn-primary" onclick="connectToGroup()">CONECTAR</button>
+            <p id="loginMsg" style="color:#ff5252; font-size:0.9rem; margin-top:15px; min-height:20px;"></p>
+        </div>
     </div>
 
-    <div id="appScreen" style="width: 100%; display:flex; flex-direction:column; align-items:center;">
-        <div class="container">
-            <h2>💰 Nuevo Gasto (<span id="groupDisplay">...</span>)</h2>
-            <input type="text" id="desc" placeholder="¿Qué vas a pagar? (ej: Luz)">
-            <input type="number" id="monto" placeholder="Monto ($)">
-            <button onclick="agregar()">+ AGREGAR GASTO</button>
+    <div class="header">
+        <a href="#" class="app-title">C&M Pagos</a>
+        <div class="group-badge" id="dispGroupId">...</div>
+    </div>
+
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('planilla')">📝 Planilla</div>
+        <div class="tab" onclick="switchTab('cuentas')">💳 Cuentas</div>
+        <div class="tab" onclick="switchTab('config')">⚙️ Config</div>
+    </div>
+
+    <div id="view-planilla" class="view active">
+        <div class="dashboard-grid">
+            <div class="dash-card">
+                <div class="dash-title">Total Fondos</div>
+                <div class="dash-value dash-gross" id="totalAssets">$0</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-title" id="dashTitleDebt">A Pagar</div>
+                <div class="dash-value dash-debt" id="totalLiabilities">$0</div>
+            </div>
+            <div class="dash-card">
+                <div class="dash-title">Proyección</div>
+                <div class="dash-value dash-net" id="globalProjected">$0</div>
+            </div>
         </div>
 
-        <div class="container">
-            <h3 style="color:#aaa; text-align:center;">Lista de Pagos</h3>
-            <div id="lista">Cargando...</div>
-            <div id="totalDisplay" class="total-row">Total: $0</div>
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#252525; padding:10px 15px; border-radius:8px; border:1px solid #333;">
+            <button class="btn-sec" style="width:auto; margin:0;" onclick="changeYear(-1)">&lt;&lt;</button>
+            <span style="font-weight:bold; font-size:1.1rem;" id="displayYear">2026</span>
+            <button class="btn-sec" style="width:auto; margin:0;" onclick="changeYear(1)">&gt;&gt;</button>
+        </div>
+
+        <div class="filter-bar" id="categoryFilters"></div>
+
+        <div class="grid-container">
+            <table class="grid-table">
+                <thead><tr id="gridHeader"></tr></thead>
+                <tbody id="gridBody"></tbody>
+                <tfoot id="gridFooter"></tfoot>
+            </table>
         </div>
         
-        <button onclick="location.reload()" style="background:transparent; color:#666; border:1px solid #333; width:auto; margin-top:20px;">Salir / Cambiar Grupo</button>
+        <div style="text-align:right; margin-top:10px;">
+            <button class="btn-sec" style="width:auto;" onclick="exportToExcel()">📊 Exportar a Excel</button>
+        </div>
     </div>
 
+    <div id="view-cuentas" class="view">
+        <div style="background:#222; padding:15px; border-radius:10px; border-left:4px solid #BB86FC;">
+            <strong style="color:#BB86FC">Gestión de Fondos</strong>
+            <p style="font-size:0.85rem; color:#ccc; margin:5px 0 0 0;">Aquí cargas tu dinero real (Bancos, Efectivo).</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModalAccount()">+ Nueva Cuenta</button>
+        <div id="accountsList" style="margin-top:20px;"></div>
+    </div>
+
+    <div id="view-config" class="view">
+        <div class="dash-card" style="text-align:left;">
+            <h3 style="color:#BB86FC;">Datos de Sesión</h3>
+            <p>Estás conectado al grupo: <strong id="confGroup" style="color:#fff;">...</strong></p>
+            <p style="font-size:0.9rem; color:#aaa;">Cualquier persona con este nombre de grupo puede ver y editar los datos.</p>
+            <button class="btn btn-sec" onclick="location.reload()">Cerrar Sesión / Cambiar Grupo</button>
+        </div>
+    </div>
+
+    <button class="fab" onclick="openModalExpense()">+</button>
+
+    <div id="modalExpense" class="modal">
+        <div class="modal-content">
+            <h3>Nuevo Gasto / Servicio</h3>
+            <label>Nombre (ej: Luz):</label>
+            <input type="text" id="expName">
+            <label>Categoría:</label>
+            <select id="expCat"></select>
+            <label>Comentarios / Usuario / Clave:</label>
+            <input type="text" id="expComment">
+            <button class="btn btn-primary" onclick="saveExpense()">Guardar</button>
+            <button class="btn btn-sec" onclick="closeModal('modalExpense')">Cancelar</button>
+        </div>
+    </div>
+
+    <div id="modalCats" class="modal">
+        <div class="modal-content">
+            <h3 style="color:#BB86FC">Editar Categorías</h3>
+            <div id="catList" style="max-height:200px; overflow-y:auto; margin-bottom:15px; border:1px solid #333; padding:5px;"></div>
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="newCatName" placeholder="Nueva..." style="margin-bottom:0;">
+                <button class="btn btn-primary" style="width:auto; margin:0;" onclick="addCategory()">+</button>
+            </div>
+            <button class="btn btn-sec" onclick="closeModal('modalCats')" style="margin-top:20px;">Cerrar</button>
+        </div>
+    </div>
+
+    <div id="modalCell" class="modal">
+        <div class="modal-content">
+            <h3 id="cellTitle">Planificar</h3>
+            <label>Importe ($):</label>
+            <input type="number" id="cellAmount" style="font-size:1.5rem; color:#BB86FC;">
+            <label>Día Vencimiento:</label>
+            <input type="number" id="cellDay">
+            <div style="background:#333; padding:10px; border-radius:8px; margin-bottom:15px;">
+                <label>Pagar con:</label>
+                <select id="cellAccount" style="margin-bottom:0;"><option value="">-- Sin Asignar --</option></select>
+            </div>
+            <div style="display:flex; align-items:center; gap:10px; margin-bottom:15px; background:#2e7d32; padding:10px; border-radius:8px;">
+                <input type="checkbox" id="cellPaid" style="width:25px; height:25px; margin:0;">
+                <label for="cellPaid" style="margin:0; color:#fff; cursor:pointer;">¡YA ESTÁ PAGADO!</label>
+            </div>
+            <button class="btn btn-primary" onclick="saveCell()">Guardar</button>
+            <div style="display:flex; gap:10px;">
+                <button class="btn btn-sec" onclick="closeModal('modalCell')">Cancelar</button>
+                <button class="btn btn-danger" onclick="clearCell()">Borrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalAccount" class="modal">
+        <div class="modal-content">
+            <h3>Cuenta / Banco</h3>
+            <label>Nombre:</label>
+            <input type="text" id="accName">
+            <label>Saldo Real ($):</label>
+            <input type="number" id="accBalance" style="color:#00e676; font-size:1.2rem;">
+            <button class="btn btn-primary" onclick="saveAccount()">Guardar</button>
+            <button class="btn btn-sec" onclick="closeModal('modalAccount')">Cancelar</button>
+        </div>
+    </div>
+
+
 <script>
-    // ======================================================
-    // PEGA AQUÍ EL CÓDIGO DE TU PANTALLA DE FIREBASE
-    // ======================================================
-    
-    // --- BORRA ESTO Y PEGA TU CONFIGURACION AQUI ---
+    // -------------------------------------------------------------
+    // ⚠️ PEGA AQUÍ TUS CLAVES DE FIREBASE (PASO OBLIGATORIO)
+    // -------------------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
   authDomain: "armadopagos.firebaseapp.com",
@@ -63,87 +244,297 @@ const firebaseConfig = {
   messagingSenderId: "482082107729",
   appId: "1:482082107729:web:e4f29ee165ca1437e76370"
 };
-    // ======================================================
+    // -------------------------------------------------------------
 
-    // INICIALIZAR LA APP
-    firebase.initializeApp(firebaseConfig);
-    const db = firebase.firestore();
-    let currentGroup = "";
+    // VARIABLES GLOBALES
+    let db;
+    let currentGroupId = null;
+    let unsubscribe = null;
+    
+    // DATOS EN MEMORIA (Se sobrescriben con lo de la nube)
+    let expenses = [];
+    let payments = {}; 
+    let accounts = [];
+    let categories = ["Hogar", "Oficina", "Personal", "Auto", "Tarjetas", "Otros"];
 
-    function conectar() {
-        const val = document.getElementById('groupInput').value.trim().toUpperCase();
-        if(val.length < 3) return alert("El nombre debe tener al menos 3 letras");
-        currentGroup = val;
+    let viewYear = new Date().getFullYear(); 
+    let selectedCell = null; 
+    let currentFilter = 'all';
+    let editingAccountId = null;
+    let editingExpenseId = null;
+    let sortMonthIndex = new Date().getMonth();
+
+    // INICIALIZAR
+    try {
+        firebase.initializeApp(firebaseConfig);
+        db = firebase.firestore();
+    } catch(e) { console.error("Error Firebase", e); }
+
+    // --- CONEXIÓN ---
+    function connectToGroup() {
+        const input = document.getElementById('groupIdInput').value.trim().toUpperCase();
+        if(input.length < 3) return document.getElementById('loginMsg').innerText = "Nombre muy corto (mínimo 3 letras)";
+
+        currentGroupId = input;
+        document.getElementById('loginMsg').innerText = "Conectando...";
         
-        document.getElementById('loginScreen').style.display = 'none';
-        document.getElementById('appScreen').style.display = 'flex'; // Fix display style
-        document.getElementById('groupDisplay').innerText = currentGroup;
-        
-        cargarDatos();
+        // Conexión en tiempo real
+        unsubscribe = db.collection('pagos_app_completa').doc(currentGroupId)
+            .onSnapshot((doc) => {
+                document.getElementById('loginOverlay').style.display = 'none';
+                document.getElementById('dispGroupId').innerText = currentGroupId;
+                document.getElementById('confGroup').innerText = currentGroupId;
+
+                if (doc.exists) {
+                    const data = doc.data();
+                    expenses = data.expenses || [];
+                    payments = data.payments || {};
+                    accounts = data.accounts || [];
+                    categories = data.categories || ["Hogar", "Oficina", "Personal", "Auto", "Tarjetas", "Otros"];
+                } else {
+                    // Si es nuevo, guardamos estructura inicial
+                    saveDataCloud();
+                }
+                refreshUI();
+            }, (error) => {
+                document.getElementById('loginMsg').innerText = "Error: " + error.message;
+            });
     }
 
-    function cargarDatos() {
-        // Escucha en tiempo real los cambios en la base de datos
-        db.collection('pagos_v2').doc(currentGroup).onSnapshot(doc => {
-            const div = document.getElementById('lista');
-            const totalDiv = document.getElementById('totalDisplay');
-            div.innerHTML = "";
+    function saveDataCloud() {
+        if(!currentGroupId || !db) return;
+        const dataToSave = { expenses, payments, accounts, categories, lastUpdate: new Date().toISOString() };
+        db.collection('pagos_app_completa').doc(currentGroupId).set(dataToSave)
+            .catch((e) => alert("Error guardando: " + e.message));
+    }
+
+    function refreshUI() {
+        renderCategoryUI();
+        renderGrid();
+        renderAccounts();
+    }
+
+    // --- LOGICA DE UI (Idéntica a la versión original) ---
+    function changeYear(delta) { viewYear += delta; renderGrid(); }
+    function getMonthName(i) { const d=new Date(viewYear, i, 1); return d.toLocaleDateString('es-ES',{month:'short'}).toUpperCase()+'-'+viewYear.toString().substring(2); }
+    function setSortMonth(i) { sortMonthIndex = i; renderGrid(); }
+
+    function renderCategoryUI() {
+        const div = document.getElementById('categoryFilters');
+        let html = `<div class="filter-chip ${currentFilter==='all'?'active':''}" onclick="filterCategory('all')">Todos</div>`;
+        categories.forEach(cat => {
+            html += `<div class="filter-chip ${currentFilter===cat?'active':''}" onclick="filterCategory('${cat}')">${cat}</div>`;
+        });
+        html += `<div class="filter-chip" style="background:#222; border-style:dashed;" onclick="openModalCats()">⚙️</div>`;
+        div.innerHTML = html;
+        
+        const sel = document.getElementById('expCat');
+        sel.innerHTML = '';
+        categories.forEach(cat => sel.innerHTML += `<option value="${cat}">${cat}</option>`);
+    }
+
+    function renderGrid() {
+        document.getElementById('displayYear').innerText = viewYear;
+        const head = document.getElementById('gridHeader');
+        const body = document.getElementById('gridBody');
+        const foot = document.getElementById('gridFooter');
+
+        // Headers
+        let hHtml = '<th class="col-fixed">Concepto</th>';
+        for(let i=0; i<12; i++) {
+            const act = i===sortMonthIndex ? 'active-sort' : '';
+            hHtml += `<th class="${act}" onclick="setSortMonth(${i})">${getMonthName(i)}</th>`;
+        }
+        head.innerHTML = hHtml;
+
+        // Data processing
+        let mTotals = new Array(12).fill(0);
+        let list = expenses.filter(e => currentFilter==='all' || e.cat===currentFilter);
+        
+        // Sort
+        list.sort((a,b) => {
+            const pA = payments[`${a.id}_${viewYear}_${sortMonthIndex}`] || {day:99};
+            const pB = payments[`${b.id}_${viewYear}_${sortMonthIndex}`] || {day:99};
+            return (pA.day||99) - (pB.day||99);
+        });
+
+        body.innerHTML = '';
+        list.forEach(exp => {
+            let row = `<tr><td class="col-fixed">
+                <span class="expense-name">${exp.name}</span>
+                <div class="expense-meta">
+                    <span class="expense-cat-badge">${exp.cat}</span>
+                    <span class="icon-btn" onclick="editExpense(${exp.id})">✏️</span>
+                    <span class="icon-btn" style="color:#ff5252" onclick="deleteExpense(${exp.id})">✖</span>
+                </div>
+            </td>`;
             
-            if(doc.exists && doc.data().items && doc.data().items.length > 0) {
-                let items = doc.data().items;
-                let total = 0;
+            for(let i=0; i<12; i++) {
+                const k = `${exp.id}_${viewYear}_${i}`;
+                const p = payments[k] || {};
+                const amt = p.amount ? `$${parseInt(p.amount).toLocaleString()}` : '';
+                const day = p.day ? `Día ${p.day}` : '';
+                const acc = getAccountName(p.accId);
                 
-                items.forEach((item, index) => {
-                    total += parseFloat(item.monto);
-                    div.innerHTML += `
-                        <div class="item">
-                            <div>
-                                <strong style="color:#fff;">${item.desc}</strong><br>
-                                <span style="color:#03dac6;">$${parseFloat(item.monto).toLocaleString()}</span>
-                            </div>
-                            <button class="btn-delete" onclick="borrar(${index})">X</button>
-                        </div>`;
-                });
-                totalDiv.innerHTML = `Total: $${total.toLocaleString()}`;
-            } else {
-                div.innerHTML = "<p style='text-align:center; color:#555;'>No hay gastos cargados aún.</p>";
-                totalDiv.innerHTML = "Total: $0";
+                if(p.amount) mTotals[i] += parseFloat(p.amount);
+                
+                let st = '';
+                if(p.paid) st = 'status-paid';
+                else if(p.amount) {
+                    const now = new Date();
+                    if(viewYear===now.getFullYear() && i<=now.getMonth() && now.getDate()>(p.day||31)) st='status-overdue';
+                    else st='status-pending';
+                }
+
+                row += `<td class="${st}"><div class="cell-content" onclick="openCell(${exp.id}, ${i})">
+                    <span class="cell-day">${day}</span>
+                    <span class="cell-amount">${amt}</span>
+                    ${acc ? `<span class="cell-bank">${acc}</span>` : ''}
+                </div></td>`;
             }
-        }, error => {
-            console.error("Error:", error);
-            div.innerHTML = "<p style='color:red'>Error de conexión. Revisa que Firebase esté en 'Test Mode'.</p>";
+            body.innerHTML += row + '</tr>';
+        });
+
+        // Footer
+        let fHtml = '<tr class="row-total"><td class="col-fixed">TOTALES</td>';
+        mTotals.forEach(t => fHtml += `<td>$${t.toLocaleString()}</td>`);
+        foot.innerHTML = fHtml + '</tr>';
+        
+        calculateDashboard();
+    }
+
+    function calculateDashboard() {
+        let debt = 0;
+        const now = new Date();
+        const m = now.getMonth();
+        const y = now.getFullYear();
+
+        expenses.forEach(e => {
+            const p = payments[`${e.id}_${y}_${m}`];
+            if(p && p.amount && !p.paid) debt += parseFloat(p.amount);
+        });
+
+        let assets = accounts.reduce((s, a) => s + (parseFloat(a.balance)||0), 0);
+        let net = assets - debt;
+
+        document.getElementById('totalAssets').innerText = `$${assets.toLocaleString()}`;
+        document.getElementById('totalLiabilities').innerText = `$${debt.toLocaleString()}`;
+        document.getElementById('dashTitleDebt').innerText = `A PAGAR (${getMonthName(m)})`;
+        document.getElementById('globalProjected').innerText = `$${net.toLocaleString()}`;
+        document.getElementById('globalProjected').className = net<0 ? 'dash-value dash-debt' : 'dash-value dash-gross';
+    }
+
+    function renderAccounts() {
+        const list = document.getElementById('accountsList');
+        const sel = document.getElementById('cellAccount');
+        list.innerHTML = '';
+        sel.innerHTML = '<option value="">-- Sin Asignar --</option>';
+        
+        const now = new Date();
+        
+        accounts.forEach(acc => {
+            // Proyección simple: Saldo - Gastos asignados no pagados de este mes
+            let pending = 0;
+            expenses.forEach(e => {
+                const p = payments[`${e.id}_${now.getFullYear()}_${now.getMonth()}`];
+                if(p && !p.paid && p.accId == acc.id) pending += parseFloat(p.amount);
+            });
+            let final = (acc.balance||0) - pending;
+
+            sel.innerHTML += `<option value="${acc.id}">${acc.name} ($${final.toLocaleString()})</option>`;
+            
+            list.innerHTML += `
+            <div class="account-card-wrapper">
+                <div class="account-row">
+                    <div>
+                        <div class="acc-name">🏦 ${acc.name}</div>
+                        <div style="font-size:0.8rem; color:#aaa; margin-top:5px;">Proyectado: $${final.toLocaleString()}</div>
+                    </div>
+                    <div>
+                        <div class="acc-balance">$${parseFloat(acc.balance).toLocaleString()}</div>
+                        <div style="text-align:right; margin-top:5px;">
+                            <span class="icon-btn" onclick="editAccount(${acc.id})">✏️</span>
+                            <span class="icon-btn" style="color:#ff5252" onclick="deleteAccount(${acc.id})">✖</span>
+                        </div>
+                    </div>
+                </div>
+            </div>`;
         });
     }
 
-    function agregar() {
-        const desc = document.getElementById('desc').value;
-        const monto = document.getElementById('monto').value;
-        if(!desc || !monto) return alert("Completa los datos");
+    function getAccountName(id) { if(!id) return null; const a=accounts.find(x=>x.id==id); return a?a.name:null; }
 
-        // 1. Leemos lo que hay
-        db.collection('pagos_v2').doc(currentGroup).get().then(doc => {
-            let items = [];
-            if(doc.exists) items = doc.data().items || [];
-            
-            // 2. Agregamos lo nuevo
-            items.push({ desc, monto: parseFloat(monto) });
-            
-            // 3. Guardamos todo junto
-            db.collection('pagos_v2').doc(currentGroup).set({ items })
-                .then(() => {
-                    document.getElementById('desc').value = '';
-                    document.getElementById('monto').value = '';
-                });
-        });
+    // --- CRUD ---
+    function openModalExpense() { editingExpenseId=null; document.getElementById('expName').value=''; document.getElementById('expComment').value=''; renderCategoryUI(); document.getElementById('modalExpense').style.display='flex'; }
+    function editExpense(id) { editingExpenseId=id; const e=expenses.find(x=>x.id===id); if(e){ document.getElementById('expName').value=e.name; document.getElementById('expCat').value=e.cat; document.getElementById('expComment').value=e.comment||''; document.getElementById('modalExpense').style.display='flex'; } }
+    function saveExpense() {
+        const name = document.getElementById('expName').value;
+        const cat = document.getElementById('expCat').value;
+        const comment = document.getElementById('expComment').value;
+        if(!name) return;
+        
+        if(editingExpenseId) { const e=expenses.find(x=>x.id===editingExpenseId); e.name=name; e.cat=cat; e.comment=comment; }
+        else { expenses.push({id:Date.now(), name, cat, comment}); }
+        saveDataCloud(); closeModal('modalExpense');
+    }
+    function deleteExpense(id) { if(confirm("¿Eliminar gasto y todo su historial?")) { expenses=expenses.filter(e=>e.id!==id); saveDataCloud(); } }
+
+    function openCell(eid, mid) {
+        selectedCell = {eid, mid};
+        const k = `${eid}_${viewYear}_${mid}`;
+        const p = payments[k] || {};
+        document.getElementById('cellTitle').innerText = `Planificar ${getMonthName(mid)}`;
+        document.getElementById('cellAmount').value = p.amount||'';
+        document.getElementById('cellDay').value = p.day||'';
+        document.getElementById('cellAccount').value = p.accId||'';
+        document.getElementById('cellPaid').checked = p.paid||false;
+        document.getElementById('modalCell').style.display='flex';
+    }
+    function saveCell() {
+        const k = `${selectedCell.eid}_${viewYear}_${selectedCell.mid}`;
+        const amt = parseFloat(document.getElementById('cellAmount').value);
+        const day = parseInt(document.getElementById('cellDay').value);
+        const acc = document.getElementById('cellAccount').value;
+        const pd = document.getElementById('cellPaid').checked;
+        
+        if(!amt && !day && !pd) delete payments[k];
+        else payments[k] = { amount:amt||0, day:day||0, accId:acc, paid:pd };
+        saveDataCloud(); closeModal('modalCell');
+    }
+    function clearCell() {
+        const k = `${selectedCell.eid}_${viewYear}_${selectedCell.mid}`;
+        delete payments[k]; saveDataCloud(); closeModal('modalCell');
     }
 
-    function borrar(index) {
-        if(!confirm("¿Eliminar este gasto?")) return;
-        db.collection('pagos_v2').doc(currentGroup).get().then(doc => {
-            let items = doc.data().items;
-            items.splice(index, 1); // Borra el item
-            db.collection('pagos_v2').doc(currentGroup).set({ items });
-        });
+    function openModalAccount() { editingAccountId=null; document.getElementById('accName').value=''; document.getElementById('accBalance').value=''; document.getElementById('modalAccount').style.display='flex'; }
+    function editAccount(id) { editingAccountId=id; const a=accounts.find(x=>x.id==id); if(a){ document.getElementById('accName').value=a.name; document.getElementById('accBalance').value=a.balance; document.getElementById('modalAccount').style.display='flex'; } }
+    function saveAccount() {
+        const name = document.getElementById('accName').value;
+        const bal = parseFloat(document.getElementById('accBalance').value);
+        if(!name) return;
+        if(editingAccountId) { const a=accounts.find(x=>x.id==editingAccountId); a.name=name; a.balance=bal||0; }
+        else { accounts.push({id:Date.now(), name, balance:bal||0}); }
+        saveDataCloud(); closeModal('modalAccount');
+    }
+    function deleteAccount(id) { if(confirm("¿Borrar cuenta?")) { accounts=accounts.filter(a=>a.id!=id); saveDataCloud(); } }
+
+    // Categorias
+    function openModalCats() { renderCatList(); document.getElementById('modalCats').style.display='flex'; }
+    function renderCatList() { 
+        const l=document.getElementById('catList'); l.innerHTML=''; 
+        categories.forEach((c,i) => l.innerHTML+=`<div class="cat-item"><span>${c}</span><span class="icon-btn" style="color:red" onclick="delCat(${i})">✖</span></div>`);
+    }
+    function addCategory() { const v=document.getElementById('newCatName').value; if(v && !categories.includes(v)) { categories.push(v); saveDataCloud(); renderCatList(); renderCategoryUI(); } }
+    function delCat(i) { if(confirm("¿Borrar categoría?")) { categories.splice(i,1); saveDataCloud(); renderCatList(); renderCategoryUI(); } }
+
+    // Utils
+    function switchTab(t) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); event.target.classList.add('active'); if(t==='planilla') renderGrid(); if(t==='cuentas') renderAccounts(); }
+    function filterCategory(c) { currentFilter=c; renderCategoryUI(); renderGrid(); }
+    function closeModal(id) { document.getElementById(id).style.display='none'; }
+    function exportToExcel() { 
+        const ws = XLSX.utils.table_to_sheet(document.querySelector('table')); 
+        const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Pagos"); 
+        XLSX.writeFile(wb, `Pagos_${currentGroupId}_${viewYear}.xlsx`); 
     }
 </script>
 </body>
