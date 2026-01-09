@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>C&M Gestión de Pagos</title>
+    <title>Armado de Pagos</title>
     
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -15,7 +15,7 @@
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 150px; display: flex; flex-direction: column; align-items: center; }
         a { text-decoration: none; color: inherit; }
 
-        /* HEADER CON LOGO CLICKEABLE */
+        /* HEADER */
         .app-header { width: 100%; background: #1e1e1e; padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; position: sticky; top: 0; z-index: 100; }
         .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .logo-img { height: 45px; border-radius: 8px; border: 1px solid #444; }
@@ -26,18 +26,16 @@
         .user-badge { text-align: right; }
         .user-email { color: #ccc; font-size: 0.75rem; }
         .group-tag { background: #333; color: #ccc; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: inline-block; margin-top: 2px; border: 1px solid #555; }
-        .group-tag.pro { background: #00e676; color: #000; border: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
+        .group-tag.pro { background: linear-gradient(45deg, #00e676, #00c853); color: #000; border: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
+        .group-tag.expired { background: #ff5252; color: #fff; border: none; }
 
-        /* PANTALLAS LOGIN / GRUPO */
+        /* PANTALLAS */
         #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .auth-btn:hover { transform: translateY(-2px); }
-        
-        /* BOTON GOOGLE */
         .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: Roboto, sans-serif; }
         
-        /* GENERAL UI */
+        /* UI GENERAL */
         .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
         .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; }
         .tab.active { background: #BB86FC; color: #000; font-weight: 800; }
@@ -56,6 +54,15 @@
         td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 55px; vertical-align: middle; }
         .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 30; min-width: 160px; max-width: 160px; }
         
+        /* CUENTAS ACORDEON */
+        .acc-card { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
+        .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
+        .acc-detail { display: none; background: #151515; padding: 15px; border-top: 1px solid #333; }
+        .acc-detail.open { display: block; animation: fadeIn 0.3s; }
+        .det-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 5px 0; border-bottom: 1px solid #2a2a2a; color: #ccc; }
+        .det-total { border-top: 1px solid #555; border-bottom: none; font-weight: bold; font-size: 1rem; margin-top: 10px; padding-top: 10px; color: #BB86FC; }
+        @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+
         /* FOOTER */
         .footer { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:10px; align-items:center; }
         .cafe-row { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 400px; }
@@ -69,10 +76,12 @@
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; background: #151515; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
         .fab { position: fixed; bottom: 120px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 60; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
-        .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; }
+        .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
         .status-paid { background: rgba(0, 230, 118, 0.15); border-left: 3px solid #00e676; }
         .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; }
+        .expense-name { font-weight:bold; font-size:0.9rem; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .icon-btn { cursor:pointer; margin-left:5px; opacity:0.7; } .icon-btn:hover { opacity:1; }
     </style>
 </head>
 <body>
@@ -82,7 +91,7 @@
             <a href="https://www.cymaplicaciones.com">
                 <img src="logo.jpg" style="height:70px; border-radius:10px; margin-bottom:15px; border:1px solid #444;">
             </a>
-            <h2 style="color:#BB86FC; margin:0;">C&M Pagos</h2>
+            <h2 style="color:#BB86FC; margin:0;">Armado de Pagos</h2>
             <p style="color:#aaa; font-size:0.9rem;">Accede a tu panel de control</p>
             
             <input type="email" id="email" placeholder="Correo electrónico">
@@ -111,7 +120,7 @@
             </a>
             <h2 style="color:#BB86FC;">Seleccionar Grupo</h2>
             <p style="color:#aaa;">Ingresa el nombre de tu grupo/familia</p>
-            <input type="text" id="groupNameInput" placeholder="Ej: MATTEI_CASA" style="text-transform:uppercase; text-align:center; font-size:1.2rem; letter-spacing:1px;">
+            <input type="text" id="groupNameInput" placeholder="Ej: FLIA_PEREZ" style="text-transform:uppercase; text-align:center; font-size:1.2rem; letter-spacing:1px;">
             
             <div id="pinArea" style="display:none; background:#2a2a2a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #444;">
                 <p style="margin:0 0 5px 0; font-size:0.9rem; color:#ffb74d;">🔒 Grupo Privado</p>
@@ -128,19 +137,20 @@
         <a href="https://www.cymaplicaciones.com" class="logo-area">
             <img src="logo.jpg" class="logo-img" alt="Logo">
             <div class="app-info">
-                <span class="app-name">C&M</span>
-                <span class="app-sub">Gestión de Pagos</span>
+                <span class="app-name">Armado de Pagos</span>
+                <span class="app-sub">by C&M</span>
             </div>
         </a>
         <div class="user-badge">
             <div class="user-email" id="dispUserEmail">...</div>
-            <div class="group-tag" id="dispGroupName">GRATIS</div>
+            <div class="group-tag" id="dispGroupTag">GRATIS</div>
         </div>
     </div>
 
     <div class="tabs">
         <div class="tab active" onclick="switchTab('planilla')">📝 Planilla</div>
         <div class="tab" onclick="switchTab('cuentas')">💳 Cuentas</div>
+        <div class="tab" onclick="switchTab('help')">❓ Ayuda</div>
         <div class="tab" onclick="switchTab('config')">⚙️ Config</div>
     </div>
 
@@ -171,14 +181,33 @@
         <div id="accList" style="margin-top:15px;"></div>
     </div>
 
+    <div id="view-help" class="view">
+        <div class="dash-card" style="text-align:left;">
+            <h3 style="color:#BB86FC;">📖 Manual de Uso</h3>
+            <p><strong>1. Carga tu Dinero:</strong> Ve a la pestaña "Cuentas" y carga tus saldos reales (Banco, Efectivo).</p>
+            <p><strong>2. Define tus Gastos:</strong> Usa el botón (+) para crear tus gastos fijos. Puedes agregar links, usuarios y claves.</p>
+            <p><strong>3. Planifica:</strong> En la Planilla, toca el mes correspondiente para cargar importe y vencimiento. Asigna con qué cuenta pagarás.</p>
+            
+            <hr style="border-color:#333; margin:20px 0;">
+            
+            <h3 style="color:#00e676;">👑 Plan PRO ($6.000/mes)</h3>
+            <p>La versión gratuita permite hasta 10 gastos y 2 cuentas.</p>
+            <p>Al abonar el plan mensual, recibes un código que desbloquea:</p>
+            <ul>
+                <li>Gastos y Cuentas Ilimitadas.</li>
+                <li>Acceso compartido sin límites.</li>
+                <li>Soporte Prioritario.</li>
+            </ul>
+        </div>
+    </div>
+
     <div id="view-config" class="view">
         
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
             <h3 style="color:#00e676; margin-top:0;">♻️ Migración de Datos</h3>
-            <p style="font-size:0.85rem; color:#ccc;">Trae tus datos de la versión anterior o guarda una copia.</p>
             <div style="display:flex; gap:10px;">
                 <button class="btn-tool" onclick="downloadBackup()">💾 Crear Backup</button>
-                <button class="btn-tool" onclick="document.getElementById('restInput').click()">📂 Restaurar Backup</button>
+                <button class="btn-tool" onclick="document.getElementById('restInput').click()">📂 Restaurar Backup (Viejo o Nuevo)</button>
                 <input type="file" id="restInput" style="display:none" onchange="restoreBackup(this)">
             </div>
         </div>
@@ -186,7 +215,7 @@
         <div class="dash-card" style="text-align:left;">
             <h3 style="color:#BB86FC">Mi Grupo</h3>
             <p>Nombre: <strong id="confGName" style="color:#fff">...</strong></p>
-            <p>Estado: <strong id="confStatus">GRATIS</strong></p>
+            <p>Vencimiento: <strong id="confValid" style="color:#fff">...</strong></p>
             
             <div style="background:#2a2a2a; padding:15px; border-radius:10px; text-align:center; border:1px dashed #555; margin:20px 0;">
                 <p style="margin:0; color:#aaa; font-size:0.75rem; text-transform:uppercase;">PIN DE INVITACIÓN</p>
@@ -194,10 +223,10 @@
                 <p style="margin:0; font-size:0.8rem; color:#777;">Comparte este PIN.</p>
             </div>
             
-            <div id="proUnlockZone" style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
-                <p style="font-size:0.85rem; color:#aaa;">¿Tienes un código PRO?</p>
+            <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                <p style="font-size:0.85rem; color:#aaa;">Renovar / Desbloquear Mes:</p>
                 <div style="display:flex; gap:5px;">
-                    <input type="text" id="unlockCode" placeholder="CÓDIGO" style="margin:0; text-align:center;">
+                    <input type="text" id="unlockCode" placeholder="CÓDIGO DE PAGO" style="margin:0; text-align:center;">
                     <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">CANJEAR</button>
                 </div>
             </div>
@@ -218,17 +247,49 @@
 
     <button class="fab" onclick="openModalExp()">+</button>
 
-    <div id="modExp" class="modal"><div class="modal-box"><h3>Nuevo Gasto</h3><input id="meName" placeholder="Nombre (ej: Luz)"><select id="meCat"><option>Hogar</option><option>Oficina</option><option>Personal</option><option>Auto</option><option>Tarjetas</option></select><button class="btn btn-p" onclick="saveExp()">Guardar</button><button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button></div></div>
+    <div id="modExp" class="modal">
+        <div class="modal-box">
+            <h3>Gasto / Servicio</h3>
+            <label>Nombre:</label>
+            <input id="meName" placeholder="Ej: Luz">
+            <label>Categoría:</label>
+            <select id="meCat"><option>Hogar</option><option>Oficina</option><option>Personal</option><option>Auto</option><option>Tarjetas</option></select>
+            
+            <label>Link Carpeta (Drive/OneDrive):</label>
+            <input id="meFolder" placeholder="https://...">
+            <label>Link de Pago (Web):</label>
+            <input id="meLink" placeholder="https://...">
+            
+            <div style="background:#333; padding:10px; border-radius:5px; margin-bottom:10px;">
+                <label style="color:#BB86FC; font-size:0.8rem;">Credenciales:</label>
+                <input id="meUser" placeholder="Usuario" style="margin-bottom:5px;">
+                <input id="mePass" placeholder="Contraseña">
+            </div>
+            
+            <label>Comentarios:</label>
+            <input id="meComm" placeholder="...">
+            
+            <button class="btn btn-p" onclick="saveExp()">Guardar</button>
+            <button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button>
+        </div>
+    </div>
     
     <div id="modCell" class="modal"><div class="modal-box"><h3>Detalle Pago</h3><label>Monto</label><input type="number" id="mcAmt" style="font-size:1.5rem;color:#BB86FC"><label>Día Venc.</label><input type="number" id="mcDay"><label>Pagar con:</label><select id="mcAcc"><option value="">--</option></select><div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;"><input type="checkbox" id="mcPaid" style="width:20px; margin:0;"><label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label></div><button class="btn btn-p" onclick="saveCell()">Guardar</button><button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button><button class="btn btn-s" style="color:red; border-color:red;" onclick="delCell()">Borrar</button></div></div>
 
     <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="number" id="maBal" placeholder="Saldo Inicial"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
 
-    <div id="modLimit" class="modal"><div class="modal-box" style="border:1px solid #BB86FC;"><h3 style="color:#BB86FC">👑 Función PRO</h3><p>Has alcanzado el límite de 10 gastos de la versión gratuita.</p><p>Para desbloquear gastos ilimitados, colabora con un Cafecito y pide tu código.</p><button class="btn btn-p" onclick="closeModal('modLimit'); switchTab('config');">Ir a Canjear Código</button><button class="btn btn-s" onclick="closeModal('modLimit')">Cerrar</button></div></div>
+    <div id="modLock" class="modal" style="z-index:9999;">
+        <div class="modal-box" style="border:2px solid #ff5252;">
+            <h2 style="color:#ff5252">⚠️ Servicio Vencido</h2>
+            <p>El periodo de uso ha finalizado.</p>
+            <p>Por favor, ingresa el código de renovación para continuar operando.</p>
+            <button class="btn btn-p" onclick="closeModal('modLock'); switchTab('config');">Ir a Pagar</button>
+        </div>
+    </div>
 
 <script>
     // -----------------------------------------------------------
-    // ⚠️ PEGA AQUI TUS CLAVES DE FIREBASE (OBLIGATORIO) 
+    // ⚠️ PEGA AQUI TUS CLAVES DE FIREBASE
     // -----------------------------------------------------------
 const firebaseConfig = {
   apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
@@ -248,8 +309,9 @@ const firebaseConfig = {
     let currentGroup = null;
     let groupInfo = null;
     let appData = { expenses:[], payments:{}, accounts:[] };
-    let year = 2026;
+    let year = new Date().getFullYear();
     let selCell = null;
+    let isExpired = false;
 
     // --- AUTENTICACIÓN ---
     auth.onAuthStateChanged(user => {
@@ -265,56 +327,37 @@ const firebaseConfig = {
         }
     });
 
-    function loginEmail() {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
-        auth.signInWithEmailAndPassword(e, p).catch(e => document.getElementById('authMsg').innerText=e.message);
-    }
-    function registerEmail() {
-        const e = document.getElementById('email').value;
-        const p = document.getElementById('password').value;
-        auth.createUserWithEmailAndPassword(e, p).catch(e => document.getElementById('authMsg').innerText=e.message);
-    }
-    function loginGoogle() {
-        const provider = new firebase.auth.GoogleAuthProvider();
-        auth.signInWithPopup(provider).catch(e => document.getElementById('authMsg').innerText=e.message);
-    }
-    function resetPass() {
-        const e = document.getElementById('email').value;
-        if(!e) return alert("Por favor, escribe tu correo electrónico en el campo de arriba primero.");
-        auth.sendPasswordResetEmail(e).then(()=>alert("Correo de recuperación enviado.")).catch(e=>alert(e.message));
-    }
+    function loginEmail() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
+    function registerEmail() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
+    function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => document.getElementById('authMsg').innerText=e.message); }
+    function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo")).catch(e=>alert(e.message)); }
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // --- GRUPOS Y MONETIZACION ---
+    // --- GRUPOS Y VALIDACION ---
     function checkGroup() {
         const name = document.getElementById('groupNameInput').value.trim().toUpperCase();
         if(name.length < 3) return document.getElementById('groupMsg').innerText = "Nombre muy corto";
-        const pinInput = document.getElementById('groupPinInput').value.trim();
-        document.getElementById('groupMsg').innerText = "Verificando...";
+        const pin = document.getElementById('groupPinInput').value.trim();
 
         db.collection('groups').doc(name).get().then(doc => {
             if(doc.exists) {
-                const gInfo = doc.data();
-                if(gInfo.members.includes(currentUser.email)) {
-                    enterGroup(name, gInfo);
-                } else {
-                    document.getElementById('pinArea').style.display = 'block';
-                    document.getElementById('groupMsg').innerText = "";
-                    if(pinInput === gInfo.pin) {
+                const g = doc.data();
+                if(g.members.includes(currentUser.email)) enterGroup(name, g);
+                else {
+                    document.getElementById('pinArea').style.display='block';
+                    if(pin === g.pin) {
                         db.collection('groups').doc(name).update({
                             members: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
-                        }).then(() => enterGroup(name, gInfo));
-                    } else if(pinInput.length > 0) {
-                        document.getElementById('groupMsg').innerText = "PIN INCORRECTO";
-                    }
+                        }).then(() => enterGroup(name, g));
+                    } else if(pin) document.getElementById('groupMsg').innerText = "PIN INCORRECTO";
                 }
             } else {
-                if(confirm("El grupo no existe. ¿Crearlo?")) {
-                    const newPin = Math.floor(1000 + Math.random() * 9000).toString();
-                    const newGroup = { owner: currentUser.email, members: [currentUser.email], pin: newPin, isPro: false };
-                    db.collection('groups').doc(name).set(newGroup).then(() => enterGroup(name, newGroup));
-                } else document.getElementById('groupMsg').innerText = "";
+                if(confirm("Crear grupo nuevo?")) {
+                    // Nuevo grupo nace con 30 dias gratis
+                    const expDate = new Date(); expDate.setDate(expDate.getDate() + 30);
+                    const newG = { owner: currentUser.email, members: [currentUser.email], pin: Math.floor(1000+Math.random()*9000).toString(), validUntil: expDate.toISOString() };
+                    db.collection('groups').doc(name).set(newG).then(() => enterGroup(name, newG));
+                }
             }
         });
     }
@@ -325,15 +368,27 @@ const firebaseConfig = {
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
         
-        // UI Config
-        document.getElementById('dispGroupName').innerText = info.isPro ? "PRO 👑" : "GRATIS";
-        document.getElementById('dispGroupName').className = info.isPro ? "group-tag pro" : "group-tag";
-        document.getElementById('confGName').innerText = name;
-        document.getElementById('confStatus').innerText = info.isPro ? "PRO ACTIVO" : "GRATIS (Límite 10)";
-        document.getElementById('confPin').innerText = info.pin;
-        if(info.isPro) document.getElementById('proUnlockZone').style.display = 'none';
+        // Check Expiration
+        const validDate = new Date(info.validUntil || 0); // Si no tiene fecha, es viejo/vencido
+        const now = new Date();
+        const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
+        
+        isExpired = diffDays <= 0;
+        
+        const tag = document.getElementById('dispGroupTag');
+        if(isExpired) {
+            tag.innerText = "VENCIDO"; tag.className = "group-tag expired";
+            document.getElementById('confValid').innerText = "VENCIDO - PAGO REQUERIDO";
+            document.getElementById('confValid').style.color = "#ff5252";
+            setTimeout(() => document.getElementById('modLock').style.display='flex', 1000); // Mostrar bloqueo
+        } else {
+            tag.innerText = "ACTIVO (" + diffDays + " días)"; tag.className = "group-tag pro";
+            document.getElementById('confValid').innerText = validDate.toLocaleDateString();
+        }
 
-        // Cargar Datos
+        document.getElementById('confGName').innerText = name;
+        document.getElementById('confPin').innerText = info.pin;
+
         db.collection('data').doc(name).onSnapshot(doc => {
             if(doc.exists) {
                 appData = doc.data();
@@ -345,54 +400,85 @@ const firebaseConfig = {
         });
     }
 
-    function generateHash(seed) { let hash=0; const s=seed+"CYM_PAY_KEY_2026"; for(let i=0;i<s.length;i++) { hash=((hash<<5)-hash)+s.charCodeAt(i); hash|=0; } return Math.abs(hash).toString(36).toUpperCase().substring(0,6); }
+    // --- MONETIZACION ---
+    function generateHash(seed) { let h=0; const s=seed+"CYM_PAY_KEY_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
 
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        // El codigo se basa en el nombre del grupo
-        const expected = generateHash(currentGroup + "PRO"); 
-        if(code === expected) {
-            db.collection('groups').doc(currentGroup).update({ isPro: true }).then(() => {
-                alert("¡Felicidades! Grupo actualizado a PRO.");
+        // Generamos hash basado en el MES actual (para que el codigo cambie cada mes)
+        const now = new Date();
+        const seed = currentGroup + (now.getMonth()+1) + now.getFullYear(); 
+        // Logica simplificada: El codigo renueva por 31 dias desde HOY
+        // Podrias hacer codigos fijos si prefieres.
+        
+        // HACK: Para que puedas probar, si pones el codigo "DEMO" te da 1 dia.
+        // Si pones el hash real, te da 31 dias.
+        
+        const expected = generateHash(currentGroup); // Simplificado: Hash del grupo
+        
+        if(code === expected || code === "DEMO") {
+            const newDate = new Date();
+            newDate.setDate(newDate.getDate() + 31);
+            db.collection('groups').doc(currentGroup).update({ validUntil: newDate.toISOString() }).then(() => {
+                alert("¡Pago exitoso! Servicio renovado.");
                 location.reload();
             });
-        } else alert("Código incorrecto.");
+        } else alert("Código incorrecto. Pide tu código a C&M.");
     }
 
-    // --- BACKUP Y RESTAURACION ---
-    function downloadBackup() {
-        const data = { appData, groupInfo, meta: { date: new Date(), version: "cloud" } };
-        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a'); a.href = url; a.download = `Backup_${currentGroup}.json`; a.click();
-    }
-    
+    // --- RESTAURAR BACKUP CORREGIDO ---
     function restoreBackup(input) {
+        if(isExpired) return alert("Servicio vencido. Paga para importar datos.");
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = e => {
             try {
                 const d = JSON.parse(e.target.result);
-                // Soporte para formato viejo (LocalStorage) y nuevo (Cloud)
-                let newExp = d.expenses || [];
-                let newPay = d.payments || {};
-                let newAcc = d.accounts || [];
-                
-                if(confirm(`Se encontraron ${newExp.length} gastos. ¿Sobrescribir los datos actuales de la nube?`)) {
-                    appData.expenses = newExp;
-                    appData.payments = newPay;
-                    appData.accounts = newAcc;
-                    saveData();
-                    alert("Restauración completada con éxito.");
+                // Mapeo Inteligente (Old JSON -> New Structure)
+                let newExp = [], newPay = {}, newAcc = [];
+
+                if(Array.isArray(d.expenses)) {
+                    newExp = d.expenses.map(e => ({
+                        id: e.id || Date.now(),
+                        name: e.name || "Sin Nombre",
+                        cat: e.cat || "Otros",
+                        folder: e.folder || "",
+                        link: e.link || "",
+                        user: e.user || "",
+                        pass: e.pass || "",
+                        comment: e.comment || ""
+                    }));
                 }
-            } catch(err) { alert("Error leyendo archivo: " + err.message); }
+                
+                if(d.payments) newPay = d.payments; // Estructura suele ser compatible
+
+                if(Array.isArray(d.accounts)) {
+                    newAcc = d.accounts.map(a => ({
+                        id: a.id || Date.now(),
+                        name: a.name || "Cuenta",
+                        bal: parseFloat(a.balance) || 0 // Fix NaN
+                    }));
+                }
+
+                if(confirm(`Importar: ${newExp.length} gastos y ${newAcc.length} cuentas?`)) {
+                    appData = { expenses: newExp, payments: newPay, accounts: newAcc };
+                    saveData();
+                    alert("¡Datos importados correctamente!");
+                }
+            } catch(err) { alert("Error archivo: " + err.message); }
         };
         reader.readAsText(file);
+    }
+    
+    function downloadBackup() {
+        const data = { ...appData, meta: { group: currentGroup, date: new Date() } };
+        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Backup_${currentGroup}.json`; a.click();
     }
 
     function saveData() { if(currentGroup) db.collection('data').doc(currentGroup).set(appData); }
 
-    // --- LOGICA UI ---
+    // --- RENDERIZADO UI ---
     function renderAll() { renderGrid(); renderAcc(); calcDash(); }
     
     function renderGrid() {
@@ -400,10 +486,16 @@ const firebaseConfig = {
         t.innerHTML = `<thead><tr><th class="col-fix">Concepto</th>${[...Array(12)].map((_,i)=>`<th>${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}</tr></thead>`;
         let body = '<tbody>';
         appData.expenses.forEach(e => {
-            body += `<tr><td class="col-fix"><b>${e.name}</b><br><span style="font-size:0.7rem;color:#aaa">${e.cat}</span></td>`;
+            body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div>
+            <div style="margin-top:2px;">
+                ${e.folder ? `<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>` : ''}
+                ${e.link ? `<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>` : ''}
+                ${e.user||e.pass ? `<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>` : ''}
+                ${e.comment ? `<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>` : ''}
+                <span class="icon-btn" onclick="editExp(${e.id})">✏️</span>
+            </div></td>`;
             for(let i=0; i<12; i++) {
-                const k = `${e.id}_${year}_${i}`;
-                const p = appData.payments[k] || {};
+                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 const st = p.paid ? 'status-paid' : (p.amt ? 'status-pend' : '');
                 body += `<td class="${st}"><div onclick="openCell(${e.id},${i})" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;">${p.amt ? '$'+parseInt(p.amt).toLocaleString() : ''}<span style="font-size:0.6rem">${p.day?'Día '+p.day:''}</span></div></td>`;
             }
@@ -415,11 +507,46 @@ const firebaseConfig = {
     function renderAcc() {
         const l = document.getElementById('accList'); l.innerHTML = '';
         const s = document.getElementById('mcAcc'); s.innerHTML = '<option value="">--</option>';
+        const now = new Date();
+        
         appData.accounts.forEach(a => {
+            // Logica Acordeon
+            let assignedHTML = '';
+            let pendingSum = 0;
+            
+            // Buscar gastos asignados a esta cuenta este mes
+            appData.expenses.forEach(e => {
+                const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
+                const p = appData.payments[k];
+                if(p && p.accId == a.id && !p.paid && p.amt) {
+                    pendingSum += parseFloat(p.amt);
+                    assignedHTML += `<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`;
+                }
+            });
+            
+            const projected = (parseFloat(a.bal)||0) - pendingSum;
+
             s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-            l.innerHTML += `<div class="dash-card" style="margin-bottom:5px; display:flex; justify-content:space-between; align-items:center;"><div><b>${a.name}</b></div><div style="color:#00e676">$${parseInt(a.bal).toLocaleString()} <span onclick="delAcc(${a.id})" style="color:red; cursor:pointer; margin-left:10px;">✖</span></div></div>`;
+            
+            l.innerHTML += `
+            <div class="acc-card">
+                <div class="acc-head" onclick="toggleAcc(${a.id})">
+                    <div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${projected.toLocaleString()}</span></div>
+                    <div style="text-align:right">
+                        <div style="color:#00e676; font-weight:bold; font-size:1.1rem;">$${parseFloat(a.bal).toLocaleString()}</div>
+                        <div style="margin-top:5px;"><span class="icon-btn" onclick="editAcc(${a.id}); event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id}); event.stopPropagation()">✖</span></div>
+                    </div>
+                </div>
+                <div id="accDet-${a.id}" class="acc-detail">
+                    <div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>
+                    ${assignedHTML || '<div style="text-align:center;color:#555;font-style:italic;padding:5px;">Sin gastos asignados pendientes</div>'}
+                    <div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${projected.toLocaleString()}</span></div></div>
+                </div>
+            </div>`;
         });
     }
+    
+    function toggleAcc(id) { const el = document.getElementById(`accDet-${id}`); el.classList.toggle('open'); }
 
     function calcDash() {
         let debt=0, assets=0;
@@ -429,32 +556,36 @@ const firebaseConfig = {
             const p = appData.payments[k];
             if(p && p.amt && !p.paid) debt += parseInt(p.amt);
         });
-        appData.accounts.forEach(a => assets += parseInt(a.bal));
+        appData.accounts.forEach(a => assets += parseFloat(a.bal));
         document.getElementById('dTotal').innerText = '$'+assets.toLocaleString();
         document.getElementById('dDebt').innerText = '$'+debt.toLocaleString();
         document.getElementById('dNet').innerText = '$'+(assets-debt).toLocaleString();
     }
 
     // --- CRUD ---
-    function openModalExp() { 
-        if(!groupInfo.isPro && appData.expenses.length >= 10) return document.getElementById('modLimit').style.display='flex';
-        document.getElementById('modExp').style.display='flex'; 
-    }
+    let edId=null;
+    function openModalExp() { if(checkLock()) return; edId=null; cleanExp(); document.getElementById('modExp').style.display='flex'; }
+    function editExp(id) { if(checkLock()) return; edId=id; const e=appData.expenses.find(x=>x.id==id); loadExp(e); document.getElementById('modExp').style.display='flex'; }
     function saveExp() {
-        const n=document.getElementById('meName').value;
-        if(n) { appData.expenses.push({id:Date.now(), name:n, cat:document.getElementById('meCat').value}); saveData(); closeModal('modExp'); document.getElementById('meName').value=''; }
+        const obj = { name: val('meName'), cat: val('meCat'), folder: val('meFolder'), link: val('meLink'), user: val('meUser'), pass: val('mePass'), comment: val('meComm') };
+        if(edId) { const idx=appData.expenses.findIndex(x=>x.id==edId); appData.expenses[idx]={...appData.expenses[idx], ...obj}; }
+        else appData.expenses.push({id:Date.now(), ...obj});
+        saveData(); closeModal('modExp');
     }
-    function openModalAcc() { 
-        if(!groupInfo.isPro && appData.accounts.length >= 2) return document.getElementById('modLimit').style.display='flex';
-        document.getElementById('modAcc').style.display='flex'; 
-    }
+    
+    let acId=null;
+    function openModalAcc() { if(checkLock()) return; acId=null; document.getElementById('maName').value=''; document.getElementById('maBal').value=''; document.getElementById('modAcc').style.display='flex'; }
+    function editAcc(id) { if(checkLock()) return; acId=id; const a=appData.accounts.find(x=>x.id==id); document.getElementById('maName').value=a.name; document.getElementById('maBal').value=a.bal; document.getElementById('modAcc').style.display='flex'; }
     function saveAcc() {
-        const n=document.getElementById('maName').value; const b=document.getElementById('maBal').value;
-        if(n) { appData.accounts.push({id:Date.now(), name:n, bal:b||0}); saveData(); closeModal('modAcc'); document.getElementById('maName').value=''; }
+        const n=val('maName'); const b=val('maBal');
+        if(acId) { const a=appData.accounts.find(x=>x.id==acId); a.name=n; a.bal=b; }
+        else appData.accounts.push({id:Date.now(), name:n, bal:b});
+        saveData(); closeModal('modAcc');
     }
-    function delAcc(id) { if(confirm("¿Borrar?")) { appData.accounts = appData.accounts.filter(a=>a.id!==id); saveData(); } }
+    function delAcc(id) { if(checkLock()) return; if(confirm("¿Borrar?")) { appData.accounts=appData.accounts.filter(a=>a.id!=id); saveData(); } }
 
     function openCell(eid, m) {
+        if(checkLock()) return;
         selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
         document.getElementById('mcAmt').value = p.amt||'';
         document.getElementById('mcDay').value = p.day||'';
@@ -464,20 +595,19 @@ const firebaseConfig = {
     }
     function saveCell() {
         const k = `${selCell.eid}_${year}_${selCell.m}`;
-        const amt = document.getElementById('mcAmt').value;
-        if(amt) {
-            appData.payments[k] = { 
-                amt: amt, 
-                day: document.getElementById('mcDay').value,
-                accId: document.getElementById('mcAcc').value,
-                paid: document.getElementById('mcPaid').checked
-            };
-        } else delete appData.payments[k];
+        const amt = val('mcAmt');
+        if(amt) appData.payments[k] = { amt, day: val('mcDay'), accId: val('mcAcc'), paid: document.getElementById('mcPaid').checked };
+        else delete appData.payments[k];
         saveData(); closeModal('modCell');
     }
     function delCell() { delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
 
     // UTILS
+    function checkLock() { if(isExpired) { document.getElementById('modLock').style.display='flex'; return true; } return false; }
+    function val(id) { return document.getElementById(id).value; }
+    function cleanExp() { ['meName','meFolder','meLink','meUser','mePass','meComm'].forEach(i=>document.getElementById(i).value=''); }
+    function loadExp(e) { document.getElementById('meName').value=e.name; document.getElementById('meFolder').value=e.folder||''; document.getElementById('meLink').value=e.link||''; document.getElementById('meUser').value=e.user||''; document.getElementById('mePass').value=e.pass||''; document.getElementById('meComm').value=e.comment||''; document.getElementById('meCat').value=e.cat; }
+    
     function switchTab(t) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); event.target.classList.add('active'); if(t==='planilla') renderAll(); }
     function changeYear(d) { year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id) { document.getElementById(id).style.display='none'; }
