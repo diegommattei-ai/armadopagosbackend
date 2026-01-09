@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestor de Pagos</title>
+    <style>
+        /* ESTILOS DE LA APP - DISEÑO OSCURO */
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
+        .container { background: #1e1e1e; padding: 25px; border-radius: 12px; border: 1px solid #333; width: 100%; max-width: 500px; margin-bottom: 20px; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        h2 { color: #BB86FC; margin-top: 0; text-align: center; }
+        input, button { width: 100%; padding: 12px; margin: 8px 0; border-radius: 8px; border: 1px solid #444; box-sizing: border-box; background: #2c2c2c; color: white; font-size: 1rem; }
+        button { background: #BB86FC; color: #000; border: none; font-weight: bold; cursor: pointer; transition: 0.3s; }
+        button:hover { opacity: 0.9; transform: scale(1.02); }
+        .btn-delete { background: #cf6679; width: auto; padding: 5px 15px; font-size: 0.8rem; margin-left: 10px; }
+        .item { display: flex; justify-content: space-between; align-items: center; padding: 12px; border-bottom: 1px solid #333; }
+        .item:last-child { border-bottom: none; }
+        .total-row { font-size: 1.2rem; font-weight: bold; color: #03dac6; text-align: center; margin-top: 15px; padding-top: 10px; border-top: 2px solid #333; }
+        #loginScreen { text-align: center; }
+        #appScreen { display: none; }
+    </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+</head>
+<body>
+
+    <div id="loginScreen" class="container">
+        <h2>🔐 Acceso a Pagos</h2>
+        <p style="color:#aaa;">Ingresa un nombre de grupo (ej: CASA, OFICINA) para compartir los datos.</p>
+        <input type="text" id="groupInput" placeholder="Nombre del Grupo (ej: FLIA_PEREZ)" style="text-transform:uppercase; text-align:center;">
+        <button onclick="conectar()">INGRESAR</button>
+    </div>
+
+    <div id="appScreen" style="width: 100%; display:flex; flex-direction:column; align-items:center;">
+        <div class="container">
+            <h2>💰 Nuevo Gasto (<span id="groupDisplay">...</span>)</h2>
+            <input type="text" id="desc" placeholder="¿Qué vas a pagar? (ej: Luz)">
+            <input type="number" id="monto" placeholder="Monto ($)">
+            <button onclick="agregar()">+ AGREGAR GASTO</button>
+        </div>
+
+        <div class="container">
+            <h3 style="color:#aaa; text-align:center;">Lista de Pagos</h3>
+            <div id="lista">Cargando...</div>
+            <div id="totalDisplay" class="total-row">Total: $0</div>
+        </div>
+        
+        <button onclick="location.reload()" style="background:transparent; color:#666; border:1px solid #333; width:auto; margin-top:20px;">Salir / Cambiar Grupo</button>
+    </div>
+
+<script>
+    // ======================================================
+    // PEGA AQUÍ EL CÓDIGO DE TU PANTALLA DE FIREBASE
+    // ======================================================
+    
+    // --- BORRA ESTO Y PEGA TU CONFIGURACION AQUI ---
+const firebaseConfig = {
+  apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
+  authDomain: "armadopagos.firebaseapp.com",
+  projectId: "armadopagos",
+  storageBucket: "armadopagos.firebasestorage.app",
+  messagingSenderId: "482082107729",
+  appId: "1:482082107729:web:e4f29ee165ca1437e76370"
+};
+    // ======================================================
+
+    // INICIALIZAR LA APP
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    let currentGroup = "";
+
+    function conectar() {
+        const val = document.getElementById('groupInput').value.trim().toUpperCase();
+        if(val.length < 3) return alert("El nombre debe tener al menos 3 letras");
+        currentGroup = val;
+        
+        document.getElementById('loginScreen').style.display = 'none';
+        document.getElementById('appScreen').style.display = 'flex'; // Fix display style
+        document.getElementById('groupDisplay').innerText = currentGroup;
+        
+        cargarDatos();
+    }
+
+    function cargarDatos() {
+        // Escucha en tiempo real los cambios en la base de datos
+        db.collection('pagos_v2').doc(currentGroup).onSnapshot(doc => {
+            const div = document.getElementById('lista');
+            const totalDiv = document.getElementById('totalDisplay');
+            div.innerHTML = "";
+            
+            if(doc.exists && doc.data().items && doc.data().items.length > 0) {
+                let items = doc.data().items;
+                let total = 0;
+                
+                items.forEach((item, index) => {
+                    total += parseFloat(item.monto);
+                    div.innerHTML += `
+                        <div class="item">
+                            <div>
+                                <strong style="color:#fff;">${item.desc}</strong><br>
+                                <span style="color:#03dac6;">$${parseFloat(item.monto).toLocaleString()}</span>
+                            </div>
+                            <button class="btn-delete" onclick="borrar(${index})">X</button>
+                        </div>`;
+                });
+                totalDiv.innerHTML = `Total: $${total.toLocaleString()}`;
+            } else {
+                div.innerHTML = "<p style='text-align:center; color:#555;'>No hay gastos cargados aún.</p>";
+                totalDiv.innerHTML = "Total: $0";
+            }
+        }, error => {
+            console.error("Error:", error);
+            div.innerHTML = "<p style='color:red'>Error de conexión. Revisa que Firebase esté en 'Test Mode'.</p>";
+        });
+    }
+
+    function agregar() {
+        const desc = document.getElementById('desc').value;
+        const monto = document.getElementById('monto').value;
+        if(!desc || !monto) return alert("Completa los datos");
+
+        // 1. Leemos lo que hay
+        db.collection('pagos_v2').doc(currentGroup).get().then(doc => {
+            let items = [];
+            if(doc.exists) items = doc.data().items || [];
+            
+            // 2. Agregamos lo nuevo
+            items.push({ desc, monto: parseFloat(monto) });
+            
+            // 3. Guardamos todo junto
+            db.collection('pagos_v2').doc(currentGroup).set({ items })
+                .then(() => {
+                    document.getElementById('desc').value = '';
+                    document.getElementById('monto').value = '';
+                });
+        });
+    }
+
+    function borrar(index) {
+        if(!confirm("¿Eliminar este gasto?")) return;
+        db.collection('pagos_v2').doc(currentGroup).get().then(doc => {
+            let items = doc.data().items;
+            items.splice(index, 1); // Borra el item
+            db.collection('pagos_v2').doc(currentGroup).set({ items });
+        });
+    }
+</script>
+</body>
+</html>
