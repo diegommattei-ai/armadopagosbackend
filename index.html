@@ -13,10 +13,11 @@
     <style>
         /* ESTILOS (Dark Theme) */
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 150px; display: flex; flex-direction: column; align-items: center; }
-        
-        /* HEADER CON LOGO */
+        a { text-decoration: none; color: inherit; }
+
+        /* HEADER CON LOGO CLICKEABLE */
         .app-header { width: 100%; background: #1e1e1e; padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; position: sticky; top: 0; z-index: 100; }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
+        .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
         .logo-img { height: 45px; border-radius: 8px; border: 1px solid #444; }
         .app-info { display:flex; flex-direction:column; }
         .app-name { font-weight: 800; font-size: 1rem; color: #fff; line-height:1.1; }
@@ -24,14 +25,17 @@
         
         .user-badge { text-align: right; }
         .user-email { color: #ccc; font-size: 0.75rem; }
-        .group-tag { background: #00e676; color: #000; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: inline-block; margin-top: 2px; }
+        .group-tag { background: #333; color: #ccc; padding: 2px 8px; border-radius: 10px; font-size: 0.7rem; font-weight: bold; display: inline-block; margin-top: 2px; border: 1px solid #555; }
+        .group-tag.pro { background: #00e676; color: #000; border: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
 
         /* PANTALLAS LOGIN / GRUPO */
         #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .auth-btn:hover { transform: translateY(-2px); }
-        .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; }
+        
+        /* BOTON GOOGLE */
+        .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: Roboto, sans-serif; }
         
         /* GENERAL UI */
         .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
@@ -60,6 +64,8 @@
         .btn { padding: 10px; width: 100%; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-p { background: #BB86FC; color: #000; }
         .btn-s { background: #333; color: #ccc; border: 1px solid #555; }
+        .btn-tool { background: transparent; border: 1px solid #555; color: #aaa; padding: 8px; font-size: 0.8rem; border-radius: 5px; cursor: pointer; flex: 1; }
+        
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; background: #151515; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
         .fab { position: fixed; bottom: 120px; right: 20px; width: 60px; height: 60px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 60; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
@@ -73,18 +79,26 @@
 
     <div id="authScreen">
         <div class="auth-box">
-            <img src="logo.jpg" style="height:70px; border-radius:10px; margin-bottom:15px; border:1px solid #444;">
+            <a href="https://www.cymaplicaciones.com">
+                <img src="logo.jpg" style="height:70px; border-radius:10px; margin-bottom:15px; border:1px solid #444;">
+            </a>
             <h2 style="color:#BB86FC; margin:0;">C&M Pagos</h2>
             <p style="color:#aaa; font-size:0.9rem;">Accede a tu panel de control</p>
             
             <input type="email" id="email" placeholder="Correo electrónico">
             <input type="password" id="password" placeholder="Contraseña">
+            
+            <div style="text-align:right; margin-bottom:15px;">
+                <span onclick="resetPass()" style="font-size:0.75rem; color:#BB86FC; cursor:pointer; text-decoration:underline;">¿Olvidaste tu contraseña?</span>
+            </div>
+
             <button class="auth-btn btn-p" onclick="loginEmail()">Iniciar Sesión</button>
             <button class="auth-btn btn-s" onclick="registerEmail()">Crear Cuenta</button>
             
             <div style="margin:20px 0; border-top:1px solid #333; padding-top:15px; color:#555; font-size:0.8rem;">O CONTINUA CON</div>
             <button class="auth-btn btn-google" onclick="loginGoogle()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20"> Google
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20"> 
+                <span style="font-weight:500;">Acceder con Google</span>
             </button>
             <p id="authMsg" style="color:#ff5252; margin-top:10px; font-size:0.9rem;"></p>
         </div>
@@ -92,14 +106,16 @@
 
     <div id="groupScreen" style="display:none;">
         <div class="auth-box">
+            <a href="https://www.cymaplicaciones.com">
+                <img src="logo.jpg" style="height:50px; border-radius:10px; margin-bottom:10px;">
+            </a>
             <h2 style="color:#BB86FC;">Seleccionar Grupo</h2>
             <p style="color:#aaa;">Ingresa el nombre de tu grupo/familia</p>
             <input type="text" id="groupNameInput" placeholder="Ej: MATTEI_CASA" style="text-transform:uppercase; text-align:center; font-size:1.2rem; letter-spacing:1px;">
             
             <div id="pinArea" style="display:none; background:#2a2a2a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #444;">
                 <p style="margin:0 0 5px 0; font-size:0.9rem; color:#ffb74d;">🔒 Grupo Privado</p>
-                <p style="margin:0 0 10px 0; font-size:0.8rem; color:#ccc;">Este grupo ya existe. Ingresa el PIN para unirte.</p>
-                <input type="text" id="groupPinInput" placeholder="0000" style="text-align:center; letter-spacing:5px; font-size:1.5rem; width:100px; margin:0 auto;">
+                <input type="text" id="groupPinInput" placeholder="PIN" style="text-align:center; letter-spacing:5px; font-size:1.5rem; width:100px; margin:0 auto;">
             </div>
 
             <button class="auth-btn btn-p" onclick="checkGroup()">ENTRAR</button>
@@ -109,16 +125,16 @@
     </div>
 
     <div class="app-header">
-        <div class="logo-area">
+        <a href="https://www.cymaplicaciones.com" class="logo-area">
             <img src="logo.jpg" class="logo-img" alt="Logo">
             <div class="app-info">
                 <span class="app-name">C&M</span>
                 <span class="app-sub">Gestión de Pagos</span>
             </div>
-        </div>
+        </a>
         <div class="user-badge">
             <div class="user-email" id="dispUserEmail">...</div>
-            <div class="group-tag" id="dispGroupName">...</div>
+            <div class="group-tag" id="dispGroupName">GRATIS</div>
         </div>
     </div>
 
@@ -156,17 +172,36 @@
     </div>
 
     <div id="view-config" class="view">
+        
+        <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
+            <h3 style="color:#00e676; margin-top:0;">♻️ Migración de Datos</h3>
+            <p style="font-size:0.85rem; color:#ccc;">Trae tus datos de la versión anterior o guarda una copia.</p>
+            <div style="display:flex; gap:10px;">
+                <button class="btn-tool" onclick="downloadBackup()">💾 Crear Backup</button>
+                <button class="btn-tool" onclick="document.getElementById('restInput').click()">📂 Restaurar Backup</button>
+                <input type="file" id="restInput" style="display:none" onchange="restoreBackup(this)">
+            </div>
+        </div>
+
         <div class="dash-card" style="text-align:left;">
             <h3 style="color:#BB86FC">Mi Grupo</h3>
             <p>Nombre: <strong id="confGName" style="color:#fff">...</strong></p>
-            <p>Creador: <strong id="confOwner" style="color:#fff">...</strong></p>
+            <p>Estado: <strong id="confStatus">GRATIS</strong></p>
             
             <div style="background:#2a2a2a; padding:15px; border-radius:10px; text-align:center; border:1px dashed #555; margin:20px 0;">
                 <p style="margin:0; color:#aaa; font-size:0.75rem; text-transform:uppercase;">PIN DE INVITACIÓN</p>
                 <div id="confPin" style="font-size:2.5rem; font-weight:bold; color:#00e676; letter-spacing:5px; margin:5px 0;">****</div>
-                <p style="margin:0; font-size:0.8rem; color:#777;">Comparte este PIN para que otros se unan.</p>
+                <p style="margin:0; font-size:0.8rem; color:#777;">Comparte este PIN.</p>
             </div>
             
+            <div id="proUnlockZone" style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
+                <p style="font-size:0.85rem; color:#aaa;">¿Tienes un código PRO?</p>
+                <div style="display:flex; gap:5px;">
+                    <input type="text" id="unlockCode" placeholder="CÓDIGO" style="margin:0; text-align:center;">
+                    <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">CANJEAR</button>
+                </div>
+            </div>
+
             <hr style="border-color:#333; margin:20px 0;">
             <button class="btn btn-s" onclick="location.reload()">Cambiar de Grupo</button>
             <button class="btn btn-s" style="border-color:#ff5252; color:#ff5252" onclick="logout()">Cerrar Sesión</button>
@@ -189,6 +224,8 @@
 
     <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="number" id="maBal" placeholder="Saldo Inicial"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
 
+    <div id="modLimit" class="modal"><div class="modal-box" style="border:1px solid #BB86FC;"><h3 style="color:#BB86FC">👑 Función PRO</h3><p>Has alcanzado el límite de 10 gastos de la versión gratuita.</p><p>Para desbloquear gastos ilimitados, colabora con un Cafecito y pide tu código.</p><button class="btn btn-p" onclick="closeModal('modLimit'); switchTab('config');">Ir a Canjear Código</button><button class="btn btn-s" onclick="closeModal('modLimit')">Cerrar</button></div></div>
+
 <script>
     // -----------------------------------------------------------
     // ⚠️ PEGA AQUI TUS CLAVES DE FIREBASE (OBLIGATORIO) 
@@ -209,6 +246,7 @@ const firebaseConfig = {
     
     let currentUser = null;
     let currentGroup = null;
+    let groupInfo = null;
     let appData = { expenses:[], payments:{}, accounts:[] };
     let year = 2026;
     let selCell = null;
@@ -241,31 +279,29 @@ const firebaseConfig = {
         const provider = new firebase.auth.GoogleAuthProvider();
         auth.signInWithPopup(provider).catch(e => document.getElementById('authMsg').innerText=e.message);
     }
+    function resetPass() {
+        const e = document.getElementById('email').value;
+        if(!e) return alert("Por favor, escribe tu correo electrónico en el campo de arriba primero.");
+        auth.sendPasswordResetEmail(e).then(()=>alert("Correo de recuperación enviado.")).catch(e=>alert(e.message));
+    }
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // --- LOGICA DE GRUPOS (Seguridad) ---
+    // --- GRUPOS Y MONETIZACION ---
     function checkGroup() {
         const name = document.getElementById('groupNameInput').value.trim().toUpperCase();
         if(name.length < 3) return document.getElementById('groupMsg').innerText = "Nombre muy corto";
         const pinInput = document.getElementById('groupPinInput').value.trim();
-
         document.getElementById('groupMsg').innerText = "Verificando...";
 
         db.collection('groups').doc(name).get().then(doc => {
             if(doc.exists) {
-                // El grupo existe
                 const gInfo = doc.data();
-                const isMember = gInfo.members.includes(currentUser.email);
-                
-                if(isMember) {
+                if(gInfo.members.includes(currentUser.email)) {
                     enterGroup(name, gInfo);
                 } else {
-                    // No es miembro, pedir PIN
                     document.getElementById('pinArea').style.display = 'block';
                     document.getElementById('groupMsg').innerText = "";
-                    
                     if(pinInput === gInfo.pin) {
-                        // PIN OK -> Agregar a miembros
                         db.collection('groups').doc(name).update({
                             members: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
                         }).then(() => enterGroup(name, gInfo));
@@ -274,35 +310,28 @@ const firebaseConfig = {
                     }
                 }
             } else {
-                // El grupo NO existe -> Crear
-                if(confirm("El grupo no existe. ¿Crearlo y ser el Dueño?")) {
+                if(confirm("El grupo no existe. ¿Crearlo?")) {
                     const newPin = Math.floor(1000 + Math.random() * 9000).toString();
-                    const newGroup = {
-                        owner: currentUser.email,
-                        members: [currentUser.email],
-                        pin: newPin,
-                        createdAt: new Date().toISOString()
-                    };
-                    db.collection('groups').doc(name).set(newGroup).then(() => {
-                        enterGroup(name, newGroup);
-                    });
-                } else {
-                    document.getElementById('groupMsg').innerText = "";
-                }
+                    const newGroup = { owner: currentUser.email, members: [currentUser.email], pin: newPin, isPro: false };
+                    db.collection('groups').doc(name).set(newGroup).then(() => enterGroup(name, newGroup));
+                } else document.getElementById('groupMsg').innerText = "";
             }
         });
     }
 
     function enterGroup(name, info) {
         currentGroup = name;
+        groupInfo = info;
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
-        document.getElementById('dispGroupName').innerText = name;
         
-        // Datos Config
+        // UI Config
+        document.getElementById('dispGroupName').innerText = info.isPro ? "PRO 👑" : "GRATIS";
+        document.getElementById('dispGroupName').className = info.isPro ? "group-tag pro" : "group-tag";
         document.getElementById('confGName').innerText = name;
-        document.getElementById('confOwner').innerText = info.owner;
+        document.getElementById('confStatus').innerText = info.isPro ? "PRO ACTIVO" : "GRATIS (Límite 10)";
         document.getElementById('confPin').innerText = info.pin;
+        if(info.isPro) document.getElementById('proUnlockZone').style.display = 'none';
 
         // Cargar Datos
         db.collection('data').doc(name).onSnapshot(doc => {
@@ -311,27 +340,65 @@ const firebaseConfig = {
                 if(!appData.expenses) appData.expenses = [];
                 if(!appData.payments) appData.payments = {};
                 if(!appData.accounts) appData.accounts = [];
-            } else {
-                saveData(); // Crear doc vacío
-            }
+            } else saveData();
             renderAll();
         });
     }
 
-    function saveData() {
-        if(!currentGroup) return;
-        db.collection('data').doc(currentGroup).set(appData);
+    function generateHash(seed) { let hash=0; const s=seed+"CYM_PAY_KEY_2026"; for(let i=0;i<s.length;i++) { hash=((hash<<5)-hash)+s.charCodeAt(i); hash|=0; } return Math.abs(hash).toString(36).toUpperCase().substring(0,6); }
+
+    function unlockPro() {
+        const code = document.getElementById('unlockCode').value.trim().toUpperCase();
+        // El codigo se basa en el nombre del grupo
+        const expected = generateHash(currentGroup + "PRO"); 
+        if(code === expected) {
+            db.collection('groups').doc(currentGroup).update({ isPro: true }).then(() => {
+                alert("¡Felicidades! Grupo actualizado a PRO.");
+                location.reload();
+            });
+        } else alert("Código incorrecto.");
     }
 
-    // --- RENDERIZADO UI ---
+    // --- BACKUP Y RESTAURACION ---
+    function downloadBackup() {
+        const data = { appData, groupInfo, meta: { date: new Date(), version: "cloud" } };
+        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a'); a.href = url; a.download = `Backup_${currentGroup}.json`; a.click();
+    }
+    
+    function restoreBackup(input) {
+        const file = input.files[0]; if(!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            try {
+                const d = JSON.parse(e.target.result);
+                // Soporte para formato viejo (LocalStorage) y nuevo (Cloud)
+                let newExp = d.expenses || [];
+                let newPay = d.payments || {};
+                let newAcc = d.accounts || [];
+                
+                if(confirm(`Se encontraron ${newExp.length} gastos. ¿Sobrescribir los datos actuales de la nube?`)) {
+                    appData.expenses = newExp;
+                    appData.payments = newPay;
+                    appData.accounts = newAcc;
+                    saveData();
+                    alert("Restauración completada con éxito.");
+                }
+            } catch(err) { alert("Error leyendo archivo: " + err.message); }
+        };
+        reader.readAsText(file);
+    }
+
+    function saveData() { if(currentGroup) db.collection('data').doc(currentGroup).set(appData); }
+
+    // --- LOGICA UI ---
     function renderAll() { renderGrid(); renderAcc(); calcDash(); }
     
     function renderGrid() {
         const t = document.getElementById('mainTable');
         t.innerHTML = `<thead><tr><th class="col-fix">Concepto</th>${[...Array(12)].map((_,i)=>`<th>${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}</tr></thead>`;
         let body = '<tbody>';
-        
-        // Ordenar gastos (opcional: por nombre)
         appData.expenses.forEach(e => {
             body += `<tr><td class="col-fix"><b>${e.name}</b><br><span style="font-size:0.7rem;color:#aaa">${e.cat}</span></td>`;
             for(let i=0; i<12; i++) {
@@ -357,7 +424,6 @@ const firebaseConfig = {
     function calcDash() {
         let debt=0, assets=0;
         const now = new Date();
-        // Deuda de este mes
         appData.expenses.forEach(e => {
             const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
             const p = appData.payments[k];
@@ -370,12 +436,18 @@ const firebaseConfig = {
     }
 
     // --- CRUD ---
-    function openModalExp() { document.getElementById('modExp').style.display='flex'; }
+    function openModalExp() { 
+        if(!groupInfo.isPro && appData.expenses.length >= 10) return document.getElementById('modLimit').style.display='flex';
+        document.getElementById('modExp').style.display='flex'; 
+    }
     function saveExp() {
         const n=document.getElementById('meName').value;
         if(n) { appData.expenses.push({id:Date.now(), name:n, cat:document.getElementById('meCat').value}); saveData(); closeModal('modExp'); document.getElementById('meName').value=''; }
     }
-    function openModalAcc() { document.getElementById('modAcc').style.display='flex'; }
+    function openModalAcc() { 
+        if(!groupInfo.isPro && appData.accounts.length >= 2) return document.getElementById('modLimit').style.display='flex';
+        document.getElementById('modAcc').style.display='flex'; 
+    }
     function saveAcc() {
         const n=document.getElementById('maName').value; const b=document.getElementById('maBal').value;
         if(n) { appData.accounts.push({id:Date.now(), name:n, bal:b||0}); saveData(); closeModal('modAcc'); document.getElementById('maName').value=''; }
