@@ -251,18 +251,18 @@
         <div class="modal-box">
             <h3>Gasto / Servicio</h3>
             <label>Nombre:</label>
-            <input id="meName" placeholder="Ej: Luz">
+            <input id="meName" placeholder="Ej: Luz Casa">
             <label>Categoría:</label>
             <select id="meCat"><option>Hogar</option><option>Oficina</option><option>Personal</option><option>Auto</option><option>Tarjetas</option></select>
             
-            <label>Link Carpeta (Drive/OneDrive):</label>
-            <input id="meFolder" placeholder="https://...">
+            <label>Link Carpeta Comprobantes:</label>
+            <input id="meFolder" placeholder="https://drive.google.com...">
             <label>Link de Pago (Web):</label>
             <input id="meLink" placeholder="https://...">
             
             <div style="background:#333; padding:10px; border-radius:5px; margin-bottom:10px;">
-                <label style="color:#BB86FC; font-size:0.8rem;">Credenciales:</label>
-                <input id="meUser" placeholder="Usuario" style="margin-bottom:5px;">
+                <label style="color:#BB86FC; font-size:0.8rem;">Credenciales (Opcional):</label>
+                <input id="meUser" placeholder="Usuario / ID" style="margin-bottom:5px;">
                 <input id="mePass" placeholder="Contraseña">
             </div>
             
@@ -283,6 +283,7 @@
             <h2 style="color:#ff5252">⚠️ Servicio Vencido</h2>
             <p>El periodo de uso ha finalizado.</p>
             <p>Por favor, ingresa el código de renovación para continuar operando.</p>
+            <p style="font-size:0.8rem; color:#aaa;">Código DEMO disponible: "DEMO"</p>
             <button class="btn btn-p" onclick="closeModal('modLock'); switchTab('config');">Ir a Pagar</button>
         </div>
     </div>
@@ -309,7 +310,7 @@ const firebaseConfig = {
     let currentGroup = null;
     let groupInfo = null;
     let appData = { expenses:[], payments:{}, accounts:[] };
-    let year = new Date().getFullYear();
+    let year = 2026;
     let selCell = null;
     let isExpired = false;
 
@@ -353,7 +354,6 @@ const firebaseConfig = {
                 }
             } else {
                 if(confirm("Crear grupo nuevo?")) {
-                    // Nuevo grupo nace con 30 dias gratis
                     const expDate = new Date(); expDate.setDate(expDate.getDate() + 30);
                     const newG = { owner: currentUser.email, members: [currentUser.email], pin: Math.floor(1000+Math.random()*9000).toString(), validUntil: expDate.toISOString() };
                     db.collection('groups').doc(name).set(newG).then(() => enterGroup(name, newG));
@@ -368,8 +368,9 @@ const firebaseConfig = {
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
         
-        // Check Expiration
-        const validDate = new Date(info.validUntil || 0); // Si no tiene fecha, es viejo/vencido
+        // CHECK VENCIMIENTO
+        // Si no tiene fecha (grupo viejo), asumimos vencido (1970) para forzar pago/demo
+        const validDate = new Date(info.validUntil || 0);
         const now = new Date();
         const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
         
@@ -380,7 +381,7 @@ const firebaseConfig = {
             tag.innerText = "VENCIDO"; tag.className = "group-tag expired";
             document.getElementById('confValid').innerText = "VENCIDO - PAGO REQUERIDO";
             document.getElementById('confValid').style.color = "#ff5252";
-            setTimeout(() => document.getElementById('modLock').style.display='flex', 1000); // Mostrar bloqueo
+            setTimeout(() => document.getElementById('modLock').style.display='flex', 1000); 
         } else {
             tag.innerText = "ACTIVO (" + diffDays + " días)"; tag.className = "group-tag pro";
             document.getElementById('confValid').innerText = validDate.toLocaleDateString();
@@ -405,25 +406,16 @@ const firebaseConfig = {
 
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        // Generamos hash basado en el MES actual (para que el codigo cambie cada mes)
-        const now = new Date();
-        const seed = currentGroup + (now.getMonth()+1) + now.getFullYear(); 
-        // Logica simplificada: El codigo renueva por 31 dias desde HOY
-        // Podrias hacer codigos fijos si prefieres.
-        
-        // HACK: Para que puedas probar, si pones el codigo "DEMO" te da 1 dia.
-        // Si pones el hash real, te da 31 dias.
-        
-        const expected = generateHash(currentGroup); // Simplificado: Hash del grupo
+        const expected = generateHash(currentGroup);
         
         if(code === expected || code === "DEMO") {
             const newDate = new Date();
             newDate.setDate(newDate.getDate() + 31);
             db.collection('groups').doc(currentGroup).update({ validUntil: newDate.toISOString() }).then(() => {
-                alert("¡Pago exitoso! Servicio renovado.");
+                alert("¡Pago exitoso! Servicio renovado por 31 días.");
                 location.reload();
             });
-        } else alert("Código incorrecto. Pide tu código a C&M.");
+        } else alert("Código incorrecto.");
     }
 
     // --- RESTAURAR BACKUP CORREGIDO ---
@@ -450,13 +442,24 @@ const firebaseConfig = {
                     }));
                 }
                 
-                if(d.payments) newPay = d.payments; // Estructura suele ser compatible
+                // Mapeo de pagos: amount -> amt, accountId -> accId
+                if(d.payments) {
+                    Object.keys(d.payments).forEach(key => {
+                        const oldP = d.payments[key];
+                        newPay[key] = {
+                            amt: oldP.amount || oldP.amt,
+                            day: oldP.day,
+                            paid: oldP.paid,
+                            accId: oldP.accId
+                        };
+                    });
+                }
 
                 if(Array.isArray(d.accounts)) {
                     newAcc = d.accounts.map(a => ({
                         id: a.id || Date.now(),
                         name: a.name || "Cuenta",
-                        bal: parseFloat(a.balance) || 0 // Fix NaN
+                        bal: parseFloat(a.balance || a.bal || 0) // Fix NaN
                     }));
                 }
 
@@ -514,7 +517,6 @@ const firebaseConfig = {
             let assignedHTML = '';
             let pendingSum = 0;
             
-            // Buscar gastos asignados a esta cuenta este mes
             appData.expenses.forEach(e => {
                 const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
                 const p = appData.payments[k];
@@ -525,7 +527,6 @@ const firebaseConfig = {
             });
             
             const projected = (parseFloat(a.bal)||0) - pendingSum;
-
             s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
             
             l.innerHTML += `
