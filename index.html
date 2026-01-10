@@ -35,6 +35,9 @@
         .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: Roboto, sans-serif; }
         
+        .pass-wrapper { position: relative; width: 100%; }
+        .pass-toggle { position: absolute; right: 15px; top: 15px; cursor: pointer; color: #aaa; font-size: 1.2rem; }
+
         /* UI GENERAL */
         .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
         .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; }
@@ -95,7 +98,11 @@
             <p style="color:#aaa; font-size:0.9rem;">Accede a tu panel de control</p>
             
             <input type="email" id="email" placeholder="Correo electrónico">
-            <input type="password" id="password" placeholder="Contraseña">
+            
+            <div class="pass-wrapper">
+                <input type="password" id="password" placeholder="Contraseña">
+                <span class="pass-toggle" onclick="togglePass()">👁️</span>
+            </div>
             
             <div style="text-align:right; margin-bottom:15px;">
                 <span onclick="resetPass()" style="font-size:0.75rem; color:#BB86FC; cursor:pointer; text-decoration:underline;">¿Olvidaste tu contraseña?</span>
@@ -224,10 +231,16 @@
             </div>
             
             <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
-                <p style="font-size:0.85rem; color:#aaa;">Renovar / Desbloquear Mes:</p>
+                <p style="font-size:0.85rem; color:#aaa;">Pagar Suscripción / Canjear:</p>
+                
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" class="btn btn-p" style="margin:0; text-align:center; background:#009EE3; color:white;">Pagar con MP</a>
+                    <a href="https://wa.me/5492615734341?text=Hola!%20Ya%20hice%20el%20pago%20de%20mi%20grupo,%20envio%20comprobante." target="_blank" class="btn btn-s" style="margin:0; text-align:center; background:#25D366; color:white; border:none;">Enviar Comprobante</a>
+                </div>
+
                 <div style="display:flex; gap:5px;">
-                    <input type="text" id="unlockCode" placeholder="CÓDIGO DE PAGO" style="margin:0; text-align:center;">
-                    <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">CANJEAR</button>
+                    <input type="text" id="unlockCode" placeholder="INGRESAR CÓDIGO" style="margin:0; text-align:center;">
+                    <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">OK</button>
                 </div>
             </div>
 
@@ -328,6 +341,11 @@ const firebaseConfig = {
         }
     });
 
+    function togglePass() {
+        const x = document.getElementById("password");
+        x.type = (x.type === "password") ? "text" : "password";
+    }
+
     function loginEmail() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function registerEmail() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => document.getElementById('authMsg').innerText=e.message); }
@@ -368,7 +386,6 @@ const firebaseConfig = {
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
         
-        // --- MODIFICACION: MOSTRAR NOMBRE DE GRUPO EN HEADER ---
         document.getElementById('headerGroupName').innerText = name;
 
         // CHECK VENCIMIENTO
@@ -385,7 +402,6 @@ const firebaseConfig = {
             document.getElementById('confValid').style.color = "#ff5252";
             setTimeout(() => document.getElementById('modLock').style.display='flex', 1000); 
         } else {
-            // --- MODIFICACION: MOSTRAR 'GRATIS' EN LUGAR DE 'ACTIVO' ---
             tag.innerText = "GRATIS (" + diffDays + " días)"; tag.className = "group-tag pro";
             document.getElementById('confValid').innerText = validDate.toLocaleDateString();
         }
@@ -421,7 +437,7 @@ const firebaseConfig = {
         } else alert("Código incorrecto.");
     }
 
-    // --- RESTAURAR BACKUP CORREGIDO ---
+    // --- RESTAURAR BACKUP ---
     function restoreBackup(input) {
         if(isExpired) return alert("Servicio vencido. Paga para importar datos.");
         const file = input.files[0]; if(!file) return;
@@ -445,7 +461,6 @@ const firebaseConfig = {
                     }));
                 }
                 
-                // Mapeo de pagos: amount -> amt, accountId -> accId
                 if(d.payments) {
                     Object.keys(d.payments).forEach(key => {
                         const oldP = d.payments[key];
@@ -462,7 +477,7 @@ const firebaseConfig = {
                     newAcc = d.accounts.map(a => ({
                         id: a.id || Date.now(),
                         name: a.name || "Cuenta",
-                        bal: parseFloat(a.balance || a.bal || 0) // Fix NaN
+                        bal: parseFloat(a.balance || a.bal || 0)
                     }));
                 }
 
