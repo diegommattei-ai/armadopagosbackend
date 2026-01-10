@@ -21,7 +21,7 @@
         .logo-img { height: 45px; border-radius: 8px; border: 1px solid #444; }
         .app-info { display:flex; flex-direction:column; }
         .app-name { font-weight: 800; font-size: 1rem; color: #fff; line-height:1.1; }
-        .app-sub { font-size: 0.75rem; color: #BB86FC; }
+        .app-sub { font-size: 0.75rem; color: #BB86FC; font-weight: bold; letter-spacing: 1px; }
         
         .user-badge { text-align: right; }
         .user-email { color: #ccc; font-size: 0.75rem; }
@@ -138,7 +138,7 @@
             <img src="logo.jpg" class="logo-img" alt="Logo">
             <div class="app-info">
                 <span class="app-name">Armado de Pagos</span>
-                <span class="app-sub">by C&M</span>
+                <span class="app-sub" id="headerGroupName">...</span>
             </div>
         </a>
         <div class="user-badge">
@@ -207,7 +207,7 @@
             <h3 style="color:#00e676; margin-top:0;">♻️ Migración de Datos</h3>
             <div style="display:flex; gap:10px;">
                 <button class="btn-tool" onclick="downloadBackup()">💾 Crear Backup</button>
-                <button class="btn-tool" onclick="document.getElementById('restInput').click()">📂 Restaurar Backup (Viejo o Nuevo)</button>
+                <button class="btn-tool" onclick="document.getElementById('restInput').click()">📂 Restaurar Backup</button>
                 <input type="file" id="restInput" style="display:none" onchange="restoreBackup(this)">
             </div>
         </div>
@@ -368,8 +368,10 @@ const firebaseConfig = {
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
         
+        // --- MODIFICACION: MOSTRAR NOMBRE DE GRUPO EN HEADER ---
+        document.getElementById('headerGroupName').innerText = name;
+
         // CHECK VENCIMIENTO
-        // Si no tiene fecha (grupo viejo), asumimos vencido (1970) para forzar pago/demo
         const validDate = new Date(info.validUntil || 0);
         const now = new Date();
         const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
@@ -383,7 +385,8 @@ const firebaseConfig = {
             document.getElementById('confValid').style.color = "#ff5252";
             setTimeout(() => document.getElementById('modLock').style.display='flex', 1000); 
         } else {
-            tag.innerText = "ACTIVO (" + diffDays + " días)"; tag.className = "group-tag pro";
+            // --- MODIFICACION: MOSTRAR 'GRATIS' EN LUGAR DE 'ACTIVO' ---
+            tag.innerText = "GRATIS (" + diffDays + " días)"; tag.className = "group-tag pro";
             document.getElementById('confValid').innerText = validDate.toLocaleDateString();
         }
 
