@@ -73,7 +73,9 @@
         .admin-table { width: 100%; min-width: 300px; border-collapse: collapse; }
         .admin-table th { text-align: left; color: #BB86FC; padding: 10px; border-bottom: 2px solid #444; }
         .admin-table td { padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem; vertical-align: top; }
-        .tag-adm { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; white-space: nowrap; }
+        .tag-adm { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; white-space: nowrap; cursor: pointer;}
+        .del-user { color: #ff5252; cursor: pointer; font-weight: bold; margin-left: 5px; }
+        .add-user { color: #00e676; cursor: pointer; font-size: 0.8rem; border: 1px solid #00e676; padding: 2px 5px; border-radius: 5px; display:inline-block; margin-top:5px; }
 
         /* FOOTER */
         .footer { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:10px; align-items:center; }
@@ -207,14 +209,15 @@
             
             <hr style="border-color:#333; margin:20px 0;">
             
-            <h3 style="color:#00e676;">👑 Plan PRO ($6.000/mes)</h3>
-            <p>La versión gratuita permite hasta 10 gastos y 2 cuentas.</p>
-            <p>Al abonar el plan mensual, recibes un código que desbloquea:</p>
-            <ul>
-                <li>Gastos y Cuentas Ilimitadas.</li>
-                <li>Acceso compartido sin límites.</li>
-                <li>Soporte Prioritario.</li>
-            </ul>
+            <h3 style="color:#00e676;">⏱️ Suscripción y Renovación</h3>
+            <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong> con acceso total a todas las funciones.</p>
+            <p><strong>¿Cómo renovar?</strong></p>
+            <ol>
+                <li>Al finalizar la prueba, realiza el pago mensual del servicio.</li>
+                <li>Envía el comprobante por WhatsApp.</li>
+                <li>Recibirás una <strong>Clave de Activación</strong>.</li>
+                <li>Ingresa la clave en "Configuración" para sumar 31 días más de servicio.</li>
+            </ol>
         </div>
     </div>
 
@@ -262,7 +265,7 @@
         <h2 style="color:#ff5252; text-align:center;">PANEL ADMINISTRADOR</h2>
         <div class="dash-card" style="text-align:left;">
             <p>Bienvenido, <b>Diego</b>.</p>
-            <p style="font-size:0.8rem; color:#aaa;">Gestión total de grupos y claves.</p>
+            <p style="font-size:0.8rem; color:#aaa;">Toca la FECHA para modificarla manualmente.<br>Toca la [x] para eliminar usuarios.</p>
             <button class="btn btn-s" onclick="renderAdmin()">🔄 Actualizar Lista</button>
         </div>
         <div id="adminList"></div>
@@ -471,21 +474,22 @@ const firebaseConfig = {
         listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
         
         db.collection('groups').get().then(snapshot => {
-            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Estado</th><th>Acciones</th></tr></thead><tbody>';
+            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Acciones</th></tr></thead><tbody>';
             snapshot.forEach(doc => {
                 const g = doc.data();
                 const vDate = new Date(g.validUntil || 0);
                 const isVencido = vDate < new Date();
-                
-                // Generar codigo
                 const code = generateHash(doc.id);
                 
-                // Formatear Miembros
+                // Formatear Miembros con opcion de eliminar
                 let membersHtml = g.members.map(m => 
-                    m === g.owner 
-                    ? `<span style="color:#00e676; font-weight:bold;">★ ${m}</span>` 
-                    : `<span style="color:#aaa;">${m}</span>`
-                ).join('<br>');
+                    `<div>
+                        ${m === g.owner ? '★' : ''} ${m} 
+                        ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span>` : ''}
+                    </div>`
+                ).join('');
+                
+                membersHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
 
                 html += `<tr>
                     <td>
@@ -493,7 +497,7 @@ const firebaseConfig = {
                         <div style="margin-top:5px; font-size:0.75rem; line-height:1.4;">${membersHtml}</div>
                     </td>
                     <td>
-                        <span class="tag-adm" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()}</span>
+                        <span class="tag-adm" onclick="modDate('${doc.id}', '${g.validUntil}')" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()} ✏️</span>
                     </td>
                     <td>
                         <button class="btn-s" style="padding:5px; margin:0; width:auto; font-size:0.75rem;" onclick="prompt('Copia el código:','${code}')">🔑 Clave</button>
@@ -505,6 +509,36 @@ const firebaseConfig = {
             html += '</tbody></table>';
             listDiv.innerHTML = html;
         });
+    }
+
+    function modDate(id, current) {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        const newD = prompt("Ingresa nueva fecha (YYYY-MM-DD):", current ? current.split('T')[0] : '');
+        if(newD) {
+            const d = new Date(newD);
+            if(!isNaN(d.getTime())) {
+                db.collection('groups').doc(id).update({ validUntil: d.toISOString() }).then(() => renderAdmin());
+            } else alert("Fecha inválida");
+        }
+    }
+
+    function kickUser(groupId, email) {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        if(confirm(`¿Sacar a ${email} del grupo?`)) {
+            db.collection('groups').doc(groupId).update({
+                members: firebase.firestore.FieldValue.arrayRemove(email)
+            }).then(() => renderAdmin());
+        }
+    }
+
+    function addUser(groupId) {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        const email = prompt("Email del nuevo usuario:");
+        if(email && email.includes('@')) {
+            db.collection('groups').doc(groupId).update({
+                members: firebase.firestore.FieldValue.arrayUnion(email.trim().toLowerCase())
+            }).then(() => renderAdmin());
+        }
     }
 
     function deleteGroup(id) {
