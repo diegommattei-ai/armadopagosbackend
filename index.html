@@ -42,7 +42,6 @@
         .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
         .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; }
         .tab.active { background: #BB86FC; color: #000; font-weight: 800; }
-        /* Pestaña Admin oculta por defecto */
         #tab-admin { display: none; background: #330000; color: #ff5252; } 
         
         .view { display: none; width: 95%; max-width: 1400px; margin: 0 auto; flex-direction: column; gap: 15px; }
@@ -69,7 +68,8 @@
         .det-total { border-top: 1px solid #555; border-bottom: none; font-weight: bold; font-size: 1rem; margin-top: 10px; padding-top: 10px; color: #BB86FC; }
         @keyframes fadeIn { from {opacity:0} to {opacity:1} }
 
-        /* ADMIN TABLE */
+        /* ADMIN */
+        .admin-controls { display:flex; gap:10px; justify-content:center; margin-bottom:15px; background:#2a2a2a; padding:10px; border-radius:8px; }
         .admin-table { width: 100%; min-width: 300px; border-collapse: collapse; }
         .admin-table th { text-align: left; color: #BB86FC; padding: 10px; border-bottom: 2px solid #444; }
         .admin-table td { padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem; vertical-align: top; }
@@ -210,13 +210,13 @@
             <hr style="border-color:#333; margin:20px 0;">
             
             <h3 style="color:#00e676;">⏱️ Suscripción y Renovación</h3>
-            <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong> con acceso total a todas las funciones.</p>
+            <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong> con acceso total.</p>
             <p><strong>¿Cómo renovar?</strong></p>
             <ol>
-                <li>Al finalizar la prueba, realiza el pago mensual del servicio.</li>
+                <li>Al finalizar el periodo, realiza el pago del mes que quieras desbloquear (ej: Marzo).</li>
                 <li>Envía el comprobante por WhatsApp.</li>
-                <li>Recibirás una <strong>Clave de Activación</strong>.</li>
-                <li>Ingresa la clave en "Configuración" para sumar 31 días más de servicio.</li>
+                <li>Recibirás una <strong>Clave Mensual</strong> única.</li>
+                <li>Ingresa la clave en "Configuración" y se habilitará ese mes.</li>
             </ol>
         </div>
     </div>
@@ -250,7 +250,7 @@
                     <a href="https://wa.me/5492615734341?text=Hola!%20Ya%20hice%20el%20pago%20de%20mi%20grupo,%20envio%20comprobante." target="_blank" class="btn btn-s" style="margin:0; text-align:center; background:#25D366; color:white; border:none;">Enviar Comprobante</a>
                 </div>
                 <div style="display:flex; gap:5px;">
-                    <input type="text" id="unlockCode" placeholder="INGRESAR CÓDIGO" style="margin:0; text-align:center;">
+                    <input type="text" id="unlockCode" placeholder="INGRESAR CÓDIGO MES/AÑO" style="margin:0; text-align:center;">
                     <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">OK</button>
                 </div>
             </div>
@@ -264,8 +264,17 @@
     <div id="view-admin" class="view">
         <h2 style="color:#ff5252; text-align:center;">PANEL ADMINISTRADOR</h2>
         <div class="dash-card" style="text-align:left;">
-            <p>Bienvenido, <b>Diego</b>.</p>
-            <p style="font-size:0.8rem; color:#aaa;">Toca la FECHA para modificarla manualmente.<br>Toca la [x] para eliminar usuarios.</p>
+            <p><b>Generador de Claves Mensuales</b></p>
+            <div class="admin-controls">
+                <select id="adminMonth">
+                    <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
+                    <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
+                    <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
+                    <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
+                </select>
+                <select id="adminYear"><option value="2026">2026</option><option value="2027">2027</option></select>
+            </div>
+            <p style="font-size:0.8rem; color:#aaa;">Selecciona Mes/Año y toca "🔑 Clave" en el usuario.</p>
             <button class="btn btn-s" onclick="renderAdmin()">🔄 Actualizar Lista</button>
         </div>
         <div id="adminList"></div>
@@ -361,6 +370,10 @@ const firebaseConfig = {
             // LOGICA ADMIN: Si es Diego, mostramos la pestaña
             if(user.email === ADMIN_EMAIL) {
                 document.getElementById('tab-admin').style.display = 'block';
+                // Configurar selectores de admin a la fecha actual
+                const hoy = new Date();
+                document.getElementById('adminMonth').value = hoy.getMonth();
+                document.getElementById('adminYear').value = hoy.getFullYear();
             }
         } else {
             document.getElementById('authScreen').style.display = 'flex';
@@ -450,45 +463,84 @@ const firebaseConfig = {
         });
     }
 
-    // --- MONETIZACION ---
-    function generateHash(seed) { let h=0; const s=seed+"CYM_PAY_KEY_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
+    // --- NUEVO SISTEMA DE CLAVES DINAMICAS ---
+    // Genera hash basado en: GRUPO + MES + AÑO
+    function generateDynamicHash(group, month, year) { 
+        let h=0; 
+        const s = group + "_" + month + "_" + year + "_CYM_SECURE_2026"; 
+        for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; 
+        return Math.abs(h).toString(36).toUpperCase().substring(0,6); 
+    }
 
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        const expected = generateHash(currentGroup);
+        if(code === "DEMO") { // Codigo Demo fijo
+             extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1)));
+             return;
+        }
+
+        // INTELIGENCIA PARA ADIVINAR EL MES:
+        // El usuario metio un codigo. Probamos si ese codigo matchea con el mes actual, el mes siguiente o el otro.
+        // Si matchea con "Marzo 2026", actualizamos la fecha de vencimiento a FIN DE MARZO 2026.
         
-        if(code === expected || code === "DEMO") {
-            const newDate = new Date();
-            newDate.setDate(newDate.getDate() + 31);
-            db.collection('groups').doc(currentGroup).update({ validUntil: newDate.toISOString() }).then(() => {
-                alert("¡Pago exitoso! Servicio renovado por 31 días.");
-                location.reload();
-            });
-        } else alert("Código incorrecto.");
+        const now = new Date();
+        let foundMatch = false;
+        
+        // Iteramos desde el mes actual hasta 12 meses adelante buscando coincidencia
+        for(let i=0; i<12; i++) {
+            const checkDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
+            const m = checkDate.getMonth();
+            const y = checkDate.getFullYear();
+            
+            const expected = generateDynamicHash(currentGroup, m, y);
+            
+            if(code === expected) {
+                // EUREKA! El codigo es para este mes/año
+                // Calcular ultimo dia de ese mes
+                const lastDay = new Date(y, m + 1, 0); // Dia 0 del mes siguiente es el ultimo del actual
+                extendValidity(lastDay);
+                foundMatch = true;
+                break;
+            }
+        }
+        
+        if(!foundMatch) alert("Código inválido o expirado.");
+    }
+
+    function extendValidity(dateObj) {
+        db.collection('groups').doc(currentGroup).update({ validUntil: dateObj.toISOString() }).then(() => {
+            alert("¡Pago exitoso! Vencimiento actualizado al: " + dateObj.toLocaleDateString());
+            location.reload();
+        });
     }
 
     // --- PANEL DE ADMINISTRADOR ---
     function renderAdmin() {
         if(currentUser.email !== ADMIN_EMAIL) return;
+        
+        const selM = document.getElementById('adminMonth').value;
+        const selY = document.getElementById('adminYear').value;
+        
         const listDiv = document.getElementById('adminList');
         listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
         
         db.collection('groups').get().then(snapshot => {
-            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Acciones</th></tr></thead><tbody>';
+            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Clave ('+ (parseInt(selM)+1) + '/' + selY +')</th></tr></thead><tbody>';
             snapshot.forEach(doc => {
                 const g = doc.data();
                 const vDate = new Date(g.validUntil || 0);
                 const isVencido = vDate < new Date();
-                const code = generateHash(doc.id);
                 
-                // Formatear Miembros con opcion de eliminar
+                // Generar CLAVE DINAMICA basada en los selectores
+                const code = generateDynamicHash(doc.id, parseInt(selM), parseInt(selY));
+                
+                // Formatear Miembros
                 let membersHtml = g.members.map(m => 
                     `<div>
                         ${m === g.owner ? '★' : ''} ${m} 
                         ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span>` : ''}
                     </div>`
                 ).join('');
-                
                 membersHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
 
                 html += `<tr>
@@ -498,11 +550,12 @@ const firebaseConfig = {
                     </td>
                     <td>
                         <span class="tag-adm" onclick="modDate('${doc.id}', '${g.validUntil}')" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()} ✏️</span>
+                        <div style="margin-top:5px;">
+                            <button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252;" onclick="deleteGroup('${doc.id}')">🗑️</button>
+                        </div>
                     </td>
                     <td>
-                        <button class="btn-s" style="padding:5px; margin:0; width:auto; font-size:0.75rem;" onclick="prompt('Copia el código:','${code}')">🔑 Clave</button>
-                        <div style="height:5px;"></div>
-                        <button class="btn-s" style="padding:5px; margin:0; width:auto; font-size:0.75rem; color:#ff5252; border-color:#ff5252;" onclick="deleteGroup('${doc.id}')">🗑️ Borrar</button>
+                        <button class="btn-s" style="padding:10px; font-weight:bold; font-size:1rem; color:#BB86FC; border:1px solid #BB86FC;" onclick="prompt('Copia clave ${doc.id}:','${code}')">🔑 ${code}</button>
                     </td>
                 </tr>`;
             });
@@ -533,7 +586,7 @@ const firebaseConfig = {
 
     function addUser(groupId) {
         if(currentUser.email !== ADMIN_EMAIL) return;
-        const email = prompt("Email del nuevo usuario:");
+        const email = prompt("Email del nuevo usuario (Debe registrarse con Google):");
         if(email && email.includes('@')) {
             db.collection('groups').doc(groupId).update({
                 members: firebase.firestore.FieldValue.arrayUnion(email.trim().toLowerCase())
@@ -543,9 +596,7 @@ const firebaseConfig = {
 
     function deleteGroup(id) {
         if(confirm("¿ESTAS SEGURO de borrar el grupo " + id + " y todos sus datos?")) {
-            // Borra metadatos
             db.collection('groups').doc(id).delete();
-            // Borra datos financieros
             db.collection('data').doc(id).delete().then(() => {
                 alert("Grupo eliminado");
                 renderAdmin();
