@@ -367,9 +367,9 @@
         </div>
     </div>
     
-    <div id="modCell" class="modal"><div class="modal-box"><h3>Detalle Pago</h3><label>Monto</label><input type="number" id="mcAmt" style="font-size:1.5rem;color:#BB86FC"><label>Día Venc.</label><input type="number" id="mcDay"><label>Pagar con:</label><select id="mcAcc"><option value="">--</option></select><div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;"><input type="checkbox" id="mcPaid" style="width:20px; margin:0;"><label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label></div><button class="btn btn-p" onclick="saveCell()">Guardar</button><button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button><button class="btn btn-s" style="color:red; border-color:red;" onclick="delCell()">Borrar</button></div></div>
+    <div id="modCell" class="modal"><div class="modal-box"><h3>Detalle Pago</h3><label>Monto (Ej: 100+50)</label><input type="text" id="mcAmt" style="font-size:1.5rem;color:#BB86FC" placeholder="0"><label>Día Venc.</label><input type="number" id="mcDay" placeholder="Día (1-31)"><label>Pagar con:</label><select id="mcAcc"><option value="">--</option></select><div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;"><input type="checkbox" id="mcPaid" style="width:20px; margin:0;"><label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label></div><button class="btn btn-p" onclick="saveCell()">Guardar</button><button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button><button class="btn btn-s" style="color:red; border-color:red;" onclick="delCell()">Borrar</button></div></div>
 
-    <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="number" id="maBal" placeholder="Saldo Inicial"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
+    <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="text" id="maBal" placeholder="Saldo Inicial (Ej: 5000+200)"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
 
     <div id="modLock" class="modal" style="z-index:9999;">
         <div class="modal-box" style="border:2px solid #ff5252;">
@@ -410,6 +410,16 @@ const firebaseConfig = {
     let selCell = null;
     let isExpired = false;
     let globalPrice = 0; 
+
+    // --- HELPER CALCULADORA ---
+    function smartParse(str) {
+        try {
+            if(!str) return 0;
+            // Reemplaza comas por puntos y elimina caracteres peligrosos
+            let clean = str.toString().replace(/,/g, '.').replace(/[^-()\d/*+.]/g, '');
+            return eval(clean) || 0;
+        } catch(e) { return 0; }
+    }
 
     // --- INICIALIZACION ---
     db.collection('config').doc('pricing').onSnapshot(doc => {
@@ -486,29 +496,23 @@ const firebaseConfig = {
         groupInfo = info;
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
-        
         document.getElementById('headerGroupName').innerText = name;
+        
+        // ESCUCHA EN VIVO DEL ESTADO DEL GRUPO (Fecha vencimiento)
+        db.collection('groups').doc(name).onSnapshot(doc => {
+            if(doc.exists) {
+                const g = doc.data();
+                updateBadge(g.validUntil);
+            }
+        });
 
-        const validDate = new Date(info.validUntil || 0);
-        const now = new Date();
-        const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
-        
-        isExpired = diffDays <= 0;
-        
-        const tag = document.getElementById('dispGroupTag');
-        if(isExpired) {
-            tag.innerText = "VENCIDO"; tag.className = "group-tag expired";
-            document.getElementById('confValid').innerText = "VENCIDO - PAGO REQUERIDO";
-            document.getElementById('confValid').style.color = "#ff5252";
-            setTimeout(() => document.getElementById('modLock').style.display='flex', 1000); 
-        } else {
-            tag.innerText = "GRATIS (" + diffDays + " días)"; tag.className = "group-tag pro";
-            document.getElementById('confValid').innerText = validDate.toLocaleDateString();
-        }
+        // Config Inicial Badge
+        updateBadge(info.validUntil);
 
         document.getElementById('confGName').innerText = name;
         document.getElementById('confPin').innerText = info.pin;
 
+        // Escucha de DATOS (Gastos, Pagos)
         db.collection('data').doc(name).onSnapshot(doc => {
             if(doc.exists) {
                 appData = doc.data();
@@ -518,6 +522,28 @@ const firebaseConfig = {
             } else saveData();
             renderAll();
         });
+    }
+
+    function updateBadge(validUntil) {
+        const validDate = new Date(validUntil || 0);
+        const now = new Date();
+        const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
+        isExpired = diffDays <= 0;
+        
+        const tag = document.getElementById('dispGroupTag');
+        document.getElementById('confValid').innerText = validDate.toLocaleDateString();
+
+        if(isExpired) {
+            tag.innerText = "VENCIDO"; tag.className = "group-tag expired";
+            document.getElementById('confValid').innerText = "VENCIDO - PAGO REQUERIDO";
+            document.getElementById('confValid').style.color = "#ff5252";
+            if(!document.getElementById('modLock').style.display || document.getElementById('modLock').style.display === 'none') {
+                 setTimeout(() => document.getElementById('modLock').style.display='flex', 1000);
+            }
+        } else {
+            tag.innerText = "GRATIS (" + diffDays + " días)"; tag.className = "group-tag pro";
+            document.getElementById('modLock').style.display='none';
+        }
     }
 
     function generateDynamicHash(group, month, year) { 
@@ -614,7 +640,7 @@ const firebaseConfig = {
                 let membersHtml = g.members.map(m => 
                     `<div>
                         ${m === g.owner ? '★' : ''} ${m} 
-                        ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span>` : ''}
+                        ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span> <span class="del-user" onclick="alert('IMPOSIBLE: Para borrar la cuenta definitivamente, ve a Firebase Console > Authentication')">[☠️]</span>` : ''}
                     </div>`
                 ).join('');
                 membersHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
@@ -651,7 +677,7 @@ const firebaseConfig = {
         if(newD) {
             const d = new Date(newD);
             if(!isNaN(d.getTime())) {
-                db.collection('groups').doc(id).update({ validUntil: d.toISOString() }).then(() => renderAdmin());
+                db.collection('groups').doc(id).update({ validUntil: d.toISOString() }); // Ya no recarga manual, el listener lo hace
             } else alert("Fecha inválida");
         }
     }
@@ -752,9 +778,6 @@ const firebaseConfig = {
         if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODOS los gastos y su historial de pagos. No se puede deshacer.")) {
             if(confirm("Confirmación final: ¿Borrar TODO?")) {
                 appData.expenses = [];
-                // También limpiamos pagos huérfanos si se quiere, 
-                // pero lo más limpio es reiniciar pagos también o filtrar.
-                // Aquí reiniciamos pagos también porque son de gastos.
                 appData.payments = {}; 
                 saveData();
                 alert("Gastos eliminados.");
@@ -790,7 +813,9 @@ const firebaseConfig = {
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 const st = p.paid ? 'status-paid' : (p.amt ? 'status-pend' : '');
-                body += `<td class="${st}"><div onclick="openCell(${e.id},${i})" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;">${p.amt ? '$'+parseInt(p.amt).toLocaleString() : ''}<span style="font-size:0.6rem">${p.day?'Día '+p.day:''}</span></div></td>`;
+                // CORRECCION DIA 1: Mostrar incluso si p.day es 0 (no deberia) o 1
+                const dayText = (p.day !== undefined && p.day !== '') ? 'Día ' + p.day : '';
+                body += `<td class="${st}"><div onclick="openCell(${e.id},${i})" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;">${p.amt ? '$'+parseInt(p.amt).toLocaleString() : ''}<span style="font-size:0.8rem; font-weight:bold; color:#aaa;">${dayText}</span></div></td>`;
             }
             body += '</tr>';
         });
@@ -887,7 +912,9 @@ const firebaseConfig = {
     function openModalAcc() { if(checkLock()) return; acId=null; document.getElementById('maName').value=''; document.getElementById('maBal').value=''; document.getElementById('modAcc').style.display='flex'; }
     function editAcc(id) { if(checkLock()) return; acId=id; const a=appData.accounts.find(x=>x.id==id); document.getElementById('maName').value=a.name; document.getElementById('maBal').value=a.bal; document.getElementById('modAcc').style.display='flex'; }
     function saveAcc() {
-        const n=val('maName'); const b=val('maBal');
+        const n=val('maName'); 
+        // SMART PARSE PARA CUENTAS
+        const b=smartParse(val('maBal'));
         if(acId) { const a=appData.accounts.find(x=>x.id==acId); a.name=n; a.bal=b; }
         else appData.accounts.push({id:Date.now(), name:n, bal:b});
         saveData(); closeModal('modAcc');
@@ -905,7 +932,10 @@ const firebaseConfig = {
     }
     function saveCell() {
         const k = `${selCell.eid}_${year}_${selCell.m}`;
-        const amt = val('mcAmt');
+        // SMART PARSE PARA PAGOS
+        const rawAmt = val('mcAmt');
+        const amt = smartParse(rawAmt);
+        
         if(amt) appData.payments[k] = { amt, day: val('mcDay'), accId: val('mcAcc'), paid: document.getElementById('mcPaid').checked };
         else delete appData.payments[k];
         saveData(); closeModal('modCell');
