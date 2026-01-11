@@ -62,7 +62,8 @@
         
         /* DISEÑO INTERNO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: #777; }
+        /* MODIFICADO: DIA MAS RESALTADO */
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.85rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
@@ -880,15 +881,11 @@ const firebaseConfig = {
                 if(p.paid) {
                     st = 'status-paid';
                 } else if(p.amt || p.day) {
-                    // Calculo de Vencimiento
                     const today = new Date();
                     today.setHours(0,0,0,0);
-                    
-                    // Si tiene dia definido, usamos ese dia. Si no, fin de mes.
                     const d = p.day ? parseInt(p.day) : 0; 
                     const deadline = d > 0 ? new Date(year, i, d) : new Date(year, i + 1, 0);
                     
-                    // Comparacion
                     if(deadline < today) st = 'status-pend'; // Rojo (Vencido)
                     else st = 'status-soon'; // Amarillo (Proximo)
                 }
