@@ -52,6 +52,14 @@
         .dash-val { font-size: 1.1rem; font-weight: bold; font-family: monospace; margin-top:5px; }
         .c-g { color: #00e676; } .c-r { color: #ff5252; } .c-p { color: #BB86FC; }
 
+        /* FILTROS (NUEVO) */
+        .filter-row { display: flex; gap: 10px; overflow-x: auto; padding: 10px 0; align-items: center; width: 100%; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+        .filter-row::-webkit-scrollbar { display: none; }
+        .filter-pill { background: #252525; padding: 8px 15px; border-radius: 20px; color: #ccc; white-space: nowrap; cursor: pointer; border: 1px solid #444; display:flex; align-items:center; gap:5px; font-size:0.85rem; transition: 0.2s; }
+        .filter-pill.active { background: #BB86FC; color: #000; border-color: #BB86FC; font-weight: bold; box-shadow: 0 0 10px rgba(187, 134, 252, 0.3); }
+        .filter-gear { min-width: 35px; width: 35px; height: 35px; border-radius: 50%; background: #222; border: 1px solid #555; display: flex; justify-content: center; align-items: center; cursor: pointer; margin-left: auto; flex-shrink: 0; color: #aaa; }
+        .filter-gear:hover { color: #fff; border-color: #888; }
+
         /* TABLA - NUEVO DISEÑO CELDA */
         .grid-con { overflow-x: auto; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; min-height: 300px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
@@ -62,7 +70,6 @@
         
         /* DISEÑO INTERNO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        /* MODIFICADO: DIA MAS RESALTADO */
         .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.85rem; font-weight: bold; color: #fff; }
@@ -108,7 +115,7 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
-        /* ESTADOS DE PAGO: LOGICA DE COLORES ACTUALIZADA */
+        /* ESTADOS DE PAGO */
         .status-paid { background: rgba(0, 230, 118, 0.15) !important; border-left: 3px solid #00e676; }
         .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; } /* ROJO: Vencido */
         .status-soon { background: rgba(255, 234, 0, 0.15); border-left: 3px solid #ffea00; } /* AMARILLO: Próximo */
@@ -118,6 +125,9 @@
         
         /* PRICE UI */
         .price-display { color: #00e676; font-weight: bold; font-size: 1.1rem; text-align: center; margin-bottom: 10px; }
+        
+        /* LISTA CATEGORIAS CONFIG */
+        .cat-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; align-items: center; }
     </style>
 </head>
 <body>
@@ -208,6 +218,12 @@
             <button class="btn-s" style="width:auto; margin:0" onclick="changeYear(1)">&gt;</button>
         </div>
 
+        <div class="filter-row">
+            <div class="filter-pill active" id="filt-ALL" onclick="setFilter('ALL')">Todos</div>
+            <div id="filterList" style="display:flex; gap:10px;"></div>
+            <div class="filter-gear" onclick="openModalCats()">⚙️</div>
+        </div>
+
         <div class="grid-con">
             <table id="mainTable"></table>
         </div>
@@ -226,8 +242,8 @@
         <div class="dash-card" style="text-align:left;">
             <h3 style="color:#BB86FC;">📖 Manual de Uso</h3>
             <p><strong>1. Carga tu Dinero:</strong> Ve a la pestaña "Cuentas" y carga tus saldos reales (Banco, Efectivo).</p>
-            <p><strong>2. Define tus Gastos:</strong> Usa el botón (+) para crear tus gastos fijos. Puedes agregar links, usuarios y claves.</p>
-            <p><strong>3. Planifica:</strong> En la Planilla, toca el mes correspondiente para cargar importe y vencimiento. Asigna con qué cuenta pagarás.</p>
+            <p><strong>2. Define tus Gastos:</strong> Usa el botón (+) para crear tus gastos fijos.</p>
+            <p><strong>3. Categorías:</strong> Usa el engranaje ⚙️ en la Planilla para crear tus propias categorías (Hogar, Auto, etc).</p>
             
             <hr style="border-color:#333; margin:20px 0;">
             
@@ -356,8 +372,12 @@
             <h3>Gasto / Servicio</h3>
             <label>Nombre:</label>
             <input id="meName" placeholder="Ej: Luz Casa">
+            
             <label>Categoría:</label>
-            <select id="meCat"><option>Hogar</option><option>Oficina</option><option>Personal</option><option>Auto</option><option>Tarjetas</option></select>
+            <div style="display:flex; gap:5px;">
+                <select id="meCat" style="flex:1"></select>
+                <button class="btn-s" style="width:auto; margin:5px 0 15px 0;" onclick="openModalCats()">⚙️</button>
+            </div>
             
             <label>Link Carpeta Comprobantes:</label>
             <input id="meFolder" placeholder="https://drive.google.com...">
@@ -379,6 +399,23 @@
         </div>
     </div>
     
+    <div id="modCats" class="modal">
+        <div class="modal-box">
+            <h3>Administrar Categorías</h3>
+            <div id="catList" style="margin-bottom:15px; max-height:200px; overflow-y:auto;"></div>
+            
+            <div style="border-top:1px solid #444; padding-top:10px;">
+                <label>Nueva Categoría:</label>
+                <div style="display:flex; gap:5px;">
+                    <input id="newCatIcon" placeholder="Emoji" style="width:60px; text-align:center;">
+                    <input id="newCatName" placeholder="Nombre (Ej: Gimnasio)">
+                </div>
+                <button class="btn btn-p" onclick="addCat()">Agregar</button>
+            </div>
+            <button class="btn btn-s" onclick="closeModal('modCats')">Cerrar</button>
+        </div>
+    </div>
+
     <div id="modCell" class="modal">
         <div class="modal-box">
             <h3>Detalle Pago</h3>
@@ -428,33 +465,30 @@
     </div>
 
 <script>
-    // -----------------------------------------------------------
-    // ⚠️ PEGA AQUI TUS CLAVES DE FIREBASE
-    // -----------------------------------------------------------
-const firebaseConfig = {
-  apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
-  authDomain: "armadopagos.firebaseapp.com",
-  projectId: "armadopagos",
-  storageBucket: "armadopagos.firebasestorage.app",
-  messagingSenderId: "482082107729",
-  appId: "1:482082107729:web:e4f29ee165ca1437e76370"
-};
-    // -----------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
+      authDomain: "armadopagos.firebaseapp.com",
+      projectId: "armadopagos",
+      storageBucket: "armadopagos.firebasestorage.app",
+      messagingSenderId: "482082107729",
+      appId: "1:482082107729:web:e4f29ee165ca1437e76370"
+    };
 
     try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error(e); }
     const auth = firebase.auth();
     const db = firebase.firestore();
     
-    // --- VARIABLES GLOBALES ---
+    // --- VARIABLES ---
     const ADMIN_EMAIL = "diegomatteiblanco@gmail.com";
     let currentUser = null;
     let currentGroup = null;
     let groupInfo = null;
-    let appData = { expenses:[], payments:{}, accounts:[] };
+    let appData = { expenses:[], payments:{}, accounts:[], categories:[] };
     let year = 2026;
     let selCell = null;
     let isExpired = false;
     let globalPrice = 0; 
+    let activeCategory = 'ALL'; // FILTRO ACTIVO
 
     // --- HELPER CALCULADORA ---
     function smartParse(str) {
@@ -465,43 +499,31 @@ const firebaseConfig = {
         } catch(e) { return 0; }
     }
     
-    function calcInput(el) {
-        const val = smartParse(el.value);
-        if(val) el.value = val;
-    }
+    function calcInput(el) { const val = smartParse(el.value); if(val) el.value = val; }
 
-    // --- HELPER COLORES CUENTAS ---
     function stringToColor(str) {
         if(!str) return 'transparent';
-        let hash = 0;
-        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
         const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
         return '#' + "00000".substring(0, 6 - c.length) + c;
     }
     
-    function getAccName(id) {
-        const acc = appData.accounts.find(a => a.id == id);
-        return acc ? acc.name : '';
-    }
+    function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
     // --- INICIALIZACION ---
     db.collection('config').doc('pricing').onSnapshot(doc => {
         if(doc.exists) {
             globalPrice = doc.data().val || 0;
-            document.querySelectorAll('.uiPriceDisplay').forEach(el => {
-                el.innerText = '$' + parseInt(globalPrice).toLocaleString();
-            });
+            document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString());
         }
     });
 
-    // --- AUTENTICACIÓN ---
     auth.onAuthStateChanged(user => {
         if(user) {
             currentUser = user;
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('groupScreen').style.display = 'flex';
             document.getElementById('dispUserEmail').innerText = user.email.split('@')[0];
-            
             if(user.email === ADMIN_EMAIL) {
                 document.getElementById('tab-admin').style.display = 'block';
                 const hoy = new Date();
@@ -514,35 +536,25 @@ const firebaseConfig = {
         }
     });
 
-    function togglePass() {
-        const x = document.getElementById("password");
-        x.type = (x.type === "password") ? "text" : "password";
-    }
-
+    function togglePass() { const x = document.getElementById("password"); x.type = (x.type === "password") ? "text" : "password"; }
     function loginEmail() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function registerEmail() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo (y SPAM)")).catch(e=>alert(e.message)); }
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // --- GRUPOS Y VALIDACION ---
     function checkGroup() {
         const name = document.getElementById('groupNameInput').value.trim().toUpperCase();
         if(name.length < 3) return document.getElementById('groupMsg').innerText = "Nombre muy corto";
         const pin = document.getElementById('groupPinInput').value.trim();
-
         db.collection('groups').doc(name).get().then(doc => {
             if(doc.exists) {
                 const g = doc.data();
-                if(currentUser.email === ADMIN_EMAIL || g.members.includes(currentUser.email)) {
-                    enterGroup(name, g);
-                } else {
+                if(currentUser.email === ADMIN_EMAIL || g.members.includes(currentUser.email)) enterGroup(name, g);
+                else {
                     document.getElementById('pinArea').style.display='block';
-                    if(pin === g.pin) {
-                        db.collection('groups').doc(name).update({
-                            members: firebase.firestore.FieldValue.arrayUnion(currentUser.email)
-                        }).then(() => enterGroup(name, g));
-                    } else if(pin) document.getElementById('groupMsg').innerText = "PIN INCORRECTO";
+                    if(pin === g.pin) db.collection('groups').doc(name).update({ members: firebase.firestore.FieldValue.arrayUnion(currentUser.email) }).then(() => enterGroup(name, g));
+                    else if(pin) document.getElementById('groupMsg').innerText = "PIN INCORRECTO";
                 }
             } else {
                 if(confirm("Crear grupo nuevo?")) {
@@ -561,27 +573,27 @@ const firebaseConfig = {
         document.querySelector('.app-header').style.display = 'flex';
         document.getElementById('headerGroupName').innerText = name;
         
-        // ESCUCHA EN VIVO DEL ESTADO DEL GRUPO (Fecha vencimiento)
-        db.collection('groups').doc(name).onSnapshot(doc => {
-            if(doc.exists) {
-                const g = doc.data();
-                updateBadge(g.validUntil);
-            }
-        });
-
-        // Config Inicial Badge
+        db.collection('groups').doc(name).onSnapshot(doc => { if(doc.exists) updateBadge(doc.data().validUntil); });
         updateBadge(info.validUntil);
-
         document.getElementById('confGName').innerText = name;
         document.getElementById('confPin').innerText = info.pin;
 
-        // Escucha de DATOS (Gastos, Pagos)
         db.collection('data').doc(name).onSnapshot(doc => {
             if(doc.exists) {
                 appData = doc.data();
                 if(!appData.expenses) appData.expenses = [];
                 if(!appData.payments) appData.payments = {};
                 if(!appData.accounts) appData.accounts = [];
+                // Init Categories if needed
+                if(!appData.categories || appData.categories.length === 0) {
+                    appData.categories = [
+                        {id: 'c1', name:'Hogar', icon:'🏠'},
+                        {id: 'c2', name:'Oficina', icon:'🏢'},
+                        {id: 'c3', name:'Auto', icon:'🚗'},
+                        {id: 'c4', name:'Personal', icon:'👤'},
+                        {id: 'c5', name:'Tarjetas', icon:'💳'}
+                    ];
+                }
             } else saveData();
             renderAll();
         });
@@ -592,316 +604,161 @@ const firebaseConfig = {
         const now = new Date();
         const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
         isExpired = diffDays <= 0;
-        
         const tag = document.getElementById('dispGroupTag');
         document.getElementById('confValid').innerText = validDate.toLocaleDateString();
-
         if(isExpired) {
             tag.innerText = "VENCIDO"; tag.className = "group-tag expired";
             document.getElementById('confValid').innerText = "VENCIDO - PAGO REQUERIDO";
             document.getElementById('confValid').style.color = "#ff5252";
-            if(!document.getElementById('modLock').style.display || document.getElementById('modLock').style.display === 'none') {
-                 setTimeout(() => document.getElementById('modLock').style.display='flex', 1000);
-            }
+            if(!document.getElementById('modLock').style.display || document.getElementById('modLock').style.display === 'none') setTimeout(() => document.getElementById('modLock').style.display='flex', 1000);
         } else {
             tag.innerText = "GRATIS (" + diffDays + " días)"; tag.className = "group-tag pro";
             document.getElementById('modLock').style.display='none';
         }
     }
 
-    function generateDynamicHash(group, month, year) { 
-        let h=0; 
-        const s = group + "_" + month + "_" + year + "_CYM_SECURE_2026"; 
-        for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; 
-        return Math.abs(h).toString(36).toUpperCase().substring(0,6); 
+    // --- CATEGORIAS ---
+    function renderFilters() {
+        const container = document.getElementById('filterList');
+        let html = '';
+        appData.categories.forEach(c => {
+            const activeClass = activeCategory === c.name ? 'active' : '';
+            html += `<div class="filter-pill ${activeClass}" onclick="setFilter('${c.name}')">${c.icon} ${c.name}</div>`;
+        });
+        container.innerHTML = html;
+        
+        // Update All Button
+        const allBtn = document.getElementById('filt-ALL');
+        if(activeCategory === 'ALL') allBtn.classList.add('active'); else allBtn.classList.remove('active');
     }
 
+    function setFilter(catName) {
+        activeCategory = catName;
+        renderFilters();
+        renderGrid();
+    }
+
+    function openModalCats() {
+        if(checkLock()) return;
+        const list = document.getElementById('catList');
+        list.innerHTML = '';
+        appData.categories.forEach(c => {
+            list.innerHTML += `<div class="cat-item"><span>${c.icon} ${c.name}</span> <button class="btn-s" style="width:auto; color:#ff5252; border-color:#ff5252; font-size:0.7rem;" onclick="delCat('${c.id}')">Eliminar</button></div>`;
+        });
+        document.getElementById('newCatIcon').value = '';
+        document.getElementById('newCatName').value = '';
+        document.getElementById('modCats').style.display = 'flex';
+    }
+
+    function addCat() {
+        const icon = document.getElementById('newCatIcon').value || '🏷️';
+        const name = document.getElementById('newCatName').value;
+        if(name) {
+            appData.categories.push({ id: Date.now().toString(), name, icon });
+            saveData();
+            openModalCats(); // refresh list
+            renderFilters();
+        }
+    }
+
+    function delCat(id) {
+        if(confirm("¿Eliminar categoría? Los gastos quedarán visibles solo en 'Todos'.")) {
+            appData.categories = appData.categories.filter(c => c.id !== id);
+            saveData();
+            openModalCats();
+            renderFilters();
+        }
+    }
+
+    // --- MONETIZACION Y ADMIN ---
+    function generateDynamicHash(g, m, y) { let h=0; const s=g+"_"+m+"_"+y+"_CYM_SECURE_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        if(code === "DEMO") { 
-             extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1)));
-             return;
-        }
-
+        if(code === "DEMO") { extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1))); return; }
         const now = new Date();
         let foundMatch = false;
-        
         for(let i=0; i<12; i++) {
             const checkDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-            const m = checkDate.getMonth();
-            const y = checkDate.getFullYear();
-            
-            const expected = generateDynamicHash(currentGroup, m, y);
-            
-            if(code === expected) {
-                const lastDay = new Date(y, m + 1, 0); 
-                extendValidity(lastDay);
+            if(code === generateDynamicHash(currentGroup, checkDate.getMonth(), checkDate.getFullYear())) {
+                extendValidity(new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0));
                 foundMatch = true;
                 break;
             }
         }
-        
-        if(!foundMatch) alert("Código inválido o expirado.");
+        if(!foundMatch) alert("Código inválido.");
     }
-
-    function extendValidity(dateObj) {
-        db.collection('groups').doc(currentGroup).update({ validUntil: dateObj.toISOString() }).then(() => {
-            alert("¡Pago exitoso! Vencimiento actualizado al: " + dateObj.toLocaleDateString());
-            location.reload();
-        });
-    }
-
-    // --- PANEL DE ADMINISTRADOR ---
-    function savePrice() {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        const val = document.getElementById('adminPriceInput').value;
-        if(val) {
-            db.collection('config').doc('pricing').set({ val: parseInt(val) })
-            .then(() => alert("Precio actualizado para todos los usuarios."));
-        }
-    }
-
-    function renderAdmin() {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        
-        const selY = document.getElementById('adminYear');
-        if(selY.options.length < 2) {
-            selY.innerHTML = "";
-            const currentYear = new Date().getFullYear();
-            for(let i=0; i<=5; i++) {
-                const opt = document.createElement('option');
-                opt.value = currentYear + i;
-                opt.text = currentYear + i;
-                selY.add(opt);
-            }
-        }
-
-        document.getElementById('adminPriceInput').value = globalPrice;
-
-        const selM = document.getElementById('adminMonth').value;
-        const currentYVal = selY.value; 
-        
-        const listDiv = document.getElementById('adminList');
-        listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
-        
-        let stats = { users:0, groups:0, active:0, expired:0 };
-
-        db.collection('groups').get().then(snapshot => {
-            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Clave ('+ (parseInt(selM)+1) + '/' + currentYVal +')</th></tr></thead><tbody>';
-            
-            snapshot.forEach(doc => {
-                const g = doc.data();
-                const vDate = new Date(g.validUntil || 0);
-                const isVencido = vDate < new Date();
-                
-                stats.groups++;
-                stats.users += (g.members ? g.members.length : 0);
-                if(isVencido) stats.expired++; else stats.active++;
-
-                const code = generateDynamicHash(doc.id, parseInt(selM), parseInt(currentYVal));
-                
-                let membersHtml = g.members.map(m => 
-                    `<div>
-                        ${m === g.owner ? '★' : ''} ${m} 
-                        ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span> <span class="del-user" onclick="alert('IMPOSIBLE: Para borrar la cuenta definitivamente, ve a Firebase Console > Authentication')">[☠️]</span>` : ''}
-                    </div>`
-                ).join('');
-                membersHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
-
-                html += `<tr>
-                    <td>
-                        <strong style="color:#fff; font-size:1.1rem;">${doc.id}</strong><br>
-                        <div style="margin-top:5px; font-size:0.75rem; line-height:1.4;">${membersHtml}</div>
-                    </td>
-                    <td>
-                        <span class="tag-adm" onclick="modDate('${doc.id}', '${g.validUntil}')" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()} ✏️</span>
-                        <div style="margin-top:5px;">
-                            <button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252;" onclick="deleteGroup('${doc.id}')">🗑️</button>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn-s" style="padding:10px; font-weight:bold; font-size:1rem; color:#BB86FC; border:1px solid #BB86FC;" onclick="prompt('Copia clave ${doc.id}:','${code}')">🔑 ${code}</button>
-                    </td>
-                </tr>`;
-            });
-            html += '</tbody></table>';
-            listDiv.innerHTML = html;
-
-            document.getElementById('statUsers').innerText = stats.users;
-            document.getElementById('statGroups').innerText = stats.groups;
-            document.getElementById('statActive').innerText = stats.active;
-            document.getElementById('statExpired').innerText = stats.expired;
-        });
-    }
-
-    function modDate(id, current) {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        const newD = prompt("Ingresa nueva fecha (YYYY-MM-DD):", current ? current.split('T')[0] : '');
-        if(newD) {
-            const d = new Date(newD);
-            if(!isNaN(d.getTime())) {
-                db.collection('groups').doc(id).update({ validUntil: d.toISOString() }); // Ya no recarga manual, el listener lo hace
-            } else alert("Fecha inválida");
-        }
-    }
-
-    function kickUser(groupId, email) {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        if(confirm(`¿Sacar a ${email} del grupo? (NO borra su cuenta)`)) {
-            db.collection('groups').doc(groupId).update({
-                members: firebase.firestore.FieldValue.arrayRemove(email)
-            }).then(() => renderAdmin());
-        }
-    }
-
-    function addUser(groupId) {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        const email = prompt("Email del nuevo usuario (Debe registrarse con Google):");
-        if(email && email.includes('@')) {
-            db.collection('groups').doc(groupId).update({
-                members: firebase.firestore.FieldValue.arrayUnion(email.trim().toLowerCase())
-            }).then(() => renderAdmin());
-        }
-    }
-
-    function deleteGroup(id) {
-        if(confirm("¿ESTAS SEGURO de borrar el grupo " + id + " y todos sus datos?")) {
-            db.collection('groups').doc(id).delete();
-            db.collection('data').doc(id).delete().then(() => {
-                alert("Grupo eliminado");
-                renderAdmin();
-            });
-        }
-    }
-
-    // --- RESTAURAR BACKUP ---
-    function restoreBackup(input) {
-        if(isExpired) return alert("Servicio vencido. Paga para importar datos.");
-        const file = input.files[0]; if(!file) return;
-        const reader = new FileReader();
-        reader.onload = e => {
-            try {
-                const d = JSON.parse(e.target.result);
-                let newExp = [], newPay = {}, newAcc = [];
-
-                if(Array.isArray(d.expenses)) {
-                    newExp = d.expenses.map(e => ({
-                        id: e.id || Date.now(),
-                        name: e.name || "Sin Nombre",
-                        cat: e.cat || "Otros",
-                        folder: e.folder || "",
-                        link: e.link || "",
-                        user: e.user || "",
-                        pass: e.pass || "",
-                        comment: e.comment || ""
-                    }));
-                }
-                
-                if(d.payments) {
-                    Object.keys(d.payments).forEach(key => {
-                        const oldP = d.payments[key];
-                        newPay[key] = {
-                            amt: oldP.amount || oldP.amt,
-                            day: oldP.day,
-                            paid: oldP.paid,
-                            accId: oldP.accId
-                        };
-                    });
-                }
-
-                if(Array.isArray(d.accounts)) {
-                    newAcc = d.accounts.map(a => ({
-                        id: a.id || Date.now(),
-                        name: a.name || "Cuenta",
-                        bal: parseFloat(a.balance || a.bal || 0)
-                    }));
-                }
-
-                if(confirm(`Importar: ${newExp.length} gastos y ${newAcc.length} cuentas?`)) {
-                    appData = { expenses: newExp, payments: newPay, accounts: newAcc };
-                    saveData();
-                    alert("¡Datos importados correctamente!");
-                }
-            } catch(err) { alert("Error archivo: " + err.message); }
-        };
-        reader.readAsText(file);
-    }
+    function extendValidity(d) { db.collection('groups').doc(currentGroup).update({ validUntil: d.toISOString() }).then(() => { alert("¡Pago exitoso!"); location.reload(); }); }
     
-    function downloadBackup() {
-        const data = { ...appData, meta: { group: currentGroup, date: new Date() } };
-        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
-        const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Backup_${currentGroup}.json`; a.click();
+    function savePrice() { if(currentUser.email!==ADMIN_EMAIL) return; const val=document.getElementById('adminPriceInput').value; if(val) db.collection('config').doc('pricing').set({val:parseInt(val)}).then(()=>alert("Guardado")); }
+    function renderAdmin() {
+        if(currentUser.email!==ADMIN_EMAIL) return;
+        const selY=document.getElementById('adminYear');
+        if(selY.options.length<2) { selY.innerHTML=""; const cy=new Date().getFullYear(); for(let i=0;i<=5;i++) { const o=document.createElement('option'); o.value=cy+i; o.text=cy+i; selY.add(o); } }
+        document.getElementById('adminPriceInput').value=globalPrice;
+        const selM=document.getElementById('adminMonth').value; const currentY=selY.value;
+        const listDiv=document.getElementById('adminList'); listDiv.innerHTML='<p style="text-align:center">Cargando...</p>';
+        let s={u:0,g:0,a:0,e:0};
+        db.collection('groups').get().then(snap=>{
+            let h='<table class="admin-table"><thead><tr><th>Grupo</th><th>Vencimiento</th><th>Clave</th></tr></thead><tbody>';
+            snap.forEach(doc=>{
+                const g=doc.data(); const v=new Date(g.validUntil||0); const exp=v<new Date();
+                s.g++; s.u+=(g.members?g.members.length:0); if(exp)s.e++; else s.a++;
+                const c=generateDynamicHash(doc.id,parseInt(selM),parseInt(currentY));
+                let mHtml=g.members.map(m=>`<div>${m===g.owner?'★':''} ${m} ${m!==g.owner?`<span class="del-user" onclick="kickUser('${doc.id}','${m}')">[x]</span>`:''}</div>`).join('');
+                mHtml+=`<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
+                h+=`<tr><td><strong style="color:#fff">${doc.id}</strong><br><div style="font-size:0.7rem;margin-top:5px">${mHtml}</div></td><td><span class="tag-adm" onclick="modDate('${doc.id}','${g.validUntil}')" style="background:${exp?'#ff5252':'#00e676'};color:#000">${v.toLocaleDateString()} ✏️</span><div style="margin-top:5px"><button class="btn-s" style="padding:2px 5px;font-size:0.7rem;color:#ff5252;border-color:#ff5252" onclick="deleteGroup('${doc.id}')">🗑️</button></div></td><td><button class="btn-s" style="padding:10px;color:#BB86FC;border:1px solid #BB86FC" onclick="prompt('Copia:','${c}')">🔑 ${c}</button></td></tr>`;
+            });
+            h+='</tbody></table>'; listDiv.innerHTML=h;
+            document.getElementById('statUsers').innerText=s.u; document.getElementById('statGroups').innerText=s.g;
+            document.getElementById('statActive').innerText=s.a; document.getElementById('statExpired').innerText=s.e;
+        });
     }
+    function modDate(id,c){if(currentUser.email!==ADMIN_EMAIL)return;const n=prompt("Fecha YYYY-MM-DD:",c?c.split('T')[0]:'');if(n){const d=new Date(n);if(!isNaN(d.getTime()))db.collection('groups').doc(id).update({validUntil:d.toISOString()});}}
+    function kickUser(id,e){if(currentUser.email!==ADMIN_EMAIL)return;if(confirm("¿Sacar usuario?"))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayRemove(e)}).then(()=>renderAdmin());}
+    function addUser(id){if(currentUser.email!==ADMIN_EMAIL)return;const e=prompt("Email:");if(e&&e.includes('@'))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayUnion(e.trim().toLowerCase())}).then(()=>renderAdmin());}
+    function deleteGroup(id){if(confirm("¿Borrar grupo?"))db.collection('groups').doc(id).delete();db.collection('data').doc(id).delete().then(()=>renderAdmin());}
 
-    function saveData() { if(currentGroup) db.collection('data').doc(currentGroup).set(appData); }
+    // --- DATA ---
+    function restoreBackup(i){if(isExpired)return alert("Vencido");const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);let nx=[],np={},na=[],nc=[];if(Array.isArray(d.expenses))nx=d.expenses;if(d.payments)np=d.payments;if(Array.isArray(d.accounts))na=d.accounts;if(Array.isArray(d.categories))nc=d.categories;if(confirm("Importar?")){appData={expenses:nx,payments:np,accounts:na,categories:nc.length?nc:appData.categories};saveData();alert("Listo");}}catch(z){alert("Error");}};r.readAsText(f);}
+    function downloadBackup(){const b=new Blob([JSON.stringify({...appData,meta:{group:currentGroup,date:new Date()}})],{type:"application/json"});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`Backup_${currentGroup}.json`;a.click();}
+    function saveData(){if(currentGroup)db.collection('data').doc(currentGroup).set(appData);}
+    function nukeExpenses(){if(checkLock())return;if(confirm("¿Borrar TODO?")){appData.expenses=[];appData.payments={};saveData();alert("Borrado");}}
+    function nukeAccounts(){if(checkLock())return;if(confirm("¿Borrar Cuentas?")){appData.accounts=[];saveData();alert("Borrado");}}
 
-    // --- FUNCIONES DE BORRADO MASIVO ---
-    function nukeExpenses() {
-        if(checkLock()) return;
-        if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODOS los gastos y su historial de pagos. No se puede deshacer.")) {
-            if(confirm("Confirmación final: ¿Borrar TODO?")) {
-                appData.expenses = [];
-                appData.payments = {}; 
-                saveData();
-                alert("Gastos eliminados.");
-            }
-        }
-    }
-
-    function nukeAccounts() {
-        if(checkLock()) return;
-        if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODAS las cuentas bancarias.")) {
-            appData.accounts = [];
-            saveData();
-            alert("Cuentas eliminadas.");
-        }
-    }
-
-    // --- RENDERIZADO UI ---
-    function renderAll() { renderGrid(); renderAcc(); calcDash(); }
+    // --- UI ---
+    function renderAll(){ renderFilters(); renderGrid(); renderAcc(); calcDash(); }
     
     function renderGrid() {
         const t = document.getElementById('mainTable');
         t.innerHTML = `<thead><tr><th class="col-fix" onclick="sortByMonth(-1)">Concepto (Ordenar)</th>${[...Array(12)].map((_,i)=>`<th onclick="sortByMonth(${i})">${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}</tr></thead>`;
         let body = '<tbody>';
-        appData.expenses.forEach(e => {
-            body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div>
-            <div style="margin-top:2px;">
-                ${e.folder ? `<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>` : ''}
-                ${e.link ? `<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>` : ''}
-                ${e.user||e.pass ? `<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>` : ''}
-                ${e.comment ? `<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>` : ''}
-                <span class="icon-btn" onclick="editExp(${e.id})">✏️</span>
-            </div></td>`;
+        
+        // FILTRADO
+        const list = activeCategory === 'ALL' ? appData.expenses : appData.expenses.filter(e => e.cat === activeCategory);
+
+        list.forEach(e => {
+            body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div><div style="margin-top:2px;">${e.folder?`<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>`:''}${e.link?`<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>`:''}${e.user||e.pass?`<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>`:''}${e.comment?`<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>`:''}<span class="icon-btn" onclick="editExp(${e.id})">✏️</span></div></td>`;
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
-                // LOGICA DE COLORES
                 let st = '';
-                if(p.paid) {
-                    st = 'status-paid';
-                } else if(p.amt || p.day) {
-                    const today = new Date();
-                    today.setHours(0,0,0,0);
+                if(p.paid) st = 'status-paid';
+                else if(p.amt || p.day) {
+                    const today = new Date(); today.setHours(0,0,0,0);
                     const d = p.day ? parseInt(p.day) : 0; 
-                    const deadline = d > 0 ? new Date(year, i, d) : new Date(year, i + 1, 0);
-                    
-                    if(deadline < today) st = 'status-pend'; // Rojo (Vencido)
-                    else st = 'status-soon'; // Amarillo (Proximo)
+                    const dl = d > 0 ? new Date(year, i, d) : new Date(year, i + 1, 0);
+                    if(dl < today) st = 'status-pend'; else st = 'status-soon';
                 }
 
-                const day = (p.day !== undefined && p.day !== '') ? p.day : '';
+                const day = (p.day!==undefined && p.day!=='') ? p.day : '';
                 const amt = p.amt ? '$'+parseInt(p.amt).toLocaleString() : '';
-                const accName = p.accId ? getAccName(p.accId) : '';
-                const accColor = p.accId ? stringToColor(accName) : 'transparent';
+                const an = p.accId ? getAccName(p.accId) : '';
+                const ac = p.accId ? stringToColor(an) : 'transparent';
                 
                 body += `<td class="${st}" style="padding:0; position:relative;">
                     <div onclick="openCell(${e.id},${i})" class="cell-container">
                         <div class="cell-day">${day}</div>
-                        <div class="cell-data">
-                            <span class="cell-amt">${amt}</span>
-                            ${p.accId ? `<div class="acc-dot" style="background:${accColor}" title="${accName}"></div>` : ''}
-                        </div>
+                        <div class="cell-data"><span class="cell-amt">${amt}</span>${p.accId ? `<div class="acc-dot" style="background:${ac}" title="${an}"></div>` : ''}</div>
                     </div>
                 </td>`;
             }
@@ -910,221 +767,92 @@ const firebaseConfig = {
         t.innerHTML += body + '</tbody>';
     }
 
-    // FUNCION DE ORDENAMIENTO
-    function sortByMonth(monthIndex) {
-        if(monthIndex === -1) {
-            // Ordenar por nombre
-            appData.expenses.sort((a,b) => a.name.localeCompare(b.name));
-        } else {
-            // Ordenar por dia de vencimiento en ese mes
-            appData.expenses.sort((a,b) => {
-                const kA = `${a.id}_${year}_${monthIndex}`;
-                const kB = `${b.id}_${year}_${monthIndex}`;
-                const pA = appData.payments[kA] || {};
-                const pB = appData.payments[kB] || {};
-                
-                // Si no tiene dia, lo mandamos al fondo (Infinity)
-                const dayA = (pA.day !== undefined && pA.day !== '') ? parseInt(pA.day) : 999;
-                const dayB = (pB.day !== undefined && pB.day !== '') ? parseInt(pB.day) : 999;
-                
-                if(dayA === dayB) return a.name.localeCompare(b.name);
-                return dayA - dayB;
-            });
-        }
+    function sortByMonth(mi){
+        if(mi===-1) appData.expenses.sort((a,b)=>a.name.localeCompare(b.name));
+        else appData.expenses.sort((a,b)=>{
+            const pA=appData.payments[`${a.id}_${year}_${mi}`]||{}; const pB=appData.payments[`${b.id}_${year}_${mi}`]||{};
+            const dA=(pA.day!==undefined&&pA.day!=='')?parseInt(pA.day):999; const dB=(pB.day!==undefined&&pB.day!=='')?parseInt(pB.day):999;
+            if(dA===dB)return a.name.localeCompare(b.name); return dA-dB;
+        });
         renderGrid();
     }
 
-    function renderAcc() {
-        const l = document.getElementById('accList'); l.innerHTML = '';
-        const s = document.getElementById('mcAcc'); s.innerHTML = '<option value="">--</option>';
-        const now = new Date();
-        
-        appData.accounts.forEach(a => {
-            let assignedHTML = '';
-            let pendingSum = 0;
-            
-            appData.expenses.forEach(e => {
-                const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
-                const p = appData.payments[k];
-                if(p && p.accId == a.id && !p.paid && p.amt) {
-                    pendingSum += parseFloat(p.amt);
-                    assignedHTML += `<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`;
-                }
-            });
-            
-            const projected = (parseFloat(a.bal)||0) - pendingSum;
-            s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-            
-            l.innerHTML += `
-            <div class="acc-card">
-                <div class="acc-head" onclick="toggleAcc(${a.id})">
-                    <div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${projected.toLocaleString()}</span></div>
-                    <div style="text-align:right">
-                        <div style="color:#00e676; font-weight:bold; font-size:1.1rem;">$${parseFloat(a.bal).toLocaleString()}</div>
-                        <div style="margin-top:5px;"><span class="icon-btn" onclick="editAcc(${a.id}); event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id}); event.stopPropagation()">✖</span></div>
-                    </div>
-                </div>
-                <div id="accDet-${a.id}" class="acc-detail">
-                    <div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>
-                    ${assignedHTML || '<div style="text-align:center;color:#555;font-style:italic;padding:5px;">Sin gastos asignados pendientes</div>'}
-                    <div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${projected.toLocaleString()}</span></div></div>
-                </div>
-            </div>`;
+    function renderAcc(){
+        const l=document.getElementById('accList'); l.innerHTML='';
+        const s=document.getElementById('mcAcc'); s.innerHTML='<option value="">--</option>';
+        const now=new Date();
+        appData.accounts.forEach(a=>{
+            let h=''; let tot=0;
+            appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`; } });
+            const proj=(parseFloat(a.bal)||0)-tot; s.innerHTML+=`<option value="${a.id}">${a.name}</option>`;
+            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${proj.toLocaleString()}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">$${parseFloat(a.bal).toLocaleString()}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${proj.toLocaleString()}</span></div></div></div></div>`;
         });
     }
-    
-    function toggleAcc(id) { const el = document.getElementById(`accDet-${id}`); el.classList.toggle('open'); }
-
-    function calcDash() {
-        let debt=0, assets=0;
-        const now = new Date();
-        appData.expenses.forEach(e => {
-            const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
-            const p = appData.payments[k];
-            if(p && p.amt && !p.paid) debt += parseInt(p.amt);
-        });
-        appData.accounts.forEach(a => assets += parseFloat(a.bal));
-        document.getElementById('dTotal').innerText = '$'+assets.toLocaleString();
-        document.getElementById('dDebt').innerText = '$'+debt.toLocaleString();
-        document.getElementById('dNet').innerText = '$'+(assets-debt).toLocaleString();
-    }
+    function toggleAcc(id){document.getElementById(`accDet-${id}`).classList.toggle('open');}
+    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseInt(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText='$'+a.toLocaleString(); document.getElementById('dDebt').innerText='$'+d.toLocaleString(); document.getElementById('dNet').innerText='$'+(a-d).toLocaleString(); }
 
     // --- CRUD ---
     let edId=null;
-    function openModalExp() { if(checkLock()) return; edId=null; cleanExp(); document.getElementById('modExp').style.display='flex'; }
-    function editExp(id) { if(checkLock()) return; edId=id; const e=appData.expenses.find(x=>x.id==id); loadExp(e); document.getElementById('modExp').style.display='flex'; }
+    function openModalExp() {
+        if(checkLock()) return; edId=null;
+        ['meName','meFolder','meLink','meUser','mePass','meComm'].forEach(i=>document.getElementById(i).value='');
+        
+        // POPULATE CATS
+        const catSel = document.getElementById('meCat'); catSel.innerHTML = '';
+        appData.categories.forEach(c => {
+            const opt = document.createElement('option'); opt.value = c.name; opt.innerText = c.icon + ' ' + c.name; catSel.add(opt);
+        });
+        
+        document.getElementById('modExp').style.display='flex';
+    }
+    function editExp(id) {
+        if(checkLock()) return; edId=id; const e=appData.expenses.find(x=>x.id==id);
+        openModalExp(); // Reset and populate cats
+        edId=id; // restore ID
+        document.getElementById('meName').value=e.name; document.getElementById('meFolder').value=e.folder||''; document.getElementById('meLink').value=e.link||''; document.getElementById('meUser').value=e.user||''; document.getElementById('mePass').value=e.pass||''; document.getElementById('meComm').value=e.comment||''; document.getElementById('meCat').value=e.cat;
+    }
     function saveExp() {
-        const obj = { name: val('meName'), cat: val('meCat'), folder: val('meFolder'), link: val('meLink'), user: val('meUser'), pass: val('mePass'), comment: val('meComm') };
-        if(edId) { const idx=appData.expenses.findIndex(x=>x.id==edId); appData.expenses[idx]={...appData.expenses[idx], ...obj}; }
-        else appData.expenses.push({id:Date.now(), ...obj});
+        const obj={name:val('meName'), cat:val('meCat'), folder:val('meFolder'), link:val('meLink'), user:val('meUser'), pass:val('mePass'), comment:val('meComm')};
+        if(edId){ const idx=appData.expenses.findIndex(x=>x.id==edId); appData.expenses[idx]={...appData.expenses[idx], ...obj}; } else appData.expenses.push({id:Date.now(), ...obj});
         saveData(); closeModal('modExp');
     }
-    
-    // NUEVA FUNCION BORRAR GASTO Y SUS PAGOS
-    function delExp() {
-        if(checkLock()) return;
-        if(!edId) return;
-        if(confirm("¿Borrar este gasto y TODO su historial de pagos?")) {
-            // 1. Borrar de la lista de gastos
-            appData.expenses = appData.expenses.filter(x => x.id !== edId);
-            
-            // 2. Borrar pagos asociados en el diccionario (claves empiezan con ID_)
-            Object.keys(appData.payments).forEach(key => {
-                if(key.startsWith(edId + "_")) {
-                    delete appData.payments[key];
-                }
-            });
-            
-            saveData();
-            closeModal('modExp');
-        }
-    }
-    
+    function delExp(){ if(checkLock())return; if(!edId)return; if(confirm("¿Borrar gasto y pagos?")){appData.expenses=appData.expenses.filter(x=>x.id!==edId); Object.keys(appData.payments).forEach(k=>{if(k.startsWith(edId+"_"))delete appData.payments[k]}); saveData(); closeModal('modExp');} }
+
     let acId=null;
-    function openModalAcc() { if(checkLock()) return; acId=null; document.getElementById('maName').value=''; document.getElementById('maBal').value=''; document.getElementById('modAcc').style.display='flex'; }
-    function editAcc(id) { if(checkLock()) return; acId=id; const a=appData.accounts.find(x=>x.id==id); document.getElementById('maName').value=a.name; document.getElementById('maBal').value=a.bal; document.getElementById('modAcc').style.display='flex'; }
-    function saveAcc() {
-        const n=val('maName'); 
-        // SMART PARSE PARA CUENTAS
-        const b=smartParse(val('maBal'));
-        if(acId) { const a=appData.accounts.find(x=>x.id==acId); a.name=n; a.bal=b; }
-        else appData.accounts.push({id:Date.now(), name:n, bal:b});
-        saveData(); closeModal('modAcc');
-    }
-    function delAcc(id) { if(checkLock()) return; if(confirm("¿Borrar?")) { appData.accounts=appData.accounts.filter(a=>a.id!=id); saveData(); } }
+    function openModalAcc(){ if(checkLock())return; acId=null; document.getElementById('maName').value=''; document.getElementById('maBal').value=''; document.getElementById('modAcc').style.display='flex'; }
+    function editAcc(id){ if(checkLock())return; acId=id; const a=appData.accounts.find(x=>x.id==id); document.getElementById('maName').value=a.name; document.getElementById('maBal').value=a.bal; document.getElementById('modAcc').style.display='flex'; }
+    function saveAcc(){ const n=val('maName'); const b=smartParse(val('maBal')); if(acId){ const a=appData.accounts.find(x=>x.id==acId); a.name=n; a.bal=b; } else appData.accounts.push({id:Date.now(), name:n, bal:b}); saveData(); closeModal('modAcc'); }
+    function delAcc(id){ if(checkLock())return; if(confirm("¿Borrar?")){appData.accounts=appData.accounts.filter(a=>a.id!=id); saveData();} }
 
     function openCell(eid, m) {
-        if(checkLock()) return;
-        selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
-        document.getElementById('mcAmt').value = p.amt||'';
-        document.getElementById('mcDay').value = p.day||'';
-        document.getElementById('mcAcc').value = p.accId||'';
-        document.getElementById('mcPaid').checked = p.paid||false;
-        
-        // RESET REPEAT UI
-        document.getElementById('mcRepeat').checked = false;
-        document.getElementById('mcRepOpt').style.display = 'none';
-        
-        // POPULATE REPEAT SELECTOR
-        const sel = document.getElementById('mcRepMonth');
-        sel.innerHTML = '';
+        if(checkLock()) return; selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
+        document.getElementById('mcAmt').value = p.amt||''; document.getElementById('mcDay').value = p.day||''; document.getElementById('mcAcc').value = p.accId||''; document.getElementById('mcPaid').checked = p.paid||false;
+        document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
+        const sel = document.getElementById('mcRepMonth'); sel.innerHTML = '';
         const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        for(let i=m+1; i<12; i++) {
-            const opt = document.createElement('option');
-            opt.value = i;
-            opt.text = months[i];
-            sel.add(opt);
-        }
-        
+        for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
         document.getElementById('modCell').style.display='flex';
     }
-    
     function saveCell() {
-        const k = `${selCell.eid}_${year}_${selCell.m}`;
-        const rawAmt = val('mcAmt');
-        const amt = smartParse(rawAmt);
-        const day = val('mcDay');
-        const paid = document.getElementById('mcPaid').checked;
-        
-        // LOGICA CORREGIDA: Guardar si hay importe, O dia, O pagado.
-        if(amt || day || paid) {
-            appData.payments[k] = { amt, day, accId: val('mcAcc'), paid };
-        } else {
-            delete appData.payments[k];
-        }
-        
-        // REPETIR VENCIMIENTO INTENCIONAL
-        if(document.getElementById('mcRepeat').checked && day) {
-            const targetM = parseInt(document.getElementById('mcRepMonth').value);
-            for(let i = selCell.m + 1; i <= targetM; i++) {
-                const nextK = `${selCell.eid}_${year}_${i}`;
-                if(!appData.payments[nextK]) appData.payments[nextK] = {};
-                appData.payments[nextK].day = day;
-            }
-        }
-
+        const k=`${selCell.eid}_${year}_${selCell.m}`; const amt=smartParse(val('mcAmt')); const day=val('mcDay'); const paid=document.getElementById('mcPaid').checked;
+        if(amt||day||paid) appData.payments[k]={amt,day,accId:val('mcAcc'),paid}; else delete appData.payments[k];
+        if(document.getElementById('mcRepeat').checked && day) { const tm=parseInt(document.getElementById('mcRepMonth').value); for(let i=selCell.m+1;i<=tm;i++){ const nk=`${selCell.eid}_${year}_${i}`; if(!appData.payments[nk])appData.payments[nk]={}; appData.payments[nk].day=day; } }
         saveData(); closeModal('modCell');
     }
-    
-    function delCell() { delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
-    
-    // NUEVA FUNCION BORRAR RECURSIVO
-    function delRecursive() {
-        if(confirm("¿Borrar pago de este mes Y TODOS los siguientes de este año?")) {
-            for(let i = selCell.m; i < 12; i++) {
-                delete appData.payments[`${selCell.eid}_${year}_${i}`];
-            }
-            saveData();
-            closeModal('modCell');
-        }
-    }
+    function delCell(){ delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
+    function delRecursive(){ if(confirm("¿Borrar este y siguientes?")){ for(let i=selCell.m; i<12; i++) delete appData.payments[`${selCell.eid}_${year}_${i}`]; saveData(); closeModal('modCell'); } }
 
-    // UTILS
-    function checkLock() { if(isExpired) { document.getElementById('modLock').style.display='flex'; return true; } return false; }
-    function val(id) { return document.getElementById(id).value; }
-    function cleanExp() { ['meName','meFolder','meLink','meUser','mePass','meComm'].forEach(i=>document.getElementById(i).value=''); }
-    function loadExp(e) { document.getElementById('meName').value=e.name; document.getElementById('meFolder').value=e.folder||''; document.getElementById('meLink').value=e.link||''; document.getElementById('meUser').value=e.user||''; document.getElementById('mePass').value=e.pass||''; document.getElementById('meComm').value=e.comment||''; document.getElementById('meCat').value=e.cat; }
-    
-    function switchTab(t) { 
-        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); 
-        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); 
-        
-        if(t === 'admin') {
-            document.getElementById('view-admin').classList.add('active');
-            renderAdmin(); 
-        } else {
-            document.getElementById('view-'+t).classList.add('active'); 
-        }
-        
-        const tabEl = document.querySelector(`.tab[onclick="switchTab('${t}')"]`);
-        if(tabEl) tabEl.classList.add('active');
-        
-        if(t==='planilla') renderAll(); 
+    function checkLock(){ if(isExpired){ document.getElementById('modLock').style.display='flex'; return true; } return false; }
+    function val(id){ return document.getElementById(id).value; }
+    function switchTab(t){ 
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+        if(t==='admin'){document.getElementById('view-admin').classList.add('active'); renderAdmin();} else document.getElementById('view-'+t).classList.add('active');
+        const tabEl=document.querySelector(`.tab[onclick="switchTab('${t}')"]`); if(tabEl) tabEl.classList.add('active');
+        if(t==='planilla') renderAll();
     }
-    
-    function changeYear(d) { year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
-    function closeModal(id) { document.getElementById(id).style.display='none'; }
-    function exportExcel() { const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
+    function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
+    function closeModal(id){ document.getElementById(id).style.display='none'; }
+    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
 </script>
 </body>
 </html>
