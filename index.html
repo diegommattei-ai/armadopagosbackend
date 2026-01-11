@@ -55,7 +55,8 @@
         /* TABLA */
         .grid-con { overflow-x: auto; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; min-height: 300px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
-        th { background: #252525; position: sticky; top: 0; padding: 10px; color: #aaa; border-bottom: 2px solid #444; z-index: 20; }
+        th { background: #252525; position: sticky; top: 0; padding: 10px; color: #aaa; border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; }
+        th:hover { background: #333; color: #fff; }
         td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 55px; vertical-align: middle; }
         .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 30; min-width: 160px; max-width: 160px; }
         
@@ -367,9 +368,9 @@
         </div>
     </div>
     
-    <div id="modCell" class="modal"><div class="modal-box"><h3>Detalle Pago</h3><label>Monto (Ej: 100+50)</label><input type="text" id="mcAmt" style="font-size:1.5rem;color:#BB86FC" placeholder="0"><label>Día Venc.</label><input type="number" id="mcDay" placeholder="Día (1-31)"><label>Pagar con:</label><select id="mcAcc"><option value="">--</option></select><div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;"><input type="checkbox" id="mcPaid" style="width:20px; margin:0;"><label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label></div><button class="btn btn-p" onclick="saveCell()">Guardar</button><button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button><button class="btn btn-s" style="color:red; border-color:red;" onclick="delCell()">Borrar</button></div></div>
+    <div id="modCell" class="modal"><div class="modal-box"><h3>Detalle Pago</h3><label>Monto (Ej: 100+50)</label><input type="text" id="mcAmt" onchange="calcInput(this)" style="font-size:1.5rem;color:#BB86FC" placeholder="0"><label>Día Venc.</label><input type="number" id="mcDay" placeholder="Día (1-31)"><label>Pagar con:</label><select id="mcAcc"><option value="">--</option></select><div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;"><input type="checkbox" id="mcPaid" style="width:20px; margin:0;"><label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label></div><button class="btn btn-p" onclick="saveCell()">Guardar</button><button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button><button class="btn btn-s" style="color:red; border-color:red;" onclick="delCell()">Borrar</button></div></div>
 
-    <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="text" id="maBal" placeholder="Saldo Inicial (Ej: 5000+200)"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
+    <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="text" id="maBal" onchange="calcInput(this)" placeholder="Saldo Inicial (Ej: 5000+200)"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
 
     <div id="modLock" class="modal" style="z-index:9999;">
         <div class="modal-box" style="border:2px solid #ff5252;">
@@ -415,10 +416,14 @@ const firebaseConfig = {
     function smartParse(str) {
         try {
             if(!str) return 0;
-            // Reemplaza comas por puntos y elimina caracteres peligrosos
             let clean = str.toString().replace(/,/g, '.').replace(/[^-()\d/*+.]/g, '');
             return eval(clean) || 0;
         } catch(e) { return 0; }
+    }
+    
+    function calcInput(el) {
+        const val = smartParse(el.value);
+        if(val) el.value = val;
     }
 
     // --- INICIALIZACION ---
@@ -799,7 +804,11 @@ const firebaseConfig = {
     
     function renderGrid() {
         const t = document.getElementById('mainTable');
-        t.innerHTML = `<thead><tr><th class="col-fix">Concepto</th>${[...Array(12)].map((_,i)=>`<th>${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}</tr></thead>`;
+        t.innerHTML = `<thead><tr>
+            <th class="col-fix" onclick="sortByMonth(-1)">Concepto (Ordenar)</th>
+            ${[...Array(12)].map((_,i)=>`<th onclick="sortByMonth(${i})">${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}
+        </tr></thead>`;
+        
         let body = '<tbody>';
         appData.expenses.forEach(e => {
             body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div>
@@ -813,13 +822,36 @@ const firebaseConfig = {
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 const st = p.paid ? 'status-paid' : (p.amt ? 'status-pend' : '');
-                // CORRECCION DIA 1: Mostrar incluso si p.day es 0 (no deberia) o 1
                 const dayText = (p.day !== undefined && p.day !== '') ? 'Día ' + p.day : '';
                 body += `<td class="${st}"><div onclick="openCell(${e.id},${i})" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;">${p.amt ? '$'+parseInt(p.amt).toLocaleString() : ''}<span style="font-size:0.8rem; font-weight:bold; color:#aaa;">${dayText}</span></div></td>`;
             }
             body += '</tr>';
         });
         t.innerHTML += body + '</tbody>';
+    }
+
+    // FUNCION DE ORDENAMIENTO
+    function sortByMonth(monthIndex) {
+        if(monthIndex === -1) {
+            // Ordenar por nombre
+            appData.expenses.sort((a,b) => a.name.localeCompare(b.name));
+        } else {
+            // Ordenar por dia de vencimiento en ese mes
+            appData.expenses.sort((a,b) => {
+                const kA = `${a.id}_${year}_${monthIndex}`;
+                const kB = `${b.id}_${year}_${monthIndex}`;
+                const pA = appData.payments[kA] || {};
+                const pB = appData.payments[kB] || {};
+                
+                // Si no tiene dia, lo mandamos al fondo (Infinity)
+                const dayA = (pA.day !== undefined && pA.day !== '') ? parseInt(pA.day) : 999;
+                const dayB = (pB.day !== undefined && pB.day !== '') ? parseInt(pB.day) : 999;
+                
+                if(dayA === dayB) return a.name.localeCompare(b.name);
+                return dayA - dayB;
+            });
+        }
+        renderGrid();
     }
 
     function renderAcc() {
@@ -935,9 +967,15 @@ const firebaseConfig = {
         // SMART PARSE PARA PAGOS
         const rawAmt = val('mcAmt');
         const amt = smartParse(rawAmt);
+        const day = val('mcDay');
+        const paid = document.getElementById('mcPaid').checked;
         
-        if(amt) appData.payments[k] = { amt, day: val('mcDay'), accId: val('mcAcc'), paid: document.getElementById('mcPaid').checked };
-        else delete appData.payments[k];
+        // LOGICA CORREGIDA: Guardar si hay importe, O dia, O pagado.
+        if(amt || day || paid) {
+            appData.payments[k] = { amt, day, accId: val('mcAcc'), paid };
+        } else {
+            delete appData.payments[k];
+        }
         saveData(); closeModal('modCell');
     }
     function delCell() { delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
