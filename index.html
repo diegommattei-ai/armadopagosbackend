@@ -87,9 +87,17 @@
         .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: 150px; max-width: 150px; padding: 5px; }
         th.col-fix { z-index: 30; }
         
-        /* FILA DE TOTALES */
-        .row-total td { background: #2a2a2a; color: #BB86FC; font-weight: bold; border-top: 2px solid #555; font-size: 0.9rem; }
-        .row-total .col-fix { background: #2a2a2a; color: #BB86FC; z-index: 15; }
+        /* FILA DE TOTALES MODIFICADA: ALINEACION DERECHA */
+        .row-total td { 
+            background: #2a2a2a; 
+            color: #BB86FC; 
+            font-weight: bold; 
+            border-top: 2px solid #555; 
+            font-size: 0.9rem; 
+            text-align: right; 
+            padding-right: 15px;
+        }
+        .row-total .col-fix { background: #2a2a2a; color: #BB86FC; z-index: 15; text-align: left; }
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
@@ -140,7 +148,7 @@
             align-items: center; 
             z-index: 60; 
             box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
-            touch-action: none; /* IMPRESCINDIBLE PARA ARRASTRAR EN MOVIL */
+            touch-action: none;
             user-select: none;
         }
 
@@ -675,7 +683,8 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
-                if(p.amt && !p.paid) monthTotals[i] += parseFloat(p.amt);
+                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
+                if(p.amt) monthTotals[i] += parseFloat(p.amt);
 
                 let st = '';
                 if(p.paid) st = 'status-paid';
@@ -701,6 +710,7 @@
             body += '</tr>';
         });
 
+        // FILA DE TOTALES CON ALINEACION DERECHA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
         monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
         totalRowHTML += '</tr>';
