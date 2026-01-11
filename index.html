@@ -91,6 +91,7 @@
         .btn { padding: 10px; width: 100%; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-p { background: #BB86FC; color: #000; }
         .btn-s { background: #333; color: #ccc; border: 1px solid #555; }
+        .btn-d { background: #330000; color: #ff5252; border: 1px solid #ff5252; }
         .btn-tool { background: transparent; border: 1px solid #555; color: #aaa; padding: 8px; font-size: 0.8rem; border-radius: 5px; cursor: pointer; flex: 1; }
         
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; background: #151515; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
@@ -241,7 +242,14 @@
             </div>
         </div>
 
-        <div class="dash-card" style="text-align:left;">
+        <div class="dash-card" style="text-align:left; border-color:#ff5252;">
+            <h3 style="color:#ff5252; margin-top:0;">☠️ Zona de Peligro</h3>
+            <p style="font-size:0.8rem; color:#aaa;">Estas acciones no se pueden deshacer.</p>
+            <button class="btn btn-d" onclick="nukeExpenses()">🗑️ Borrar TODOS los Gastos</button>
+            <button class="btn btn-d" onclick="nukeAccounts()">🗑️ Borrar TODAS las Cuentas</button>
+        </div>
+
+        <div class="dash-card" style="text-align:left; margin-top:15px;">
             <h3 style="color:#BB86FC">Mi Grupo</h3>
             <p>Nombre: <strong id="confGName" style="color:#fff">...</strong></p>
             <p>Vencimiento: <strong id="confValid" style="color:#fff">...</strong></p>
@@ -355,6 +363,7 @@
             
             <button class="btn btn-p" onclick="saveExp()">Guardar</button>
             <button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button>
+            <button class="btn btn-d" style="margin-top:15px;" onclick="delExp()">🗑️ Borrar Gasto y Pagos</button>
         </div>
     </div>
     
@@ -400,14 +409,12 @@ const firebaseConfig = {
     let year = 2026;
     let selCell = null;
     let isExpired = false;
-    let globalPrice = 0; // Variable para el precio
+    let globalPrice = 0; 
 
     // --- INICIALIZACION ---
-    // Cargar precio al iniciar
     db.collection('config').doc('pricing').onSnapshot(doc => {
         if(doc.exists) {
             globalPrice = doc.data().val || 0;
-            // Actualizar todos los lugares donde se muestra el precio
             document.querySelectorAll('.uiPriceDisplay').forEach(el => {
                 el.innerText = '$' + parseInt(globalPrice).toLocaleString();
             });
@@ -422,10 +429,8 @@ const firebaseConfig = {
             document.getElementById('groupScreen').style.display = 'flex';
             document.getElementById('dispUserEmail').innerText = user.email.split('@')[0];
             
-            // LOGICA ADMIN: Si es Diego, mostramos la pestaña
             if(user.email === ADMIN_EMAIL) {
                 document.getElementById('tab-admin').style.display = 'block';
-                // Configurar selectores de admin a la fecha actual
                 const hoy = new Date();
                 document.getElementById('adminMonth').value = hoy.getMonth();
             }
@@ -444,7 +449,7 @@ const firebaseConfig = {
     function loginEmail() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function registerEmail() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => document.getElementById('authMsg').innerText=e.message); }
-    function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo")).catch(e=>alert(e.message)); }
+    function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo (y SPAM)")).catch(e=>alert(e.message)); }
     function logout() { auth.signOut().then(() => location.reload()); }
 
     // --- GRUPOS Y VALIDACION ---
@@ -456,7 +461,6 @@ const firebaseConfig = {
         db.collection('groups').doc(name).get().then(doc => {
             if(doc.exists) {
                 const g = doc.data();
-                // Si es ADMIN, entra siempre
                 if(currentUser.email === ADMIN_EMAIL || g.members.includes(currentUser.email)) {
                     enterGroup(name, g);
                 } else {
@@ -485,7 +489,6 @@ const firebaseConfig = {
         
         document.getElementById('headerGroupName').innerText = name;
 
-        // CHECK VENCIMIENTO
         const validDate = new Date(info.validUntil || 0);
         const now = new Date();
         const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
@@ -517,7 +520,6 @@ const firebaseConfig = {
         });
     }
 
-    // --- NUEVO SISTEMA DE CLAVES DINAMICAS ---
     function generateDynamicHash(group, month, year) { 
         let h=0; 
         const s = group + "_" + month + "_" + year + "_CYM_SECURE_2026"; 
@@ -535,7 +537,6 @@ const firebaseConfig = {
         const now = new Date();
         let foundMatch = false;
         
-        // Busca coincidencia en los proximos 12 meses
         for(let i=0; i<12; i++) {
             const checkDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
             const m = checkDate.getMonth();
@@ -544,7 +545,6 @@ const firebaseConfig = {
             const expected = generateDynamicHash(currentGroup, m, y);
             
             if(code === expected) {
-                // Calcular ultimo dia de ese mes
                 const lastDay = new Date(y, m + 1, 0); 
                 extendValidity(lastDay);
                 foundMatch = true;
@@ -575,7 +575,6 @@ const firebaseConfig = {
     function renderAdmin() {
         if(currentUser.email !== ADMIN_EMAIL) return;
         
-        // 1. GENERACION DINAMICA DE AÑOS
         const selY = document.getElementById('adminYear');
         if(selY.options.length < 2) {
             selY.innerHTML = "";
@@ -588,7 +587,6 @@ const firebaseConfig = {
             }
         }
 
-        // Cargar precio actual en el input
         document.getElementById('adminPriceInput').value = globalPrice;
 
         const selM = document.getElementById('adminMonth').value;
@@ -597,7 +595,6 @@ const firebaseConfig = {
         const listDiv = document.getElementById('adminList');
         listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
         
-        // METRICAS
         let stats = { users:0, groups:0, active:0, expired:0 };
 
         db.collection('groups').get().then(snapshot => {
@@ -661,7 +658,7 @@ const firebaseConfig = {
 
     function kickUser(groupId, email) {
         if(currentUser.email !== ADMIN_EMAIL) return;
-        if(confirm(`¿Sacar a ${email} del grupo?`)) {
+        if(confirm(`¿Sacar a ${email} del grupo? (NO borra su cuenta)`)) {
             db.collection('groups').doc(groupId).update({
                 members: firebase.firestore.FieldValue.arrayRemove(email)
             }).then(() => renderAdmin());
@@ -748,6 +745,31 @@ const firebaseConfig = {
     }
 
     function saveData() { if(currentGroup) db.collection('data').doc(currentGroup).set(appData); }
+
+    // --- FUNCIONES DE BORRADO MASIVO ---
+    function nukeExpenses() {
+        if(checkLock()) return;
+        if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODOS los gastos y su historial de pagos. No se puede deshacer.")) {
+            if(confirm("Confirmación final: ¿Borrar TODO?")) {
+                appData.expenses = [];
+                // También limpiamos pagos huérfanos si se quiere, 
+                // pero lo más limpio es reiniciar pagos también o filtrar.
+                // Aquí reiniciamos pagos también porque son de gastos.
+                appData.payments = {}; 
+                saveData();
+                alert("Gastos eliminados.");
+            }
+        }
+    }
+
+    function nukeAccounts() {
+        if(checkLock()) return;
+        if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODAS las cuentas bancarias.")) {
+            appData.accounts = [];
+            saveData();
+            alert("Cuentas eliminadas.");
+        }
+    }
 
     // --- RENDERIZADO UI ---
     function renderAll() { renderGrid(); renderAcc(); calcDash(); }
@@ -839,6 +861,26 @@ const firebaseConfig = {
         if(edId) { const idx=appData.expenses.findIndex(x=>x.id==edId); appData.expenses[idx]={...appData.expenses[idx], ...obj}; }
         else appData.expenses.push({id:Date.now(), ...obj});
         saveData(); closeModal('modExp');
+    }
+    
+    // NUEVA FUNCION BORRAR GASTO Y SUS PAGOS
+    function delExp() {
+        if(checkLock()) return;
+        if(!edId) return;
+        if(confirm("¿Borrar este gasto y TODO su historial de pagos?")) {
+            // 1. Borrar de la lista de gastos
+            appData.expenses = appData.expenses.filter(x => x.id !== edId);
+            
+            // 2. Borrar pagos asociados en el diccionario (claves empiezan con ID_)
+            Object.keys(appData.payments).forEach(key => {
+                if(key.startsWith(edId + "_")) {
+                    delete appData.payments[key];
+                }
+            });
+            
+            saveData();
+            closeModal('modExp');
+        }
     }
     
     let acId=null;
