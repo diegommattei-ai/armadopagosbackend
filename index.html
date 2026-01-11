@@ -87,7 +87,7 @@
         .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: 150px; max-width: 150px; padding: 5px; }
         th.col-fix { z-index: 30; }
         
-        /* FILA DE TOTALES MODIFICADA: ALINEACION DERECHA */
+        /* FILA DE TOTALES */
         .row-total td { 
             background: #2a2a2a; 
             color: #BB86FC; 
@@ -106,8 +106,8 @@
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
 
-        /* OTRAS VISTAS */
-        #view-cuentas, #view-help, #view-config, #view-admin { overflow-y: auto; padding-bottom: 80px; }
+        /* OTRAS VISTAS CON SCROLL Y MARGEN FINAL PARA QUE NO SE CORTE NADA */
+        #view-cuentas, #view-help, #view-config, #view-admin { overflow-y: auto; padding-bottom: 100px; }
 
         /* ADMIN & UI */
         .admin-controls { display:flex; gap:10px; justify-content:center; margin-bottom:10px; background:#2a2a2a; padding:10px; border-radius:8px; }
@@ -118,9 +118,8 @@
         .del-user { color: #ff5252; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .add-user { color: #00e676; cursor: pointer; font-size: 0.8rem; border: 1px solid #00e676; padding: 2px 5px; border-radius: 5px; display:inline-block; margin-top:5px; }
 
-        /* FOOTER FLOTANTE */
-        .footer { position: fixed; bottom: 0; width: 100%; background: rgba(26,26,26,0.95); backdrop-filter: blur(5px); padding: 8px 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:5px; align-items:center; }
-        .cafe-row { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 400px; }
+        /* FOOTER DE AYUDA (NUEVO LUGAR PARA BOTONES) */
+        .cafe-row { display: flex; gap: 10px; justify-content: center; width: 100%; margin-top: 20px; }
         
         .btn { padding: 10px; width: 100%; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-p { background: #BB86FC; color: #000; }
@@ -133,7 +132,7 @@
         /* BOTON FLOTANTE MOVIBLE */
         .fab { 
             position: fixed; 
-            bottom: 85px; 
+            bottom: 30px; 
             right: 20px; 
             width: 55px; 
             height: 55px; 
@@ -292,6 +291,14 @@
                 <li>Ingresa la clave en "Configuración".</li>
             </ol>
         </div>
+        
+        <div style="margin-top:20px; text-align:center;">
+            <div class="cafe-row">
+                <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" style="flex:2; background:linear-gradient(45deg, #009EE3, #00B1EA); color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">☕ Invitar Cafecito</a>
+                <a href="https://wa.me/5492615734341?text=Hola!%20Te%20acabo%20de%20invitar%20un%20cafecito%20en%20la%20App" target="_blank" style="flex:1; background:#25D366; color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">🔔 Avisar</a>
+            </div>
+            <div style="font-size:0.7rem; color:#666; font-style:italic; margin-top:5px;">Ayudame a seguir desarrollando aplicaciones como esta ✨</div>
+        </div>
     </div>
 
     <div id="view-config" class="view">
@@ -330,8 +337,8 @@
                 </div>
             </div>
             <hr style="border-color:#333; margin:20px 0;">
-            <button class="btn btn-s" onclick="location.reload()">Cambiar de Grupo</button>
-            <button class="btn btn-s" style="border-color:#ff5252; color:#ff5252" onclick="logout()">Cerrar Sesión</button>
+            <button class="btn btn-s" style="margin-bottom:30px;" onclick="location.reload()">Cambiar de Grupo</button>
+            <button class="btn btn-s" style="border-color:#ff5252; color:#ff5252; margin-bottom:20px;" onclick="logout()">Cerrar Sesión</button>
         </div>
     </div>
 
@@ -366,14 +373,6 @@
             <button class="btn btn-s" onclick="renderAdmin()">🔄 Actualizar Lista</button>
         </div>
         <div id="adminList"></div>
-    </div>
-
-    <div class="footer">
-        <div class="cafe-row">
-            <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" style="flex:2; background:linear-gradient(45deg, #009EE3, #00B1EA); color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">☕ Invitar Cafecito</a>
-            <a href="https://wa.me/5492615734341?text=Hola!%20Te%20acabo%20de%20invitar%20un%20cafecito%20en%20la%20App" target="_blank" style="flex:1; background:#25D366; color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">🔔 Avisar</a>
-        </div>
-        <div style="font-size:0.7rem; color:#666; font-style:italic;">Ayudame a seguir desarrollando aplicaciones como esta ✨</div>
     </div>
 
     <button class="fab" id="fabBtn">+</button>
@@ -684,7 +683,12 @@
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
                 // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
-                if(p.amt) monthTotals[i] += parseFloat(p.amt);
+                if(p.amt || p.paid) {
+                    // Si esta pagado y tiene monto, sumar. O si no esta pagado y tiene monto, sumar.
+                    // En tu logica original, p.amt puede existir aunque este pagado.
+                    // Asumimos que queremos sumar el valor monetario siempre.
+                    if(p.amt) monthTotals[i] += parseFloat(p.amt);
+                }
 
                 let st = '';
                 if(p.paid) st = 'status-paid';
