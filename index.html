@@ -72,7 +72,7 @@
             border: 1px solid #333; 
             flex: 1; 
             position: relative;
-            padding-bottom: 100px; /* ESPACIO EXTRA PARA EL BOTON FLOTANTE */
+            padding-bottom: 100px; 
         }
         
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
@@ -91,7 +91,7 @@
         .row-total td { background: #2a2a2a; color: #BB86FC; font-weight: bold; border-top: 2px solid #555; font-size: 0.9rem; }
         .row-total .col-fix { background: #2a2a2a; color: #BB86FC; z-index: 15; }
 
-        /* DISEÑO CELDA */
+        /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
         .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
@@ -121,7 +121,29 @@
         .btn-tool { background: transparent; border: 1px solid #555; color: #aaa; padding: 8px; font-size: 0.8rem; border-radius: 5px; cursor: pointer; flex: 1; }
         
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; background: #151515; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
-        .fab { position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 60; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        
+        /* BOTON FLOTANTE MOVIBLE */
+        .fab { 
+            position: fixed; 
+            bottom: 85px; 
+            right: 20px; 
+            width: 55px; 
+            height: 55px; 
+            border-radius: 50%; 
+            background: #BB86FC; 
+            color: #000; 
+            font-size: 2rem; 
+            border: none; 
+            cursor: pointer; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 60; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.5); 
+            touch-action: none; /* IMPRESCINDIBLE PARA ARRASTRAR EN MOVIL */
+            user-select: none;
+        }
+
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
@@ -346,7 +368,7 @@
         <div style="font-size:0.7rem; color:#666; font-style:italic;">Ayudame a seguir desarrollando aplicaciones como esta ✨</div>
     </div>
 
-    <button class="fab" onclick="openModalExp()">+</button>
+    <button class="fab" id="fabBtn">+</button>
 
     <div id="modExp" class="modal">
         <div class="modal-box">
@@ -646,14 +668,13 @@
         let body = '<tbody>';
         
         const list = activeCategory === 'ALL' ? appData.expenses : appData.expenses.filter(e => e.cat === activeCategory);
-        let monthTotals = new Array(12).fill(0); // ARRAY DE TOTALES
+        let monthTotals = new Array(12).fill(0);
 
         list.forEach(e => {
             body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div><div style="margin-top:2px;">${e.folder?`<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>`:''}${e.link?`<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>`:''}${e.user||e.pass?`<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>`:''}${e.comment?`<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>`:''}<span class="icon-btn" onclick="editExp(${e.id})">✏️</span></div></td>`;
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
-                // CALCULO TOTALES
                 if(p.amt && !p.paid) monthTotals[i] += parseFloat(p.amt);
 
                 let st = '';
@@ -680,11 +701,8 @@
             body += '</tr>';
         });
 
-        // FILA DE TOTALES
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
-        monthTotals.forEach(val => {
-            totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`;
-        });
+        monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
         totalRowHTML += '</tr>';
 
         t.innerHTML += body + totalRowHTML + '</tbody>';
@@ -770,6 +788,54 @@
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
     function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
+
+    // FAB DRAG LOGIC
+    const fab = document.getElementById('fabBtn');
+    let isDragging = false;
+    let hasMoved = false;
+    let offsetX, offsetY;
+
+    const startDrag = (e) => {
+        hasMoved = false;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        const rect = fab.getBoundingClientRect();
+        offsetX = clientX - rect.left;
+        offsetY = clientY - rect.top;
+        isDragging = true;
+    };
+
+    const doDrag = (e) => {
+        if (!isDragging) return;
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+        hasMoved = true;
+        e.preventDefault(); 
+        let newX = clientX - offsetX;
+        let newY = clientY - offsetY;
+        const maxW = window.innerWidth - fab.offsetWidth;
+        const maxH = window.innerHeight - fab.offsetHeight;
+        newX = Math.max(0, Math.min(newX, maxW));
+        newY = Math.max(0, Math.min(newY, maxH));
+        fab.style.left = newX + 'px';
+        fab.style.top = newY + 'px';
+        fab.style.right = 'auto'; 
+        fab.style.bottom = 'auto';
+    };
+
+    const endDrag = () => { isDragging = false; };
+
+    fab.addEventListener('click', (e) => {
+        if (hasMoved) { e.preventDefault(); e.stopPropagation(); } else { openModalExp(); }
+    });
+
+    fab.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', doDrag);
+    document.addEventListener('mouseup', endDrag);
+    
+    fab.addEventListener('touchstart', startDrag);
+    fab.addEventListener('touchmove', doDrag);
+    fab.addEventListener('touchend', endDrag);
 </script>
 </body>
 </html>
