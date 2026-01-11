@@ -42,6 +42,9 @@
         .tabs { display: flex; width: 95%; max-width: 1400px; margin: 15px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; }
         .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; }
         .tab.active { background: #BB86FC; color: #000; font-weight: 800; }
+        /* Pestaña Admin oculta por defecto */
+        #tab-admin { display: none; background: #330000; color: #ff5252; } 
+        
         .view { display: none; width: 95%; max-width: 1400px; margin: 0 auto; flex-direction: column; gap: 15px; }
         .view.active { display: flex; }
 
@@ -65,6 +68,12 @@
         .det-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 5px 0; border-bottom: 1px solid #2a2a2a; color: #ccc; }
         .det-total { border-top: 1px solid #555; border-bottom: none; font-weight: bold; font-size: 1rem; margin-top: 10px; padding-top: 10px; color: #BB86FC; }
         @keyframes fadeIn { from {opacity:0} to {opacity:1} }
+
+        /* ADMIN TABLE */
+        .admin-table { width: 100%; min-width: 300px; border-collapse: collapse; }
+        .admin-table th { text-align: left; color: #BB86FC; }
+        .admin-table td { padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem; }
+        .tag-adm { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; }
 
         /* FOOTER */
         .footer { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:10px; align-items:center; }
@@ -159,6 +168,7 @@
         <div class="tab" onclick="switchTab('cuentas')">💳 Cuentas</div>
         <div class="tab" onclick="switchTab('help')">❓ Ayuda</div>
         <div class="tab" onclick="switchTab('config')">⚙️ Config</div>
+        <div class="tab" id="tab-admin" onclick="switchTab('admin')">🔒 Admin</div>
     </div>
 
     <div id="view-planilla" class="view active">
@@ -232,12 +242,10 @@
             
             <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
                 <p style="font-size:0.85rem; color:#aaa;">Pagar Suscripción / Canjear:</p>
-                
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" class="btn btn-p" style="margin:0; text-align:center; background:#009EE3; color:white;">Pagar con MP</a>
                     <a href="https://wa.me/5492615734341?text=Hola!%20Ya%20hice%20el%20pago%20de%20mi%20grupo,%20envio%20comprobante." target="_blank" class="btn btn-s" style="margin:0; text-align:center; background:#25D366; color:white; border:none;">Enviar Comprobante</a>
                 </div>
-
                 <div style="display:flex; gap:5px;">
                     <input type="text" id="unlockCode" placeholder="INGRESAR CÓDIGO" style="margin:0; text-align:center;">
                     <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">OK</button>
@@ -248,6 +256,16 @@
             <button class="btn btn-s" onclick="location.reload()">Cambiar de Grupo</button>
             <button class="btn btn-s" style="border-color:#ff5252; color:#ff5252" onclick="logout()">Cerrar Sesión</button>
         </div>
+    </div>
+
+    <div id="view-admin" class="view">
+        <h2 style="color:#ff5252; text-align:center;">PANEL ADMINISTRADOR</h2>
+        <div class="dash-card" style="text-align:left;">
+            <p>Bienvenido, <b>Diego</b>.</p>
+            <p style="font-size:0.8rem; color:#aaa;">Aquí puedes ver todos los grupos y generar claves de renovación.</p>
+            <button class="btn btn-s" onclick="renderAdmin()">🔄 Actualizar Lista</button>
+        </div>
+        <div id="adminList"></div>
     </div>
 
     <div class="footer">
@@ -319,6 +337,8 @@ const firebaseConfig = {
     const auth = firebase.auth();
     const db = firebase.firestore();
     
+    // --- VARIABLES GLOBALES ---
+    const ADMIN_EMAIL = "diegomatteiblanco@gmail.com";
     let currentUser = null;
     let currentGroup = null;
     let groupInfo = null;
@@ -334,6 +354,11 @@ const firebaseConfig = {
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('groupScreen').style.display = 'flex';
             document.getElementById('dispUserEmail').innerText = user.email.split('@')[0];
+            
+            // LOGICA ADMIN: Si es Diego, mostramos la pestaña
+            if(user.email === ADMIN_EMAIL) {
+                document.getElementById('tab-admin').style.display = 'block';
+            }
         } else {
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('groupScreen').style.display = 'none';
@@ -361,8 +386,10 @@ const firebaseConfig = {
         db.collection('groups').doc(name).get().then(doc => {
             if(doc.exists) {
                 const g = doc.data();
-                if(g.members.includes(currentUser.email)) enterGroup(name, g);
-                else {
+                // Si es ADMIN, entra siempre
+                if(currentUser.email === ADMIN_EMAIL || g.members.includes(currentUser.email)) {
+                    enterGroup(name, g);
+                } else {
                     document.getElementById('pinArea').style.display='block';
                     if(pin === g.pin) {
                         db.collection('groups').doc(name).update({
@@ -437,6 +464,53 @@ const firebaseConfig = {
         } else alert("Código incorrecto.");
     }
 
+    // --- PANEL DE ADMINISTRADOR ---
+    function renderAdmin() {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        const listDiv = document.getElementById('adminList');
+        listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
+        
+        db.collection('groups').get().then(snapshot => {
+            let html = '<table class="admin-table"><thead><tr><th>Grupo</th><th>Vence</th><th>Acciones</th></tr></thead><tbody>';
+            snapshot.forEach(doc => {
+                const g = doc.data();
+                const vDate = new Date(g.validUntil || 0);
+                const isVencido = vDate < new Date();
+                
+                // Generar codigo al vuelo
+                const code = generateHash(doc.id);
+                
+                html += `<tr>
+                    <td>
+                        <strong style="color:#fff">${doc.id}</strong><br>
+                        <span style="font-size:0.7rem; color:#aaa">${g.owner}</span>
+                    </td>
+                    <td>
+                        <span class="tag-adm" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()}</span>
+                    </td>
+                    <td>
+                        <button class="btn-s" style="padding:5px; margin:0; width:auto; font-size:0.75rem;" onclick="prompt('Copia el código:','${code}')">🔑 Clave</button>
+                        <button class="btn-s" style="padding:5px; margin:0; width:auto; font-size:0.75rem; color:#ff5252; border-color:#ff5252;" onclick="deleteGroup('${doc.id}')">🗑️</button>
+                    </td>
+                </tr>`;
+            });
+            html += '</tbody></table>';
+            listDiv.innerHTML = html;
+        });
+    }
+
+    function deleteGroup(id) {
+        if(confirm("¿ESTAS SEGURO de borrar el grupo " + id + " y todos sus datos?")) {
+            // Borra metadatos
+            db.collection('groups').doc(id).delete();
+            // Borra datos financieros
+            db.collection('data').doc(id).delete().then(() => {
+                alert("Grupo eliminado");
+                renderAdmin();
+            });
+        }
+    }
+
     // --- RESTAURAR BACKUP ---
     function restoreBackup(input) {
         if(isExpired) return alert("Servicio vencido. Paga para importar datos.");
@@ -445,7 +519,7 @@ const firebaseConfig = {
         reader.onload = e => {
             try {
                 const d = JSON.parse(e.target.result);
-                // Mapeo Inteligente (Old JSON -> New Structure)
+                // Mapeo Inteligente
                 let newExp = [], newPay = {}, newAcc = [];
 
                 if(Array.isArray(d.expenses)) {
@@ -627,7 +701,25 @@ const firebaseConfig = {
     function cleanExp() { ['meName','meFolder','meLink','meUser','mePass','meComm'].forEach(i=>document.getElementById(i).value=''); }
     function loadExp(e) { document.getElementById('meName').value=e.name; document.getElementById('meFolder').value=e.folder||''; document.getElementById('meLink').value=e.link||''; document.getElementById('meUser').value=e.user||''; document.getElementById('mePass').value=e.pass||''; document.getElementById('meComm').value=e.comment||''; document.getElementById('meCat').value=e.cat; }
     
-    function switchTab(t) { document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); document.getElementById('view-'+t).classList.add('active'); event.target.classList.add('active'); if(t==='planilla') renderAll(); }
+    function switchTab(t) { 
+        document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); 
+        document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); 
+        
+        // Manejo especial para la pestaña Admin
+        if(t === 'admin') {
+            document.getElementById('view-admin').classList.add('active');
+            renderAdmin(); // Cargar datos al abrir
+        } else {
+            document.getElementById('view-'+t).classList.add('active'); 
+        }
+        
+        // Marcar tab activo (si existe en el DOM)
+        const tabEl = document.querySelector(`.tab[onclick="switchTab('${t}')"]`);
+        if(tabEl) tabEl.classList.add('active');
+        
+        if(t==='planilla') renderAll(); 
+    }
+    
     function changeYear(d) { year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id) { document.getElementById(id).style.display='none'; }
     function exportExcel() { const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
