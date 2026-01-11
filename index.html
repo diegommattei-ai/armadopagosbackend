@@ -6,10 +6,12 @@
     <meta name="theme-color" content="#121212">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="ArmadoPagos">
     <title>Armado de Pagos</title>
     
     <link rel="manifest" id="myManifest">
     <link rel="apple-touch-icon" href="logo.jpg">
+    <link rel="icon" type="image/jpeg" href="logo.jpg">
 
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
@@ -100,19 +102,12 @@
         }
         td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 45px; padding: 0; vertical-align: middle; }
         
-        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: 150px; max-width: 150px; padding: 5px; }
+        :root { --col-w: 150px; }
+        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: var(--col-w); max-width: var(--col-w); padding: 5px; transition: 0.1s; }
         th.col-fix { z-index: 30; }
         
         /* FILA DE TOTALES */
-        .row-total td { 
-            background: #2a2a2a; 
-            color: #BB86FC; 
-            font-weight: bold; 
-            border-top: 2px solid #555; 
-            font-size: 0.9rem; 
-            text-align: right; 
-            padding-right: 15px;
-        }
+        .row-total td { background: #2a2a2a; color: #BB86FC; font-weight: bold; border-top: 2px solid #555; font-size: 0.9rem; text-align: right; padding-right: 15px; }
         .row-total .col-fix { background: #2a2a2a; color: #BB86FC; z-index: 15; text-align: left; }
 
         /* DISEÑO CELDA SPLIT */
@@ -315,7 +310,7 @@
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#BB86FC;">
             <h3 style="color:#BB86FC; margin-top:0;">📲 App en tu Celular</h3>
             <p style="font-size:0.8rem;">Instala la app para acceder directo desde tu pantalla de inicio.</p>
-            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">INSTALAR APLICACIÓN</button>
+            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">📲 INSTALAR APLICACIÓN</button>
         </div>
 
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
@@ -500,7 +495,10 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO
+    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
+    const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
+    const logoUrl = appUrl + "logo.jpg";
+    
     const manifest = {
         name: "Armado de Pagos",
         short_name: "ArmadoPagos",
@@ -508,7 +506,10 @@
         display: "standalone",
         background_color: "#121212",
         theme_color: "#BB86FC",
-        icons: [{ src: "logo.jpg", sizes: "192x192", type: "image/jpeg" }]
+        icons: [
+            { src: logoUrl, sizes: "192x192", type: "image/jpeg" },
+            { src: logoUrl, sizes: "512x512", type: "image/jpeg" }
+        ]
     };
     const stringManifest = JSON.stringify(manifest);
     const blob = new Blob([stringManifest], {type: 'application/json'});
@@ -520,6 +521,7 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        // El botón ya está visible siempre, no hace falta tocarlo
     });
 
     async function installApp() {
