@@ -107,8 +107,11 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
+        /* ESTADOS DE PAGO: LOGICA DE COLORES ACTUALIZADA */
         .status-paid { background: rgba(0, 230, 118, 0.15) !important; border-left: 3px solid #00e676; }
-        .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; }
+        .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; } /* ROJO: Vencido */
+        .status-soon { background: rgba(255, 234, 0, 0.15); border-left: 3px solid #ffea00; } /* AMARILLO: Próximo */
+        
         .expense-name { font-weight:bold; font-size:0.9rem; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .icon-btn { cursor:pointer; margin-left:5px; opacity:0.7; } .icon-btn:hover { opacity:1; }
         
@@ -871,9 +874,25 @@ const firebaseConfig = {
             </div></td>`;
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
-                const st = p.paid ? 'status-paid' : (p.amt ? 'status-pend' : '');
                 
-                // DATA PREP
+                // LOGICA DE COLORES
+                let st = '';
+                if(p.paid) {
+                    st = 'status-paid';
+                } else if(p.amt || p.day) {
+                    // Calculo de Vencimiento
+                    const today = new Date();
+                    today.setHours(0,0,0,0);
+                    
+                    // Si tiene dia definido, usamos ese dia. Si no, fin de mes.
+                    const d = p.day ? parseInt(p.day) : 0; 
+                    const deadline = d > 0 ? new Date(year, i, d) : new Date(year, i + 1, 0);
+                    
+                    // Comparacion
+                    if(deadline < today) st = 'status-pend'; // Rojo (Vencido)
+                    else st = 'status-soon'; // Amarillo (Proximo)
+                }
+
                 const day = (p.day !== undefined && p.day !== '') ? p.day : '';
                 const amt = p.amt ? '$'+parseInt(p.amt).toLocaleString() : '';
                 const accName = p.accId ? getAccName(p.accId) : '';
