@@ -52,14 +52,21 @@
         .dash-val { font-size: 1.1rem; font-weight: bold; font-family: monospace; margin-top:5px; }
         .c-g { color: #00e676; } .c-r { color: #ff5252; } .c-p { color: #BB86FC; }
 
-        /* TABLA */
+        /* TABLA - NUEVO DISEÑO CELDA */
         .grid-con { overflow-x: auto; background: #1e1e1e; border-radius: 8px; border: 1px solid #333; min-height: 300px; }
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
         th { background: #252525; position: sticky; top: 0; padding: 10px; color: #aaa; border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; }
         th:hover { background: #333; color: #fff; }
-        td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 55px; vertical-align: middle; }
-        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 30; min-width: 160px; max-width: 160px; }
+        td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 50px; padding: 0; vertical-align: middle; }
+        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 30; min-width: 160px; max-width: 160px; padding: 5px; }
         
+        /* DISEÑO INTERNO CELDA SPLIT */
+        .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.7rem; font-weight: bold; color: #777; }
+        .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
+        .cell-amt { font-size: 0.85rem; font-weight: bold; color: #fff; }
+        .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
+
         /* CUENTAS ACORDEON */
         .acc-card { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
         .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
@@ -100,7 +107,7 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
-        .status-paid { background: rgba(0, 230, 118, 0.15); border-left: 3px solid #00e676; }
+        .status-paid { background: rgba(0, 230, 118, 0.15) !important; border-left: 3px solid #00e676; }
         .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; }
         .expense-name { font-weight:bold; font-size:0.9rem; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .icon-btn { cursor:pointer; margin-left:5px; opacity:0.7; } .icon-btn:hover { opacity:1; }
@@ -286,22 +293,10 @@
         <h2 style="color:#ff5252; text-align:center;">PANEL ADMINISTRADOR</h2>
         
         <div class="stats-grid" id="adminStats">
-            <div class="stat-box">
-                <div class="stat-num" id="statUsers">0</div>
-                <div class="stat-label">Usuarios</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-num" id="statGroups">0</div>
-                <div class="stat-label">Grupos</div>
-            </div>
-            <div class="stat-box" style="border-color:#00e676;">
-                <div class="stat-num" style="color:#00e676;" id="statActive">0</div>
-                <div class="stat-label">Activos</div>
-            </div>
-            <div class="stat-box" style="border-color:#ff5252;">
-                <div class="stat-num" style="color:#ff5252;" id="statExpired">0</div>
-                <div class="stat-label">Vencidos</div>
-            </div>
+            <div class="stat-box"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Usuarios</div></div>
+            <div class="stat-box"><div class="stat-num" id="statGroups">0</div><div class="stat-label">Grupos</div></div>
+            <div class="stat-box" style="border-color:#00e676;"><div class="stat-num" style="color:#00e676;" id="statActive">0</div><div class="stat-label">Activos</div></div>
+            <div class="stat-box" style="border-color:#ff5252;"><div class="stat-num" style="color:#ff5252;" id="statExpired">0</div><div class="stat-label">Vencidos</div></div>
         </div>
 
         <div class="dash-card" style="text-align:left; border-color:#BB86FC; margin-bottom:15px;">
@@ -347,21 +342,17 @@
             <input id="meName" placeholder="Ej: Luz Casa">
             <label>Categoría:</label>
             <select id="meCat"><option>Hogar</option><option>Oficina</option><option>Personal</option><option>Auto</option><option>Tarjetas</option></select>
-            
             <label>Link Carpeta Comprobantes:</label>
             <input id="meFolder" placeholder="https://drive.google.com...">
             <label>Link de Pago (Web):</label>
             <input id="meLink" placeholder="https://...">
-            
             <div style="background:#333; padding:10px; border-radius:5px; margin-bottom:10px;">
                 <label style="color:#BB86FC; font-size:0.8rem;">Credenciales (Opcional):</label>
                 <input id="meUser" placeholder="Usuario / ID" style="margin-bottom:5px;">
                 <input id="mePass" placeholder="Contraseña">
             </div>
-            
             <label>Comentarios:</label>
             <input id="meComm" placeholder="...">
-            
             <button class="btn btn-p" onclick="saveExp()">Guardar</button>
             <button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button>
             <button class="btn btn-d" style="margin-top:15px;" onclick="delExp()">🗑️ Borrar Gasto y Pagos</button>
@@ -376,7 +367,6 @@
         <div class="modal-box" style="border:2px solid #ff5252;">
             <h2 style="color:#ff5252">⚠️ Servicio Vencido</h2>
             <p>El periodo de uso ha finalizado.</p>
-            <p>Por favor, ingresa el código de renovación para continuar operando.</p>
             <div class="price-display">Valor Actual: <span class="uiPriceDisplay">$...</span></div>
             <p style="font-size:0.8rem; color:#aaa;">Código DEMO disponible: "DEMO"</p>
             <button class="btn btn-p" onclick="closeModal('modLock'); switchTab('config');">Ir a Pagar</button>
@@ -384,24 +374,20 @@
     </div>
 
 <script>
-    // -----------------------------------------------------------
-    // ⚠️ PEGA AQUI TUS CLAVES DE FIREBASE
-    // -----------------------------------------------------------
-const firebaseConfig = {
-  apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
-  authDomain: "armadopagos.firebaseapp.com",
-  projectId: "armadopagos",
-  storageBucket: "armadopagos.firebasestorage.app",
-  messagingSenderId: "482082107729",
-  appId: "1:482082107729:web:e4f29ee165ca1437e76370"
-};
-    // -----------------------------------------------------------
+    const firebaseConfig = {
+      apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
+      authDomain: "armadopagos.firebaseapp.com",
+      projectId: "armadopagos",
+      storageBucket: "armadopagos.firebasestorage.app",
+      messagingSenderId: "482082107729",
+      appId: "1:482082107729:web:e4f29ee165ca1437e76370"
+    };
 
     try { firebase.initializeApp(firebaseConfig); } catch(e) { console.error(e); }
     const auth = firebase.auth();
     const db = firebase.firestore();
     
-    // --- VARIABLES GLOBALES ---
+    // --- VARIABLES ---
     const ADMIN_EMAIL = "diegomatteiblanco@gmail.com";
     let currentUser = null;
     let currentGroup = null;
@@ -426,6 +412,20 @@ const firebaseConfig = {
         if(val) el.value = val;
     }
 
+    // --- HELPER COLORES CUENTAS ---
+    function stringToColor(str) {
+        if(!str) return 'transparent';
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+        return '#' + "00000".substring(0, 6 - c.length) + c;
+    }
+    
+    function getAccName(id) {
+        const acc = appData.accounts.find(a => a.id == id);
+        return acc ? acc.name : '';
+    }
+
     // --- INICIALIZACION ---
     db.collection('config').doc('pricing').onSnapshot(doc => {
         if(doc.exists) {
@@ -443,7 +443,6 @@ const firebaseConfig = {
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('groupScreen').style.display = 'flex';
             document.getElementById('dispUserEmail').innerText = user.email.split('@')[0];
-            
             if(user.email === ADMIN_EMAIL) {
                 document.getElementById('tab-admin').style.display = 'block';
                 const hoy = new Date();
@@ -467,7 +466,7 @@ const firebaseConfig = {
     function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo (y SPAM)")).catch(e=>alert(e.message)); }
     function logout() { auth.signOut().then(() => location.reload()); }
 
-    // --- GRUPOS Y VALIDACION ---
+    // --- GRUPOS ---
     function checkGroup() {
         const name = document.getElementById('groupNameInput').value.trim().toUpperCase();
         if(name.length < 3) return document.getElementById('groupMsg').innerText = "Nombre muy corto";
@@ -476,9 +475,8 @@ const firebaseConfig = {
         db.collection('groups').doc(name).get().then(doc => {
             if(doc.exists) {
                 const g = doc.data();
-                if(currentUser.email === ADMIN_EMAIL || g.members.includes(currentUser.email)) {
-                    enterGroup(name, g);
-                } else {
+                if(currentUser.email === ADMIN_EMAIL || g.members.includes(currentUser.email)) enterGroup(name, g);
+                else {
                     document.getElementById('pinArea').style.display='block';
                     if(pin === g.pin) {
                         db.collection('groups').doc(name).update({
@@ -503,21 +501,11 @@ const firebaseConfig = {
         document.querySelector('.app-header').style.display = 'flex';
         document.getElementById('headerGroupName').innerText = name;
         
-        // ESCUCHA EN VIVO DEL ESTADO DEL GRUPO (Fecha vencimiento)
-        db.collection('groups').doc(name).onSnapshot(doc => {
-            if(doc.exists) {
-                const g = doc.data();
-                updateBadge(g.validUntil);
-            }
-        });
-
-        // Config Inicial Badge
+        db.collection('groups').doc(name).onSnapshot(doc => { if(doc.exists) updateBadge(doc.data().validUntil); });
         updateBadge(info.validUntil);
-
         document.getElementById('confGName').innerText = name;
         document.getElementById('confPin').innerText = info.pin;
 
-        // Escucha de DATOS (Gastos, Pagos)
         db.collection('data').doc(name).onSnapshot(doc => {
             if(doc.exists) {
                 appData = doc.data();
@@ -534,23 +522,20 @@ const firebaseConfig = {
         const now = new Date();
         const diffDays = Math.ceil((validDate - now) / (1000 * 60 * 60 * 24));
         isExpired = diffDays <= 0;
-        
         const tag = document.getElementById('dispGroupTag');
         document.getElementById('confValid').innerText = validDate.toLocaleDateString();
-
         if(isExpired) {
             tag.innerText = "VENCIDO"; tag.className = "group-tag expired";
             document.getElementById('confValid').innerText = "VENCIDO - PAGO REQUERIDO";
             document.getElementById('confValid').style.color = "#ff5252";
-            if(!document.getElementById('modLock').style.display || document.getElementById('modLock').style.display === 'none') {
-                 setTimeout(() => document.getElementById('modLock').style.display='flex', 1000);
-            }
+            if(!document.getElementById('modLock').style.display || document.getElementById('modLock').style.display === 'none') setTimeout(() => document.getElementById('modLock').style.display='flex', 1000);
         } else {
             tag.innerText = "GRATIS (" + diffDays + " días)"; tag.className = "group-tag pro";
             document.getElementById('modLock').style.display='none';
         }
     }
 
+    // --- MONETIZACION ---
     function generateDynamicHash(group, month, year) { 
         let h=0; 
         const s = group + "_" + month + "_" + year + "_CYM_SECURE_2026"; 
@@ -560,29 +545,18 @@ const firebaseConfig = {
 
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        if(code === "DEMO") { 
-             extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1)));
-             return;
-        }
-
+        if(code === "DEMO") { extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1))); return; }
         const now = new Date();
         let foundMatch = false;
-        
         for(let i=0; i<12; i++) {
             const checkDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-            const m = checkDate.getMonth();
-            const y = checkDate.getFullYear();
-            
-            const expected = generateDynamicHash(currentGroup, m, y);
-            
+            const expected = generateDynamicHash(currentGroup, checkDate.getMonth(), checkDate.getFullYear());
             if(code === expected) {
-                const lastDay = new Date(y, m + 1, 0); 
-                extendValidity(lastDay);
+                extendValidity(new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0));
                 foundMatch = true;
                 break;
             }
         }
-        
         if(!foundMatch) alert("Código inválido o expirado.");
     }
 
@@ -593,19 +567,15 @@ const firebaseConfig = {
         });
     }
 
-    // --- PANEL DE ADMINISTRADOR ---
+    // --- ADMIN ---
     function savePrice() {
         if(currentUser.email !== ADMIN_EMAIL) return;
         const val = document.getElementById('adminPriceInput').value;
-        if(val) {
-            db.collection('config').doc('pricing').set({ val: parseInt(val) })
-            .then(() => alert("Precio actualizado para todos los usuarios."));
-        }
+        if(val) db.collection('config').doc('pricing').set({ val: parseInt(val) }).then(() => alert("Precio actualizado."));
     }
 
     function renderAdmin() {
         if(currentUser.email !== ADMIN_EMAIL) return;
-        
         const selY = document.getElementById('adminYear');
         if(selY.options.length < 2) {
             selY.innerHTML = "";
@@ -617,58 +587,29 @@ const firebaseConfig = {
                 selY.add(opt);
             }
         }
-
         document.getElementById('adminPriceInput').value = globalPrice;
-
         const selM = document.getElementById('adminMonth').value;
         const currentYVal = selY.value; 
-        
         const listDiv = document.getElementById('adminList');
         listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
-        
         let stats = { users:0, groups:0, active:0, expired:0 };
 
         db.collection('groups').get().then(snapshot => {
             let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Clave ('+ (parseInt(selM)+1) + '/' + currentYVal +')</th></tr></thead><tbody>';
-            
             snapshot.forEach(doc => {
                 const g = doc.data();
                 const vDate = new Date(g.validUntil || 0);
                 const isVencido = vDate < new Date();
-                
                 stats.groups++;
                 stats.users += (g.members ? g.members.length : 0);
                 if(isVencido) stats.expired++; else stats.active++;
-
                 const code = generateDynamicHash(doc.id, parseInt(selM), parseInt(currentYVal));
-                
-                let membersHtml = g.members.map(m => 
-                    `<div>
-                        ${m === g.owner ? '★' : ''} ${m} 
-                        ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span> <span class="del-user" onclick="alert('IMPOSIBLE: Para borrar la cuenta definitivamente, ve a Firebase Console > Authentication')">[☠️]</span>` : ''}
-                    </div>`
-                ).join('');
+                let membersHtml = g.members.map(m => `<div>${m === g.owner ? '★' : ''} ${m} ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}', '${m}')">[x]</span> <span class="del-user" onclick="alert('IMPOSIBLE: Para borrar la cuenta definitivamente, ve a Firebase Console > Authentication')">[☠️]</span>` : ''}</div>`).join('');
                 membersHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
-
-                html += `<tr>
-                    <td>
-                        <strong style="color:#fff; font-size:1.1rem;">${doc.id}</strong><br>
-                        <div style="margin-top:5px; font-size:0.75rem; line-height:1.4;">${membersHtml}</div>
-                    </td>
-                    <td>
-                        <span class="tag-adm" onclick="modDate('${doc.id}', '${g.validUntil}')" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()} ✏️</span>
-                        <div style="margin-top:5px;">
-                            <button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252;" onclick="deleteGroup('${doc.id}')">🗑️</button>
-                        </div>
-                    </td>
-                    <td>
-                        <button class="btn-s" style="padding:10px; font-weight:bold; font-size:1rem; color:#BB86FC; border:1px solid #BB86FC;" onclick="prompt('Copia clave ${doc.id}:','${code}')">🔑 ${code}</button>
-                    </td>
-                </tr>`;
+                html += `<tr><td><strong style="color:#fff; font-size:1.1rem;">${doc.id}</strong><br><div style="margin-top:5px; font-size:0.75rem; line-height:1.4;">${membersHtml}</div></td><td><span class="tag-adm" onclick="modDate('${doc.id}', '${g.validUntil}')" style="background:${isVencido?'#ff5252':'#00e676'}; color:#000;">${vDate.toLocaleDateString()} ✏️</span><div style="margin-top:5px;"><button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252;" onclick="deleteGroup('${doc.id}')">🗑️</button></div></td><td><button class="btn-s" style="padding:10px; font-weight:bold; font-size:1rem; color:#BB86FC; border:1px solid #BB86FC;" onclick="prompt('Copia clave ${doc.id}:','${code}')">🔑 ${code}</button></td></tr>`;
             });
             html += '</tbody></table>';
             listDiv.innerHTML = html;
-
             document.getElementById('statUsers').innerText = stats.users;
             document.getElementById('statGroups').innerText = stats.groups;
             document.getElementById('statActive').innerText = stats.active;
@@ -679,178 +620,83 @@ const firebaseConfig = {
     function modDate(id, current) {
         if(currentUser.email !== ADMIN_EMAIL) return;
         const newD = prompt("Ingresa nueva fecha (YYYY-MM-DD):", current ? current.split('T')[0] : '');
-        if(newD) {
-            const d = new Date(newD);
-            if(!isNaN(d.getTime())) {
-                db.collection('groups').doc(id).update({ validUntil: d.toISOString() }); // Ya no recarga manual, el listener lo hace
-            } else alert("Fecha inválida");
-        }
+        if(newD) { const d = new Date(newD); if(!isNaN(d.getTime())) db.collection('groups').doc(id).update({ validUntil: d.toISOString() }); }
     }
+    function kickUser(groupId, email) { if(currentUser.email !== ADMIN_EMAIL) return; if(confirm(`¿Sacar a ${email} del grupo?`)) db.collection('groups').doc(groupId).update({ members: firebase.firestore.FieldValue.arrayRemove(email) }).then(() => renderAdmin()); }
+    function addUser(groupId) { if(currentUser.email !== ADMIN_EMAIL) return; const email = prompt("Email del nuevo usuario:"); if(email && email.includes('@')) db.collection('groups').doc(groupId).update({ members: firebase.firestore.FieldValue.arrayUnion(email.trim().toLowerCase()) }).then(() => renderAdmin()); }
+    function deleteGroup(id) { if(confirm("¿ESTAS SEGURO de borrar el grupo?")) { db.collection('groups').doc(id).delete(); db.collection('data').doc(id).delete().then(() => { alert("Eliminado"); renderAdmin(); }); } }
 
-    function kickUser(groupId, email) {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        if(confirm(`¿Sacar a ${email} del grupo? (NO borra su cuenta)`)) {
-            db.collection('groups').doc(groupId).update({
-                members: firebase.firestore.FieldValue.arrayRemove(email)
-            }).then(() => renderAdmin());
-        }
-    }
-
-    function addUser(groupId) {
-        if(currentUser.email !== ADMIN_EMAIL) return;
-        const email = prompt("Email del nuevo usuario (Debe registrarse con Google):");
-        if(email && email.includes('@')) {
-            db.collection('groups').doc(groupId).update({
-                members: firebase.firestore.FieldValue.arrayUnion(email.trim().toLowerCase())
-            }).then(() => renderAdmin());
-        }
-    }
-
-    function deleteGroup(id) {
-        if(confirm("¿ESTAS SEGURO de borrar el grupo " + id + " y todos sus datos?")) {
-            db.collection('groups').doc(id).delete();
-            db.collection('data').doc(id).delete().then(() => {
-                alert("Grupo eliminado");
-                renderAdmin();
-            });
-        }
-    }
-
-    // --- RESTAURAR BACKUP ---
+    // --- DATA ---
     function restoreBackup(input) {
-        if(isExpired) return alert("Servicio vencido. Paga para importar datos.");
+        if(isExpired) return alert("Servicio vencido.");
         const file = input.files[0]; if(!file) return;
         const reader = new FileReader();
         reader.onload = e => {
             try {
                 const d = JSON.parse(e.target.result);
                 let newExp = [], newPay = {}, newAcc = [];
-
-                if(Array.isArray(d.expenses)) {
-                    newExp = d.expenses.map(e => ({
-                        id: e.id || Date.now(),
-                        name: e.name || "Sin Nombre",
-                        cat: e.cat || "Otros",
-                        folder: e.folder || "",
-                        link: e.link || "",
-                        user: e.user || "",
-                        pass: e.pass || "",
-                        comment: e.comment || ""
-                    }));
-                }
-                
-                if(d.payments) {
-                    Object.keys(d.payments).forEach(key => {
-                        const oldP = d.payments[key];
-                        newPay[key] = {
-                            amt: oldP.amount || oldP.amt,
-                            day: oldP.day,
-                            paid: oldP.paid,
-                            accId: oldP.accId
-                        };
-                    });
-                }
-
-                if(Array.isArray(d.accounts)) {
-                    newAcc = d.accounts.map(a => ({
-                        id: a.id || Date.now(),
-                        name: a.name || "Cuenta",
-                        bal: parseFloat(a.balance || a.bal || 0)
-                    }));
-                }
-
-                if(confirm(`Importar: ${newExp.length} gastos y ${newAcc.length} cuentas?`)) {
-                    appData = { expenses: newExp, payments: newPay, accounts: newAcc };
-                    saveData();
-                    alert("¡Datos importados correctamente!");
-                }
-            } catch(err) { alert("Error archivo: " + err.message); }
+                if(Array.isArray(d.expenses)) newExp = d.expenses.map(e => ({ id: e.id || Date.now(), name: e.name || "Sin Nombre", cat: e.cat || "Otros", folder: e.folder || "", link: e.link || "", user: e.user || "", pass: e.pass || "", comment: e.comment || "" }));
+                if(d.payments) Object.keys(d.payments).forEach(key => { const oldP = d.payments[key]; newPay[key] = { amt: oldP.amount || oldP.amt, day: oldP.day, paid: oldP.paid, accId: oldP.accId }; });
+                if(Array.isArray(d.accounts)) newAcc = d.accounts.map(a => ({ id: a.id || Date.now(), name: a.name || "Cuenta", bal: parseFloat(a.balance || a.bal || 0) }));
+                if(confirm("¿Importar datos?")) { appData = { expenses: newExp, payments: newPay, accounts: newAcc }; saveData(); alert("Importado."); }
+            } catch(err) { alert("Error archivo"); }
         };
         reader.readAsText(file);
     }
     
     function downloadBackup() {
-        const data = { ...appData, meta: { group: currentGroup, date: new Date() } };
-        const blob = new Blob([JSON.stringify(data)], {type: "application/json"});
+        const blob = new Blob([JSON.stringify({ ...appData, meta: { group: currentGroup, date: new Date() } })], {type: "application/json"});
         const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `Backup_${currentGroup}.json`; a.click();
     }
 
     function saveData() { if(currentGroup) db.collection('data').doc(currentGroup).set(appData); }
+    function nukeExpenses() { if(checkLock()) return; if(confirm("¿Borrar TODOS los gastos?")) { appData.expenses = []; appData.payments = {}; saveData(); alert("Gastos eliminados."); } }
+    function nukeAccounts() { if(checkLock()) return; if(confirm("¿Borrar TODAS las cuentas?")) { appData.accounts = []; saveData(); alert("Cuentas eliminadas."); } }
 
-    // --- FUNCIONES DE BORRADO MASIVO ---
-    function nukeExpenses() {
-        if(checkLock()) return;
-        if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODOS los gastos y su historial de pagos. No se puede deshacer.")) {
-            if(confirm("Confirmación final: ¿Borrar TODO?")) {
-                appData.expenses = [];
-                appData.payments = {}; 
-                saveData();
-                alert("Gastos eliminados.");
-            }
-        }
-    }
-
-    function nukeAccounts() {
-        if(checkLock()) return;
-        if(confirm("⚠️ ¿ESTÁS SEGURO? Se borrarán TODAS las cuentas bancarias.")) {
-            appData.accounts = [];
-            saveData();
-            alert("Cuentas eliminadas.");
-        }
-    }
-
-    // --- RENDERIZADO UI ---
+    // --- UI ---
     function renderAll() { renderGrid(); renderAcc(); calcDash(); }
     
     function renderGrid() {
         const t = document.getElementById('mainTable');
-        t.innerHTML = `<thead><tr>
-            <th class="col-fix" onclick="sortByMonth(-1)">Concepto (Ordenar)</th>
-            ${[...Array(12)].map((_,i)=>`<th onclick="sortByMonth(${i})">${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}
-        </tr></thead>`;
-        
+        t.innerHTML = `<thead><tr><th class="col-fix" onclick="sortByMonth(-1)">Concepto (Ordenar)</th>${[...Array(12)].map((_,i)=>`<th onclick="sortByMonth(${i})">${new Date(year,i,1).toLocaleDateString('es-ES',{month:'short'}).toUpperCase()}</th>`).join('')}</tr></thead>`;
         let body = '<tbody>';
         appData.expenses.forEach(e => {
-            body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div>
-            <div style="margin-top:2px;">
-                ${e.folder ? `<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>` : ''}
-                ${e.link ? `<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>` : ''}
-                ${e.user||e.pass ? `<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>` : ''}
-                ${e.comment ? `<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>` : ''}
-                <span class="icon-btn" onclick="editExp(${e.id})">✏️</span>
-            </div></td>`;
+            body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div><div style="margin-top:2px;">${e.folder?`<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>`:''}${e.link?`<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>`:''}${e.user||e.pass?`<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>`:''}${e.comment?`<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>`:''}<span class="icon-btn" onclick="editExp(${e.id})">✏️</span></div></td>`;
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 const st = p.paid ? 'status-paid' : (p.amt ? 'status-pend' : '');
-                const dayText = (p.day !== undefined && p.day !== '') ? 'Día ' + p.day : '';
-                body += `<td class="${st}"><div onclick="openCell(${e.id},${i})" style="height:100%;display:flex;flex-direction:column;justify-content:center;align-items:center;cursor:pointer;">${p.amt ? '$'+parseInt(p.amt).toLocaleString() : ''}<span style="font-size:0.8rem; font-weight:bold; color:#aaa;">${dayText}</span></div></td>`;
+                
+                // DATA PREP
+                const day = (p.day !== undefined && p.day !== '') ? p.day : '';
+                const amt = p.amt ? '$'+parseInt(p.amt).toLocaleString() : '';
+                const accName = p.accId ? getAccName(p.accId) : '';
+                const accColor = p.accId ? stringToColor(accName) : 'transparent';
+                
+                body += `<td class="${st}" style="padding:0; position:relative;">
+                    <div onclick="openCell(${e.id},${i})" class="cell-container">
+                        <div class="cell-day">${day}</div>
+                        <div class="cell-data">
+                            <span class="cell-amt">${amt}</span>
+                            ${p.accId ? `<div class="acc-dot" style="background:${accColor}" title="${accName}"></div>` : ''}
+                        </div>
+                    </div>
+                </td>`;
             }
             body += '</tr>';
         });
         t.innerHTML += body + '</tbody>';
     }
 
-    // FUNCION DE ORDENAMIENTO
     function sortByMonth(monthIndex) {
-        if(monthIndex === -1) {
-            // Ordenar por nombre
-            appData.expenses.sort((a,b) => a.name.localeCompare(b.name));
-        } else {
-            // Ordenar por dia de vencimiento en ese mes
-            appData.expenses.sort((a,b) => {
-                const kA = `${a.id}_${year}_${monthIndex}`;
-                const kB = `${b.id}_${year}_${monthIndex}`;
-                const pA = appData.payments[kA] || {};
-                const pB = appData.payments[kB] || {};
-                
-                // Si no tiene dia, lo mandamos al fondo (Infinity)
-                const dayA = (pA.day !== undefined && pA.day !== '') ? parseInt(pA.day) : 999;
-                const dayB = (pB.day !== undefined && pB.day !== '') ? parseInt(pB.day) : 999;
-                
-                if(dayA === dayB) return a.name.localeCompare(b.name);
-                return dayA - dayB;
-            });
-        }
+        if(monthIndex === -1) appData.expenses.sort((a,b) => a.name.localeCompare(b.name));
+        else appData.expenses.sort((a,b) => {
+            const pA = appData.payments[`${a.id}_${year}_${monthIndex}`] || {};
+            const pB = appData.payments[`${b.id}_${year}_${monthIndex}`] || {};
+            const dayA = (pA.day !== undefined && pA.day !== '') ? parseInt(pA.day) : 999;
+            const dayB = (pB.day !== undefined && pB.day !== '') ? parseInt(pB.day) : 999;
+            if(dayA === dayB) return a.name.localeCompare(b.name);
+            return dayA - dayB;
+        });
         renderGrid();
     }
 
@@ -858,55 +704,24 @@ const firebaseConfig = {
         const l = document.getElementById('accList'); l.innerHTML = '';
         const s = document.getElementById('mcAcc'); s.innerHTML = '<option value="">--</option>';
         const now = new Date();
-        
         appData.accounts.forEach(a => {
-            let assignedHTML = '';
-            let pendingSum = 0;
-            
+            let assignedHTML = ''; let pendingSum = 0;
             appData.expenses.forEach(e => {
-                const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
-                const p = appData.payments[k];
-                if(p && p.accId == a.id && !p.paid && p.amt) {
-                    pendingSum += parseFloat(p.amt);
-                    assignedHTML += `<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`;
-                }
+                const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p = appData.payments[k];
+                if(p && p.accId == a.id && !p.paid && p.amt) { pendingSum += parseFloat(p.amt); assignedHTML += `<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`; }
             });
-            
             const projected = (parseFloat(a.bal)||0) - pendingSum;
             s.innerHTML += `<option value="${a.id}">${a.name}</option>`;
-            
-            l.innerHTML += `
-            <div class="acc-card">
-                <div class="acc-head" onclick="toggleAcc(${a.id})">
-                    <div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${projected.toLocaleString()}</span></div>
-                    <div style="text-align:right">
-                        <div style="color:#00e676; font-weight:bold; font-size:1.1rem;">$${parseFloat(a.bal).toLocaleString()}</div>
-                        <div style="margin-top:5px;"><span class="icon-btn" onclick="editAcc(${a.id}); event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id}); event.stopPropagation()">✖</span></div>
-                    </div>
-                </div>
-                <div id="accDet-${a.id}" class="acc-detail">
-                    <div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>
-                    ${assignedHTML || '<div style="text-align:center;color:#555;font-style:italic;padding:5px;">Sin gastos asignados pendientes</div>'}
-                    <div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${projected.toLocaleString()}</span></div></div>
-                </div>
-            </div>`;
+            l.innerHTML += `<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${projected.toLocaleString()}</span></div><div style="text-align:right"><div style="color:#00e676; font-weight:bold; font-size:1.1rem;">$${parseFloat(a.bal).toLocaleString()}</div><div style="margin-top:5px;"><span class="icon-btn" onclick="editAcc(${a.id}); event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id}); event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>${assignedHTML || '<div style="text-align:center;color:#555;font-style:italic;padding:5px;">Sin gastos asignados pendientes</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${projected.toLocaleString()}</span></div></div></div></div>`;
         });
     }
     
-    function toggleAcc(id) { const el = document.getElementById(`accDet-${id}`); el.classList.toggle('open'); }
-
+    function toggleAcc(id) { document.getElementById(`accDet-${id}`).classList.toggle('open'); }
     function calcDash() {
-        let debt=0, assets=0;
-        const now = new Date();
-        appData.expenses.forEach(e => {
-            const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`;
-            const p = appData.payments[k];
-            if(p && p.amt && !p.paid) debt += parseInt(p.amt);
-        });
+        let debt=0, assets=0; const now = new Date();
+        appData.expenses.forEach(e => { const k = `${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p = appData.payments[k]; if(p && p.amt && !p.paid) debt += parseInt(p.amt); });
         appData.accounts.forEach(a => assets += parseFloat(a.bal));
-        document.getElementById('dTotal').innerText = '$'+assets.toLocaleString();
-        document.getElementById('dDebt').innerText = '$'+debt.toLocaleString();
-        document.getElementById('dNet').innerText = '$'+(assets-debt).toLocaleString();
+        document.getElementById('dTotal').innerText = '$'+assets.toLocaleString(); document.getElementById('dDebt').innerText = '$'+debt.toLocaleString(); document.getElementById('dNet').innerText = '$'+(assets-debt).toLocaleString();
     }
 
     // --- CRUD ---
@@ -919,38 +734,12 @@ const firebaseConfig = {
         else appData.expenses.push({id:Date.now(), ...obj});
         saveData(); closeModal('modExp');
     }
-    
-    // NUEVA FUNCION BORRAR GASTO Y SUS PAGOS
-    function delExp() {
-        if(checkLock()) return;
-        if(!edId) return;
-        if(confirm("¿Borrar este gasto y TODO su historial de pagos?")) {
-            // 1. Borrar de la lista de gastos
-            appData.expenses = appData.expenses.filter(x => x.id !== edId);
-            
-            // 2. Borrar pagos asociados en el diccionario (claves empiezan con ID_)
-            Object.keys(appData.payments).forEach(key => {
-                if(key.startsWith(edId + "_")) {
-                    delete appData.payments[key];
-                }
-            });
-            
-            saveData();
-            closeModal('modExp');
-        }
-    }
+    function delExp() { if(checkLock()) return; if(!edId) return; if(confirm("¿Borrar este gasto y TODO su historial?")) { appData.expenses = appData.expenses.filter(x => x.id !== edId); Object.keys(appData.payments).forEach(key => { if(key.startsWith(edId + "_")) delete appData.payments[key]; }); saveData(); closeModal('modExp'); } }
     
     let acId=null;
     function openModalAcc() { if(checkLock()) return; acId=null; document.getElementById('maName').value=''; document.getElementById('maBal').value=''; document.getElementById('modAcc').style.display='flex'; }
     function editAcc(id) { if(checkLock()) return; acId=id; const a=appData.accounts.find(x=>x.id==id); document.getElementById('maName').value=a.name; document.getElementById('maBal').value=a.bal; document.getElementById('modAcc').style.display='flex'; }
-    function saveAcc() {
-        const n=val('maName'); 
-        // SMART PARSE PARA CUENTAS
-        const b=smartParse(val('maBal'));
-        if(acId) { const a=appData.accounts.find(x=>x.id==acId); a.name=n; a.bal=b; }
-        else appData.accounts.push({id:Date.now(), name:n, bal:b});
-        saveData(); closeModal('modAcc');
-    }
+    function saveAcc() { const n=val('maName'); const b=smartParse(val('maBal')); if(acId) { const a=appData.accounts.find(x=>x.id==acId); a.name=n; a.bal=b; } else appData.accounts.push({id:Date.now(), name:n, bal:b}); saveData(); closeModal('modAcc'); }
     function delAcc(id) { if(checkLock()) return; if(confirm("¿Borrar?")) { appData.accounts=appData.accounts.filter(a=>a.id!=id); saveData(); } }
 
     function openCell(eid, m) {
@@ -962,20 +751,32 @@ const firebaseConfig = {
         document.getElementById('mcPaid').checked = p.paid||false;
         document.getElementById('modCell').style.display='flex';
     }
+    
     function saveCell() {
         const k = `${selCell.eid}_${year}_${selCell.m}`;
-        // SMART PARSE PARA PAGOS
-        const rawAmt = val('mcAmt');
-        const amt = smartParse(rawAmt);
-        const day = val('mcDay');
-        const paid = document.getElementById('mcPaid').checked;
+        const rawAmt = val('mcAmt'); const amt = smartParse(rawAmt);
+        const day = val('mcDay'); const paid = document.getElementById('mcPaid').checked;
         
-        // LOGICA CORREGIDA: Guardar si hay importe, O dia, O pagado.
-        if(amt || day || paid) {
-            appData.payments[k] = { amt, day, accId: val('mcAcc'), paid };
-        } else {
-            delete appData.payments[k];
+        // CHECK REPLICAR FECHAS
+        const originalDay = (appData.payments[k] && appData.payments[k].day) || '';
+        
+        if(day && day !== originalDay) {
+            // Logica replicacion
+            if(confirm(`¿Replicar el vencimiento (Día ${day}) a los meses siguientes?`)) {
+                const limit = prompt("¿Hasta qué mes? (1=Ene, 12=Dic)", 12);
+                if(limit && !isNaN(limit)) {
+                    const limitMonth = parseInt(limit) - 1; // 0 index
+                    for(let m = selCell.m + 1; m <= limitMonth; m++) {
+                        const nextK = `${selCell.eid}_${year}_${m}`;
+                        if(!appData.payments[nextK]) appData.payments[nextK] = {};
+                        appData.payments[nextK].day = day;
+                    }
+                }
+            }
         }
+
+        if(amt || day || paid) appData.payments[k] = { amt, day, accId: val('mcAcc'), paid };
+        else delete appData.payments[k];
         saveData(); closeModal('modCell');
     }
     function delCell() { delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
@@ -989,17 +790,9 @@ const firebaseConfig = {
     function switchTab(t) { 
         document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); 
         document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active')); 
-        
-        if(t === 'admin') {
-            document.getElementById('view-admin').classList.add('active');
-            renderAdmin(); 
-        } else {
-            document.getElementById('view-'+t).classList.add('active'); 
-        }
-        
-        const tabEl = document.querySelector(`.tab[onclick="switchTab('${t}')"]`);
-        if(tabEl) tabEl.classList.add('active');
-        
+        if(t === 'admin') { document.getElementById('view-admin').classList.add('active'); renderAdmin(); } 
+        else { document.getElementById('view-'+t).classList.add('active'); }
+        const tabEl = document.querySelector(`.tab[onclick="switchTab('${t}')"]`); if(tabEl) tabEl.classList.add('active');
         if(t==='planilla') renderAll(); 
     }
     
