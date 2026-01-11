@@ -12,22 +12,21 @@
 
     <style>
         /* ESTILOS (Dark Theme) */
-        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 20px; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
+        body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; }
         a { text-decoration: none; color: inherit; }
 
         /* SCROLLBAR PERSONALIZADO */
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #1e1e1e; }
-        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
-        ::-webkit-scrollbar-thumb:hover { background: #555; }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
 
         /* HEADER */
-        .app-header { width: 100%; background: #1e1e1e; padding: 10px 20px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; flex-shrink: 0; }
+        .app-header { width: 100%; background: #1e1e1e; padding: 10px 15px; border-bottom: 1px solid #333; display: flex; justify-content: space-between; align-items: center; box-sizing: border-box; flex-shrink: 0; }
         .logo-area { display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .logo-img { height: 45px; border-radius: 8px; border: 1px solid #444; }
+        .logo-img { height: 40px; border-radius: 8px; border: 1px solid #444; }
         .app-info { display:flex; flex-direction:column; }
-        .app-name { font-weight: 800; font-size: 1rem; color: #fff; line-height:1.1; }
-        .app-sub { font-size: 0.75rem; color: #BB86FC; font-weight: bold; letter-spacing: 1px; }
+        .app-name { font-weight: 800; font-size: 0.95rem; color: #fff; line-height:1.1; }
+        .app-sub { font-size: 0.7rem; color: #BB86FC; font-weight: bold; letter-spacing: 1px; }
         
         .user-badge { text-align: right; }
         .user-email { color: #ccc; font-size: 0.75rem; }
@@ -35,9 +34,9 @@
         .group-tag.pro { background: linear-gradient(45deg, #00e676, #00c853); color: #000; border: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
         .group-tag.expired { background: #ff5252; color: #fff; border: none; }
 
-        /* PANTALLAS DE LOGIN */
-        #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; overflow-y: auto; }
-        .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); margin: auto; }
+        /* PANTALLAS */
+        #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+        .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: Roboto, sans-serif; }
         
@@ -45,116 +44,76 @@
         .pass-toggle { position: absolute; right: 15px; top: 15px; cursor: pointer; color: #aaa; font-size: 1.2rem; }
 
         /* UI GENERAL */
-        .tabs { display: flex; width: 95%; max-width: 1400px; margin: 10px auto; background: #252525; border-radius: 12px; border: 1px solid #333; overflow: hidden; flex-shrink: 0; }
-        .tab { flex: 1; padding: 12px; text-align: center; cursor: pointer; color: #888; font-weight: 600; }
+        .tabs { display: flex; width: 98%; max-width: 1400px; margin: 5px auto; background: #252525; border-radius: 10px; border: 1px solid #333; overflow: hidden; flex-shrink: 0; }
+        .tab { flex: 1; padding: 10px; text-align: center; cursor: pointer; color: #888; font-weight: 600; font-size: 0.9rem; }
         .tab.active { background: #BB86FC; color: #000; font-weight: 800; }
         #tab-admin { display: none; background: #330000; color: #ff5252; } 
         
-        .view { display: none; width: 95%; max-width: 1400px; margin: 0 auto; flex-direction: column; gap: 10px; height: 100%; overflow: hidden; }
+        .view { display: none; width: 98%; max-width: 1400px; margin: 0 auto; flex-direction: column; gap: 5px; height: 100%; overflow: hidden; }
         .view.active { display: flex; }
 
-        /* DASHBOARD COMPACTO */
-        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex-shrink: 0; }
-        .dash-card { background: #1e1e1e; padding: 10px; border-radius: 12px; border: 1px solid #333; text-align: center; }
-        .dash-val { font-size: 1rem; font-weight: bold; font-family: monospace; margin-top:2px; }
+        .dashboard-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; margin-bottom: 5px; flex-shrink: 0; }
+        .dash-card { background: #1e1e1e; padding: 8px; border-radius: 8px; border: 1px solid #333; text-align: center; }
+        .dash-val { font-size: 0.9rem; font-weight: bold; font-family: monospace; margin-top:2px; }
         .c-g { color: #00e676; } .c-r { color: #ff5252; } .c-p { color: #BB86FC; }
 
         /* FILTROS */
-        .filter-row { display: flex; gap: 10px; overflow-x: auto; padding: 5px 0; align-items: center; width: 100%; flex-shrink: 0; scrollbar-width: none; }
+        .filter-row { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; align-items: center; width: 100%; flex-shrink: 0; scrollbar-width: none; }
         .filter-row::-webkit-scrollbar { display: none; }
-        .filter-pill { background: #252525; padding: 6px 12px; border-radius: 20px; color: #ccc; white-space: nowrap; cursor: pointer; border: 1px solid #444; display:flex; align-items:center; gap:5px; font-size:0.8rem; transition: 0.2s; }
-        .filter-pill.active { background: #BB86FC; color: #000; border-color: #BB86FC; font-weight: bold; box-shadow: 0 0 10px rgba(187, 134, 252, 0.3); }
-        .filter-gear { min-width: 30px; width: 30px; height: 30px; border-radius: 50%; background: #222; border: 1px solid #555; display: flex; justify-content: center; align-items: center; cursor: pointer; margin-left: auto; flex-shrink: 0; color: #aaa; }
-        .filter-gear:hover { color: #fff; border-color: #888; }
+        .filter-pill { background: #252525; padding: 5px 12px; border-radius: 15px; color: #ccc; white-space: nowrap; cursor: pointer; border: 1px solid #444; display:flex; align-items:center; gap:5px; font-size:0.75rem; transition: 0.2s; }
+        .filter-pill.active { background: #BB86FC; color: #000; border-color: #BB86FC; font-weight: bold; }
+        .filter-gear { min-width: 30px; width: 30px; height: 30px; border-radius: 50%; background: #222; border: 1px solid #555; display: flex; justify-content: center; align-items: center; cursor: pointer; margin-left: auto; flex-shrink: 0; color: #aaa; font-size: 0.9rem; }
 
-        /* TABLA SCROLLABLE (NUEVO SISTEMA FIJO) */
+        /* TABLA SCROLLABLE */
         .grid-con { 
-            overflow: auto; /* Scroll interno */
+            overflow: auto; 
             background: #1e1e1e; 
-            border-radius: 8px; 
+            border-radius: 8px 8px 0 0; 
             border: 1px solid #333; 
-            flex: 1; /* Ocupa el resto de la pantalla */
+            flex: 1; 
             position: relative;
-            margin-bottom: 60px; /* Espacio para el footer flotante */
+            padding-bottom: 100px; /* ESPACIO EXTRA PARA EL BOTON FLOTANTE */
         }
         
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
         
-        /* CABECERA FIJA */
         th { 
-            background: #252525; 
-            position: sticky; 
-            top: 0; 
-            padding: 10px; 
-            color: #aaa; 
-            border-bottom: 2px solid #444; 
-            z-index: 20; 
-            cursor: pointer; 
-            user-select: none;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+            background: #252525; position: sticky; top: 0; padding: 8px; color: #aaa; 
+            border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; font-size: 0.85rem; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
-        th:hover { background: #333; color: #fff; }
+        td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 45px; padding: 0; vertical-align: middle; }
         
-        td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 50px; padding: 0; vertical-align: middle; }
+        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: 150px; max-width: 150px; padding: 5px; }
+        th.col-fix { z-index: 30; }
         
-        /* PRIMERA COLUMNA FIJA */
-        .col-fix { 
-            position: sticky; 
-            left: 0; 
-            background: #1e1e1e; 
-            border-right: 2px solid #444 !important; 
-            z-index: 10; 
-            min-width: 160px; 
-            max-width: 160px; 
-            padding: 5px; 
-        }
-        
-        /* INTERSECCION ARRIBA-IZQUIERDA (CONCEPTO) */
-        th.col-fix {
-            z-index: 30; /* Encima de todo */
-            background: #252525;
-        }
-        
-        /* DISEÑO CELDA SPLIT */
+        /* FILA DE TOTALES */
+        .row-total td { background: #2a2a2a; color: #BB86FC; font-weight: bold; border-top: 2px solid #555; font-size: 0.9rem; }
+        .row-total .col-fix { background: #2a2a2a; color: #BB86FC; z-index: 15; }
+
+        /* DISEÑO CELDA */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        /* DIA BLANCO Y NEGRITA */
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
-        .cell-amt { font-size: 0.85rem; font-weight: bold; color: #fff; }
+        .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
 
-        /* OTRAS VISTAS CON SCROLL */
+        /* OTRAS VISTAS */
         #view-cuentas, #view-help, #view-config, #view-admin { overflow-y: auto; padding-bottom: 80px; }
 
-        /* CUENTAS ACORDEON */
-        .acc-card { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
-        .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
-        .acc-detail { display: none; background: #151515; padding: 15px; border-top: 1px solid #333; }
-        .acc-detail.open { display: block; animation: fadeIn 0.3s; }
-        .det-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 5px 0; border-bottom: 1px solid #2a2a2a; color: #ccc; }
-        .det-total { border-top: 1px solid #555; border-bottom: none; font-weight: bold; font-size: 1rem; margin-top: 10px; padding-top: 10px; color: #BB86FC; }
-        @keyframes fadeIn { from {opacity:0} to {opacity:1} }
-
-        /* ADMIN */
-        .admin-controls { display:flex; gap:10px; justify-content:center; margin-bottom:15px; background:#2a2a2a; padding:10px; border-radius:8px; }
+        /* ADMIN & UI */
+        .admin-controls { display:flex; gap:10px; justify-content:center; margin-bottom:10px; background:#2a2a2a; padding:10px; border-radius:8px; }
         .admin-table { width: 100%; min-width: 300px; border-collapse: collapse; }
-        .admin-table th { text-align: left; color: #BB86FC; padding: 10px; border-bottom: 2px solid #444; }
-        .admin-table td { padding: 10px; border-bottom: 1px solid #333; font-size: 0.9rem; vertical-align: top; }
+        .admin-table th { text-align: left; color: #BB86FC; padding: 8px; border-bottom: 2px solid #444; }
+        .admin-table td { padding: 8px; border-bottom: 1px solid #333; font-size: 0.85rem; vertical-align: top; }
         .tag-adm { padding: 2px 6px; border-radius: 4px; font-size: 0.7rem; font-weight: bold; white-space: nowrap; cursor: pointer;}
         .del-user { color: #ff5252; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .add-user { color: #00e676; cursor: pointer; font-size: 0.8rem; border: 1px solid #00e676; padding: 2px 5px; border-radius: 5px; display:inline-block; margin-top:5px; }
 
-        /* Stats Grid Admin */
-        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
-        .stat-box { background: #2a2a2a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; }
-        .stat-num { font-size: 1.2rem; font-weight: bold; color: #fff; }
-        .stat-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; }
-
-        /* FOOTER */
-        .footer { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 10px 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:5px; align-items:center; }
+        /* FOOTER FLOTANTE */
+        .footer { position: fixed; bottom: 0; width: 100%; background: rgba(26,26,26,0.95); backdrop-filter: blur(5px); padding: 8px 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:5px; align-items:center; }
         .cafe-row { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 400px; }
         
-        /* UTILIDADES */
         .btn { padding: 10px; width: 100%; border-radius: 5px; border: none; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-p { background: #BB86FC; color: #000; }
         .btn-s { background: #333; color: #ccc; border: 1px solid #555; }
@@ -162,23 +121,31 @@
         .btn-tool { background: transparent; border: 1px solid #555; color: #aaa; padding: 8px; font-size: 0.8rem; border-radius: 5px; cursor: pointer; flex: 1; }
         
         input, select { width: 100%; padding: 12px; margin: 5px 0 15px 0; background: #151515; border: 1px solid #444; color: #fff; border-radius: 5px; box-sizing: border-box; }
-        .fab { position: fixed; bottom: 90px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 60; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
+        .fab { position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; border-radius: 50%; background: #BB86FC; color: #000; font-size: 2rem; border: none; cursor: pointer; display: flex; justify-content: center; align-items: center; z-index: 60; box-shadow: 0 4px 10px rgba(0,0,0,0.5); }
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
         /* ESTADOS DE PAGO */
         .status-paid { background: rgba(0, 230, 118, 0.15) !important; border-left: 3px solid #00e676; }
-        .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; } /* ROJO: Vencido */
-        .status-soon { background: rgba(255, 234, 0, 0.15); border-left: 3px solid #ffea00; } /* AMARILLO: Próximo */
+        .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; } 
+        .status-soon { background: rgba(255, 234, 0, 0.15); border-left: 3px solid #ffea00; }
         
-        .expense-name { font-weight:bold; font-size:0.9rem; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .expense-name { font-weight:bold; font-size:0.85rem; display:block; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
         .icon-btn { cursor:pointer; margin-left:5px; opacity:0.7; } .icon-btn:hover { opacity:1; }
-        
-        /* PRICE UI */
         .price-display { color: #00e676; font-weight: bold; font-size: 1.1rem; text-align: center; margin-bottom: 10px; }
         
-        /* LISTA CATEGORIAS CONFIG */
+        /* Stats Grid */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; margin-bottom: 10px; }
+        .stat-box { background: #2a2a2a; padding: 8px; border-radius: 8px; text-align: center; border: 1px solid #444; }
+        .stat-num { font-size: 1.1rem; font-weight: bold; color: #fff; }
+        .stat-label { font-size: 0.6rem; color: #aaa; text-transform: uppercase; }
         .cat-item { display: flex; justify-content: space-between; padding: 8px; border-bottom: 1px solid #333; align-items: center; }
+        
+        /* ACORDEON CUENTAS */
+        .acc-card { background: #1e1e1e; border-radius: 10px; border: 1px solid #333; margin-bottom: 10px; overflow: hidden; }
+        .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
+        .acc-detail { display: none; background: #151515; padding: 15px; border-top: 1px solid #333; }
+        .acc-detail.open { display: block; animation: fadeIn 0.3s; }
     </style>
 </head>
 <body>
@@ -190,21 +157,16 @@
             </a>
             <h2 style="color:#BB86FC; margin:0;">Armado de Pagos</h2>
             <p style="color:#aaa; font-size:0.9rem;">Accede a tu panel de control</p>
-            
             <input type="email" id="email" placeholder="Correo electrónico">
-            
             <div class="pass-wrapper">
                 <input type="password" id="password" placeholder="Contraseña">
                 <span class="pass-toggle" onclick="togglePass()">👁️</span>
             </div>
-            
             <div style="text-align:right; margin-bottom:15px;">
                 <span onclick="resetPass()" style="font-size:0.75rem; color:#BB86FC; cursor:pointer; text-decoration:underline;">¿Olvidaste tu contraseña?</span>
             </div>
-
             <button class="auth-btn btn-p" onclick="loginEmail()">Iniciar Sesión</button>
             <button class="auth-btn btn-s" onclick="registerEmail()">Crear Cuenta</button>
-            
             <div style="margin:20px 0; border-top:1px solid #333; padding-top:15px; color:#555; font-size:0.8rem;">O CONTINUA CON</div>
             <button class="auth-btn btn-google" onclick="loginGoogle()">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20"> 
@@ -222,12 +184,10 @@
             <h2 style="color:#BB86FC;">Seleccionar Grupo</h2>
             <p style="color:#aaa;">Ingresa el nombre de tu grupo/familia</p>
             <input type="text" id="groupNameInput" placeholder="Ej: FLIA_PEREZ" style="text-transform:uppercase; text-align:center; font-size:1.2rem; letter-spacing:1px;">
-            
             <div id="pinArea" style="display:none; background:#2a2a2a; padding:15px; border-radius:8px; margin-bottom:15px; border:1px solid #444;">
                 <p style="margin:0 0 5px 0; font-size:0.9rem; color:#ffb74d;">🔒 Grupo Privado</p>
                 <input type="text" id="groupPinInput" placeholder="PIN" style="text-align:center; letter-spacing:5px; font-size:1.5rem; width:100px; margin:0 auto;">
             </div>
-
             <button class="auth-btn btn-p" onclick="checkGroup()">ENTRAR</button>
             <button class="auth-btn btn-s" style="margin-top:20px;" onclick="logout()">Cerrar Sesión</button>
             <p id="groupMsg" style="color:#ff5252; margin-top:10px; font-size:0.9rem;"></p>
@@ -290,24 +250,21 @@
             <h3 style="color:#BB86FC;">📖 Manual de Uso</h3>
             <p><strong>1. Carga tu Dinero:</strong> Ve a la pestaña "Cuentas" y carga tus saldos reales (Banco, Efectivo).</p>
             <p><strong>2. Define tus Gastos:</strong> Usa el botón (+) para crear tus gastos fijos.</p>
-            <p><strong>3. Categorías:</strong> Usa el engranaje ⚙️ en la Planilla para crear tus propias categorías (Hogar, Auto, etc).</p>
-            
+            <p><strong>3. Categorías:</strong> Usa el engranaje ⚙️ para crear categorías propias.</p>
             <hr style="border-color:#333; margin:20px 0;">
-            
             <h3 style="color:#00e676;">👑 Plan PRO (<span class="uiPriceDisplay">$...</span>/mes)</h3>
-            <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong> con acceso total.</p>
+            <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong>.</p>
             <p><strong>¿Cómo renovar?</strong></p>
             <ol>
                 <li>Al finalizar el periodo, realiza el pago del mes.</li>
                 <li>Envía el comprobante por WhatsApp.</li>
-                <li>Recibirás una <strong>Clave Mensual</strong> única.</li>
-                <li>Ingresa la clave en "Configuración" y se habilitará ese mes.</li>
+                <li>Recibirás una <strong>Clave Mensual</strong>.</li>
+                <li>Ingresa la clave en "Configuración".</li>
             </ol>
         </div>
     </div>
 
     <div id="view-config" class="view">
-        
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
             <h3 style="color:#00e676; margin-top:0;">♻️ Migración de Datos</h3>
             <div style="display:flex; gap:10px;">
@@ -316,30 +273,23 @@
                 <input type="file" id="restInput" style="display:none" onchange="restoreBackup(this)">
             </div>
         </div>
-
         <div class="dash-card" style="text-align:left; border-color:#ff5252;">
             <h3 style="color:#ff5252; margin-top:0;">☠️ Zona de Peligro</h3>
-            <p style="font-size:0.8rem; color:#aaa;">Estas acciones no se pueden deshacer.</p>
             <button class="btn btn-d" onclick="nukeExpenses()">🗑️ Borrar TODOS los Gastos</button>
             <button class="btn btn-d" onclick="nukeAccounts()">🗑️ Borrar TODAS las Cuentas</button>
         </div>
-
         <div class="dash-card" style="text-align:left; margin-top:15px;">
             <h3 style="color:#BB86FC">Mi Grupo</h3>
             <p>Nombre: <strong id="confGName" style="color:#fff">...</strong></p>
             <p>Vencimiento: <strong id="confValid" style="color:#fff">...</strong></p>
-            
             <div style="background:#2a2a2a; padding:15px; border-radius:10px; text-align:center; border:1px dashed #555; margin:20px 0;">
                 <p style="margin:0; color:#aaa; font-size:0.75rem; text-transform:uppercase;">PIN DE INVITACIÓN</p>
                 <div id="confPin" style="font-size:2.5rem; font-weight:bold; color:#00e676; letter-spacing:5px; margin:5px 0;">****</div>
                 <p style="margin:0; font-size:0.8rem; color:#777;">Comparte este PIN.</p>
             </div>
-            
             <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
                 <p style="font-size:0.85rem; color:#aaa;">Pagar Suscripción / Canjear:</p>
-                
                 <div class="price-display">Valor Mensual: <span class="uiPriceDisplay">$...</span></div>
-
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" class="btn btn-p" style="margin:0; text-align:center; background:#009EE3; color:white;">Pagar con MP</a>
                     <a href="https://wa.me/5492615734341?text=Hola!%20Ya%20hice%20el%20pago%20de%20mi%20grupo,%20envio%20comprobante." target="_blank" class="btn btn-s" style="margin:0; text-align:center; background:#25D366; color:white; border:none;">Enviar Comprobante</a>
@@ -349,7 +299,6 @@
                     <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">OK</button>
                 </div>
             </div>
-
             <hr style="border-color:#333; margin:20px 0;">
             <button class="btn btn-s" onclick="location.reload()">Cambiar de Grupo</button>
             <button class="btn btn-s" style="border-color:#ff5252; color:#ff5252" onclick="logout()">Cerrar Sesión</button>
@@ -358,26 +307,12 @@
 
     <div id="view-admin" class="view">
         <h2 style="color:#ff5252; text-align:center;">PANEL ADMINISTRADOR</h2>
-        
         <div class="stats-grid" id="adminStats">
-            <div class="stat-box">
-                <div class="stat-num" id="statUsers">0</div>
-                <div class="stat-label">Usuarios</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-num" id="statGroups">0</div>
-                <div class="stat-label">Grupos</div>
-            </div>
-            <div class="stat-box" style="border-color:#00e676;">
-                <div class="stat-num" style="color:#00e676;" id="statActive">0</div>
-                <div class="stat-label">Activos</div>
-            </div>
-            <div class="stat-box" style="border-color:#ff5252;">
-                <div class="stat-num" style="color:#ff5252;" id="statExpired">0</div>
-                <div class="stat-label">Vencidos</div>
-            </div>
+            <div class="stat-box"><div class="stat-num" id="statUsers">0</div><div class="stat-label">Usuarios</div></div>
+            <div class="stat-box"><div class="stat-num" id="statGroups">0</div><div class="stat-label">Grupos</div></div>
+            <div class="stat-box" style="border-color:#00e676;"><div class="stat-num" style="color:#00e676;" id="statActive">0</div><div class="stat-label">Activos</div></div>
+            <div class="stat-box" style="border-color:#ff5252;"><div class="stat-num" style="color:#ff5252;" id="statExpired">0</div><div class="stat-label">Vencidos</div></div>
         </div>
-
         <div class="dash-card" style="text-align:left; border-color:#BB86FC; margin-bottom:15px;">
             <p><b style="color:#BB86FC">Configuración Global</b></p>
             <label>Precio Suscripción:</label>
@@ -386,7 +321,6 @@
                 <button class="btn-p" style="width:auto; margin:0;" onclick="savePrice()">Guardar</button>
             </div>
         </div>
-
         <div class="dash-card" style="text-align:left;">
             <p><b>Generador de Claves Mensuales</b></p>
             <div class="admin-controls">
@@ -419,27 +353,22 @@
             <h3>Gasto / Servicio</h3>
             <label>Nombre:</label>
             <input id="meName" placeholder="Ej: Luz Casa">
-            
             <label>Categoría:</label>
             <div style="display:flex; gap:5px;">
                 <select id="meCat" style="flex:1"></select>
                 <button class="btn-s" style="width:auto; margin:5px 0 15px 0;" onclick="openModalCats()">⚙️</button>
             </div>
-            
             <label>Link Carpeta Comprobantes:</label>
             <input id="meFolder" placeholder="https://drive.google.com...">
             <label>Link de Pago (Web):</label>
             <input id="meLink" placeholder="https://...">
-            
             <div style="background:#333; padding:10px; border-radius:5px; margin-bottom:10px;">
                 <label style="color:#BB86FC; font-size:0.8rem;">Credenciales (Opcional):</label>
                 <input id="meUser" placeholder="Usuario / ID" style="margin-bottom:5px;">
                 <input id="mePass" placeholder="Contraseña">
             </div>
-            
             <label>Comentarios:</label>
             <input id="meComm" placeholder="...">
-            
             <button class="btn btn-p" onclick="saveExp()">Guardar</button>
             <button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button>
             <button class="btn btn-d" style="margin-top:15px;" onclick="delExp()">🗑️ Borrar Gasto y Pagos</button>
@@ -450,7 +379,6 @@
         <div class="modal-box">
             <h3>Administrar Categorías</h3>
             <div id="catList" style="margin-bottom:15px; max-height:200px; overflow-y:auto;"></div>
-            
             <div style="border-top:1px solid #444; padding-top:10px;">
                 <label>Nueva Categoría:</label>
                 <div style="display:flex; gap:5px;">
@@ -472,7 +400,6 @@
             <input type="number" id="mcDay" placeholder="Día (1-31)">
             <label>Pagar con:</label>
             <select id="mcAcc"><option value="">--</option></select>
-            
             <div style="background:#2a2a2a; padding:10px; border-radius:5px; margin:10px 0; border:1px solid #444;">
                 <div style="display:flex; align-items:center; gap:10px;">
                     <input type="checkbox" id="mcRepeat" style="width:20px; margin:0;" onchange="document.getElementById('mcRepOpt').style.display = this.checked ? 'block' : 'none'">
@@ -483,12 +410,10 @@
                     <select id="mcRepMonth"></select>
                 </div>
             </div>
-
             <div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;">
                 <input type="checkbox" id="mcPaid" style="width:20px; margin:0;">
                 <label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label>
             </div>
-            
             <button class="btn btn-p" onclick="saveCell()">Guardar</button>
             <button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button>
             <div style="display:flex; gap:5px; margin-top:10px;">
@@ -504,7 +429,6 @@
         <div class="modal-box" style="border:2px solid #ff5252;">
             <h2 style="color:#ff5252">⚠️ Servicio Vencido</h2>
             <p>El periodo de uso ha finalizado.</p>
-            <p>Por favor, ingresa el código de renovación para continuar operando.</p>
             <div class="price-display">Valor Actual: <span class="uiPriceDisplay">$...</span></div>
             <p style="font-size:0.8rem; color:#aaa;">Código DEMO disponible: "DEMO"</p>
             <button class="btn btn-p" onclick="closeModal('modLock'); switchTab('config');">Ir a Pagar</button>
@@ -525,11 +449,9 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
     
-    // --- VARIABLES ---
     const ADMIN_EMAIL = "diegomatteiblanco@gmail.com";
     let currentUser = null;
     let currentGroup = null;
-    let groupInfo = null;
     let appData = { expenses:[], payments:{}, accounts:[], categories:[] };
     let year = 2026;
     let selCell = null;
@@ -537,33 +459,12 @@
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
 
-    // --- HELPER CALCULADORA ---
-    function smartParse(str) {
-        try {
-            if(!str) return 0;
-            let clean = str.toString().replace(/,/g, '.').replace(/[^-()\d/*+.]/g, '');
-            return eval(clean) || 0;
-        } catch(e) { return 0; }
-    }
-    
+    function smartParse(str) { try { if(!str) return 0; let clean = str.toString().replace(/,/g, '.').replace(/[^-()\d/*+.]/g, ''); return eval(clean) || 0; } catch(e) { return 0; } }
     function calcInput(el) { const val = smartParse(el.value); if(val) el.value = val; }
-
-    function stringToColor(str) {
-        if(!str) return 'transparent';
-        let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash);
-        const c = (hash & 0x00FFFFFF).toString(16).toUpperCase();
-        return '#' + "00000".substring(0, 6 - c.length) + c;
-    }
-    
+    function stringToColor(str) { if(!str) return 'transparent'; let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#' + "00000".substring(0, 6 - c.length) + c; }
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
-    // --- INICIALIZACION ---
-    db.collection('config').doc('pricing').onSnapshot(doc => {
-        if(doc.exists) {
-            globalPrice = doc.data().val || 0;
-            document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString());
-        }
-    });
+    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString()); } });
 
     auth.onAuthStateChanged(user => {
         if(user) {
@@ -571,11 +472,7 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('groupScreen').style.display = 'flex';
             document.getElementById('dispUserEmail').innerText = user.email.split('@')[0];
-            if(user.email === ADMIN_EMAIL) {
-                document.getElementById('tab-admin').style.display = 'block';
-                const hoy = new Date();
-                document.getElementById('adminMonth').value = hoy.getMonth();
-            }
+            if(user.email === ADMIN_EMAIL) { document.getElementById('tab-admin').style.display = 'block'; const hoy = new Date(); document.getElementById('adminMonth').value = hoy.getMonth(); }
         } else {
             document.getElementById('authScreen').style.display = 'flex';
             document.getElementById('groupScreen').style.display = 'none';
@@ -587,7 +484,7 @@
     function loginEmail() { auth.signInWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function registerEmail() { auth.createUserWithEmailAndPassword(document.getElementById('email').value, document.getElementById('password').value).catch(e => document.getElementById('authMsg').innerText=e.message); }
     function loginGoogle() { auth.signInWithPopup(new firebase.auth.GoogleAuthProvider()).catch(e => document.getElementById('authMsg').innerText=e.message); }
-    function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo (y SPAM)")).catch(e=>alert(e.message)); }
+    function resetPass() { const e=document.getElementById('email').value; if(!e) return alert("Ingresa tu correo arriba"); auth.sendPasswordResetEmail(e).then(()=>alert("Revisa tu correo")).catch(e=>alert(e.message)); }
     function logout() { auth.signOut().then(() => location.reload()); }
 
     function checkGroup() {
@@ -615,16 +512,13 @@
 
     function enterGroup(name, info) {
         currentGroup = name;
-        groupInfo = info;
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
         document.getElementById('headerGroupName').innerText = name;
-        
         db.collection('groups').doc(name).onSnapshot(doc => { if(doc.exists) updateBadge(doc.data().validUntil); });
         updateBadge(info.validUntil);
         document.getElementById('confGName').innerText = name;
         document.getElementById('confPin').innerText = info.pin;
-
         db.collection('data').doc(name).onSnapshot(doc => {
             if(doc.exists) {
                 appData = doc.data();
@@ -632,13 +526,7 @@
                 if(!appData.payments) appData.payments = {};
                 if(!appData.accounts) appData.accounts = [];
                 if(!appData.categories || appData.categories.length === 0) {
-                    appData.categories = [
-                        {id: 'c1', name:'Hogar', icon:'🏠'},
-                        {id: 'c2', name:'Oficina', icon:'🏢'},
-                        {id: 'c3', name:'Auto', icon:'🚗'},
-                        {id: 'c4', name:'Personal', icon:'👤'},
-                        {id: 'c5', name:'Tarjetas', icon:'💳'}
-                    ];
+                    appData.categories = [ {id:'c1',name:'Hogar',icon:'🏠'}, {id:'c2',name:'Oficina',icon:'🏢'}, {id:'c3',name:'Auto',icon:'🚗'}, {id:'c4',name:'Personal',icon:'👤'}, {id:'c5',name:'Tarjetas',icon:'💳'} ];
                 }
             } else saveData();
             renderAll();
@@ -663,7 +551,6 @@
         }
     }
 
-    // --- CATEGORIAS ---
     function renderFilters() {
         const container = document.getElementById('filterList');
         let html = '';
@@ -698,7 +585,6 @@
 
     function delCat(id) { if(confirm("¿Eliminar categoría?")) { appData.categories = appData.categories.filter(c => c.id !== id); saveData(); openModalCats(); renderFilters(); } }
 
-    // --- MONETIZACION Y ADMIN ---
     function generateDynamicHash(g, m, y) { let h=0; const s=g+"_"+m+"_"+y+"_CYM_SECURE_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
@@ -727,7 +613,7 @@
         const listDiv=document.getElementById('adminList'); listDiv.innerHTML='<p style="text-align:center">Cargando...</p>';
         let s={u:0,g:0,a:0,e:0};
         db.collection('groups').get().then(snap=>{
-            let h='<table class="admin-table"><thead><tr><th>Grupo</th><th>Vencimiento</th><th>Clave</th></tr></thead><tbody>';
+            let h='<table class="admin-table"><thead><tr><th>Grupo</th><th>Vence</th><th>Clave</th></tr></thead><tbody>';
             snap.forEach(doc=>{
                 const g=doc.data(); const v=new Date(g.validUntil||0); const exp=v<new Date();
                 s.g++; s.u+=(g.members?g.members.length:0); if(exp)s.e++; else s.a++;
@@ -746,14 +632,12 @@
     function addUser(id){if(currentUser.email!==ADMIN_EMAIL)return;const e=prompt("Email:");if(e&&e.includes('@'))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayUnion(e.trim().toLowerCase())}).then(()=>renderAdmin());}
     function deleteGroup(id){if(confirm("¿Borrar grupo?"))db.collection('groups').doc(id).delete();db.collection('data').doc(id).delete().then(()=>renderAdmin());}
 
-    // --- DATA ---
     function restoreBackup(i){if(isExpired)return alert("Vencido");const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);let nx=[],np={},na=[],nc=[];if(Array.isArray(d.expenses))nx=d.expenses;if(d.payments)np=d.payments;if(Array.isArray(d.accounts))na=d.accounts;if(Array.isArray(d.categories))nc=d.categories;if(confirm("Importar?")){appData={expenses:nx,payments:np,accounts:na,categories:nc.length?nc:appData.categories};saveData();alert("Listo");}}catch(z){alert("Error");}};r.readAsText(f);}
     function downloadBackup(){const b=new Blob([JSON.stringify({...appData,meta:{group:currentGroup,date:new Date()}})],{type:"application/json"});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`Backup_${currentGroup}.json`;a.click();}
     function saveData(){if(currentGroup)db.collection('data').doc(currentGroup).set(appData);}
     function nukeExpenses(){if(checkLock())return;if(confirm("¿Borrar TODO?")){appData.expenses=[];appData.payments={};saveData();alert("Borrado");}}
     function nukeAccounts(){if(checkLock())return;if(confirm("¿Borrar Cuentas?")){appData.accounts=[];saveData();alert("Borrado");}}
 
-    // --- UI ---
     function renderAll(){ renderFilters(); renderGrid(); renderAcc(); calcDash(); }
     
     function renderGrid() {
@@ -762,12 +646,16 @@
         let body = '<tbody>';
         
         const list = activeCategory === 'ALL' ? appData.expenses : appData.expenses.filter(e => e.cat === activeCategory);
+        let monthTotals = new Array(12).fill(0); // ARRAY DE TOTALES
 
         list.forEach(e => {
             body += `<tr><td class="col-fix"><span class="expense-name">${e.name}</span><div style="font-size:0.7rem;color:#aaa">${e.cat}</div><div style="margin-top:2px;">${e.folder?`<span class="icon-btn" onclick="window.open('${e.folder}')">📁</span>`:''}${e.link?`<span class="icon-btn" onclick="window.open('${e.link}')">🔗</span>`:''}${e.user||e.pass?`<span class="icon-btn" onclick="alert('U: ${e.user}\\nP: ${e.pass}')">🔑</span>`:''}${e.comment?`<span class="icon-btn" onclick="alert('${e.comment}')">💬</span>`:''}<span class="icon-btn" onclick="editExp(${e.id})">✏️</span></div></td>`;
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
+                // CALCULO TOTALES
+                if(p.amt && !p.paid) monthTotals[i] += parseFloat(p.amt);
+
                 let st = '';
                 if(p.paid) st = 'status-paid';
                 else if(p.amt || p.day) {
@@ -791,7 +679,15 @@
             }
             body += '</tr>';
         });
-        t.innerHTML += body + '</tbody>';
+
+        // FILA DE TOTALES
+        let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
+        monthTotals.forEach(val => {
+            totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`;
+        });
+        totalRowHTML += '</tr>';
+
+        t.innerHTML += body + totalRowHTML + '</tbody>';
     }
 
     function sortByMonth(mi){
