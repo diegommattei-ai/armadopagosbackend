@@ -77,6 +77,12 @@
         .del-user { color: #ff5252; cursor: pointer; font-weight: bold; margin-left: 5px; }
         .add-user { color: #00e676; cursor: pointer; font-size: 0.8rem; border: 1px solid #00e676; padding: 2px 5px; border-radius: 5px; display:inline-block; margin-top:5px; }
 
+        /* Stats Grid Admin */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 15px; }
+        .stat-box { background: #2a2a2a; padding: 10px; border-radius: 8px; text-align: center; border: 1px solid #444; }
+        .stat-num { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .stat-label { font-size: 0.7rem; color: #aaa; text-transform: uppercase; }
+
         /* FOOTER */
         .footer { position: fixed; bottom: 0; width: 100%; background: #1a1a1a; padding: 15px; border-top: 1px solid #333; text-align: center; z-index: 50; display:flex; flex-direction:column; gap:10px; align-items:center; }
         .cafe-row { display: flex; gap: 10px; justify-content: center; width: 100%; max-width: 400px; }
@@ -263,6 +269,26 @@
 
     <div id="view-admin" class="view">
         <h2 style="color:#ff5252; text-align:center;">PANEL ADMINISTRADOR</h2>
+        
+        <div class="stats-grid" id="adminStats">
+            <div class="stat-box">
+                <div class="stat-num" id="statUsers">0</div>
+                <div class="stat-label">Usuarios</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-num" id="statGroups">0</div>
+                <div class="stat-label">Grupos</div>
+            </div>
+            <div class="stat-box" style="border-color:#00e676;">
+                <div class="stat-num" style="color:#00e676;" id="statActive">0</div>
+                <div class="stat-label">Activos</div>
+            </div>
+            <div class="stat-box" style="border-color:#ff5252;">
+                <div class="stat-num" style="color:#ff5252;" id="statExpired">0</div>
+                <div class="stat-label">Vencidos</div>
+            </div>
+        </div>
+
         <div class="dash-card" style="text-align:left;">
             <p><b>Generador de Claves Mensuales</b></p>
             <div class="admin-controls">
@@ -272,7 +298,7 @@
                     <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
                     <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
                 </select>
-                <select id="adminYear"><option value="2026">2026</option><option value="2027">2027</option></select>
+                <select id="adminYear"></select> 
             </div>
             <p style="font-size:0.8rem; color:#aaa;">Selecciona Mes/Año y toca "🔑 Clave" en el usuario.</p>
             <button class="btn btn-s" onclick="renderAdmin()">🔄 Actualizar Lista</button>
@@ -373,7 +399,6 @@ const firebaseConfig = {
                 // Configurar selectores de admin a la fecha actual
                 const hoy = new Date();
                 document.getElementById('adminMonth').value = hoy.getMonth();
-                document.getElementById('adminYear').value = hoy.getFullYear();
             }
         } else {
             document.getElementById('authScreen').style.display = 'flex';
@@ -464,7 +489,6 @@ const firebaseConfig = {
     }
 
     // --- NUEVO SISTEMA DE CLAVES DINAMICAS ---
-    // Genera hash basado en: GRUPO + MES + AÑO
     function generateDynamicHash(group, month, year) { 
         let h=0; 
         const s = group + "_" + month + "_" + year + "_CYM_SECURE_2026"; 
@@ -474,19 +498,15 @@ const firebaseConfig = {
 
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        if(code === "DEMO") { // Codigo Demo fijo
+        if(code === "DEMO") { 
              extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1)));
              return;
         }
 
-        // INTELIGENCIA PARA ADIVINAR EL MES:
-        // El usuario metio un codigo. Probamos si ese codigo matchea con el mes actual, el mes siguiente o el otro.
-        // Si matchea con "Marzo 2026", actualizamos la fecha de vencimiento a FIN DE MARZO 2026.
-        
         const now = new Date();
         let foundMatch = false;
         
-        // Iteramos desde el mes actual hasta 12 meses adelante buscando coincidencia
+        // Busca coincidencia en los proximos 12 meses
         for(let i=0; i<12; i++) {
             const checkDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
             const m = checkDate.getMonth();
@@ -495,9 +515,8 @@ const firebaseConfig = {
             const expected = generateDynamicHash(currentGroup, m, y);
             
             if(code === expected) {
-                // EUREKA! El codigo es para este mes/año
                 // Calcular ultimo dia de ese mes
-                const lastDay = new Date(y, m + 1, 0); // Dia 0 del mes siguiente es el ultimo del actual
+                const lastDay = new Date(y, m + 1, 0); 
                 extendValidity(lastDay);
                 foundMatch = true;
                 break;
@@ -518,23 +537,46 @@ const firebaseConfig = {
     function renderAdmin() {
         if(currentUser.email !== ADMIN_EMAIL) return;
         
+        // 1. GENERACION DINAMICA DE AÑOS
+        const selY = document.getElementById('adminYear');
+        // Si tiene menos de 2 opciones o esta vacio, lo rellenamos
+        if(selY.options.length < 2) {
+            selY.innerHTML = "";
+            const currentYear = new Date().getFullYear();
+            // Genera desde este año hasta 5 años mas
+            for(let i=0; i<=5; i++) {
+                const opt = document.createElement('option');
+                opt.value = currentYear + i;
+                opt.text = currentYear + i;
+                selY.add(opt);
+            }
+        }
+
         const selM = document.getElementById('adminMonth').value;
-        const selY = document.getElementById('adminYear').value;
+        const currentYVal = selY.value; // Valor seleccionado actualmente
         
         const listDiv = document.getElementById('adminList');
         listDiv.innerHTML = '<p style="text-align:center">Cargando grupos...</p>';
         
+        // METRICAS
+        let stats = { users:0, groups:0, active:0, expired:0 };
+
         db.collection('groups').get().then(snapshot => {
-            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Clave ('+ (parseInt(selM)+1) + '/' + selY +')</th></tr></thead><tbody>';
+            let html = '<table class="admin-table"><thead><tr><th>Grupo / Miembros</th><th>Vencimiento</th><th>Clave ('+ (parseInt(selM)+1) + '/' + currentYVal +')</th></tr></thead><tbody>';
+            
             snapshot.forEach(doc => {
                 const g = doc.data();
                 const vDate = new Date(g.validUntil || 0);
                 const isVencido = vDate < new Date();
                 
-                // Generar CLAVE DINAMICA basada en los selectores
-                const code = generateDynamicHash(doc.id, parseInt(selM), parseInt(selY));
+                // CALCULO METRICAS
+                stats.groups++;
+                stats.users += (g.members ? g.members.length : 0);
+                if(isVencido) stats.expired++; else stats.active++;
+
+                // Generar CLAVE
+                const code = generateDynamicHash(doc.id, parseInt(selM), parseInt(currentYVal));
                 
-                // Formatear Miembros
                 let membersHtml = g.members.map(m => 
                     `<div>
                         ${m === g.owner ? '★' : ''} ${m} 
@@ -561,6 +603,12 @@ const firebaseConfig = {
             });
             html += '</tbody></table>';
             listDiv.innerHTML = html;
+
+            // ACTUALIZAR METRICAS EN DOM
+            document.getElementById('statUsers').innerText = stats.users;
+            document.getElementById('statGroups').innerText = stats.groups;
+            document.getElementById('statActive').innerText = stats.active;
+            document.getElementById('statExpired').innerText = stats.expired;
         });
     }
 
