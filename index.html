@@ -2,30 +2,33 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#121212">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>Armado de Pagos</title>
     
+    <link rel="manifest" id="myManifest">
+    <link rel="apple-touch-icon" href="logo.jpg">
+
     <script src="https://cdn.sheetjs.com/xlsx-0.19.3/package/dist/xlsx.full.min.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
 
     <style>
-        /* VARIABLE CSS PARA ANCHO COLUMNA */
-        :root { --col-w: 150px; }
-
         /* ESTILOS (Dark Theme) */
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; transition: 0.3s; }
         a { text-decoration: none; color: inherit; }
 
-        /* MODO ZEN (PANTALLA COMPLETA) */
+        /* MODO ZEN */
         body.zen-mode .app-header, 
         body.zen-mode .tabs, 
         body.zen-mode .footer, 
         body.zen-mode .dashboard-grid { display: none !important; }
         body.zen-mode .view { height: 100vh; padding-top: 10px; }
 
-        /* SCROLLBAR PERSONALIZADO */
+        /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #1e1e1e; }
         ::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
@@ -67,7 +70,7 @@
         .dash-val { font-size: 0.9rem; font-weight: bold; font-family: monospace; margin-top:2px; }
         .c-g { color: #00e676; } .c-r { color: #ff5252; } .c-p { color: #BB86FC; }
 
-        /* FILTROS Y TOOLBAR */
+        /* FILTROS */
         .filter-row { display: flex; gap: 8px; overflow-x: auto; padding: 5px 0; align-items: center; width: 100%; flex-shrink: 0; scrollbar-width: none; }
         .filter-row::-webkit-scrollbar { display: none; }
         .filter-pill { background: #252525; padding: 5px 12px; border-radius: 15px; color: #ccc; white-space: nowrap; cursor: pointer; border: 1px solid #444; display:flex; align-items:center; gap:5px; font-size:0.75rem; transition: 0.2s; }
@@ -79,32 +82,16 @@
 
         /* TABLA SCROLLABLE */
         .grid-con { 
-            overflow: auto; 
-            background: #1e1e1e; 
-            border-radius: 8px 8px 0 0; 
-            border: 1px solid #333; 
-            flex: 1; 
-            position: relative;
-            padding-bottom: 100px; 
+            overflow: auto; background: #1e1e1e; border-radius: 8px 8px 0 0; border: 1px solid #333; 
+            flex: 1; position: relative; padding-bottom: 100px; 
         }
         
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
-        
-        th { 
-            background: #252525; position: sticky; top: 0; padding: 8px; color: #aaa; 
-            border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; font-size: 0.85rem; 
-            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-        }
+        th { background: #252525; position: sticky; top: 0; padding: 8px; color: #aaa; border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
         td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 45px; padding: 0; vertical-align: middle; }
         
-        /* COLUMNA FIJA REGULABLE */
-        .col-fix { 
-            position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; 
-            z-index: 10; 
-            min-width: var(--col-w); max-width: var(--col-w); /* USA LA VARIABLE */
-            padding: 5px; 
-            transition: 0.1s;
-        }
+        :root { --col-w: 150px; }
+        .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: var(--col-w); max-width: var(--col-w); padding: 5px; transition: 0.1s; }
         th.col-fix { z-index: 30; }
         
         /* FILA DE TOTALES */
@@ -113,13 +100,13 @@
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
 
         /* OTRAS VISTAS */
-        #view-cuentas, #view-help, #view-config, #view-admin { overflow-y: auto; padding-bottom: 80px; }
+        #view-cuentas, #view-help, #view-config, #view-admin { overflow-y: auto; padding-bottom: 100px; }
 
         /* ADMIN & UI */
         .admin-controls { display:flex; gap:10px; justify-content:center; margin-bottom:10px; background:#2a2a2a; padding:10px; border-radius:8px; }
@@ -278,6 +265,14 @@
             <p><strong>1. Carga tu Dinero:</strong> Ve a la pestaña "Cuentas" y carga tus saldos reales (Banco, Efectivo).</p>
             <p><strong>2. Define tus Gastos:</strong> Usa el botón (+) para crear tus gastos fijos.</p>
             <p><strong>3. Categorías:</strong> Usa el engranaje ⚙️ para crear categorías propias.</p>
+            
+            <div style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">
+               <p style="margin-bottom:10px;"><strong>Referencias de Colores:</strong></p>
+               <div style="display:flex;gap:10px;align-items:center;margin-bottom:5px"><div style="width:15px;height:15px;background:#00e676;border-radius:50%"></div><span style="font-size:0.9rem">Pagado</span></div>
+               <div style="display:flex;gap:10px;align-items:center;margin-bottom:5px"><div style="width:15px;height:15px;background:#ffea00;border-radius:50%"></div><span style="font-size:0.9rem">Próximo a Vencer</span></div>
+               <div style="display:flex;gap:10px;align-items:center"><div style="width:15px;height:15px;background:#ff5252;border-radius:50%"></div><span style="font-size:0.9rem">Vencido (Impago)</span></div>
+            </div>
+
             <hr style="border-color:#333; margin:20px 0;">
             <h3 style="color:#00e676;">👑 Plan PRO (<span class="uiPriceDisplay">$...</span>/mes)</h3>
             <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong>.</p>
@@ -300,6 +295,10 @@
     </div>
 
     <div id="view-config" class="view">
+        <div id="installContainer" style="display:none; margin-bottom:15px;">
+            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">📲 INSTALAR APLICACIÓN</button>
+        </div>
+
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
             <h3 style="color:#00e676; margin-top:0;">♻️ Migración de Datos</h3>
             <div style="display:flex; gap:10px;">
@@ -388,22 +387,33 @@
             <h3>Gasto / Servicio</h3>
             <label>Nombre:</label>
             <input id="meName" placeholder="Ej: Luz Casa">
+            
             <label>Categoría:</label>
             <div style="display:flex; gap:5px;">
                 <select id="meCat" style="flex:1"></select>
                 <button class="btn-s" style="width:auto; margin:5px 0 15px 0;" onclick="openModalCats()">⚙️</button>
             </div>
+            
             <label>Link Carpeta Comprobantes:</label>
             <input id="meFolder" placeholder="https://drive.google.com...">
             <label>Link de Pago (Web):</label>
             <input id="meLink" placeholder="https://...">
+            
             <div style="background:#333; padding:10px; border-radius:5px; margin-bottom:10px;">
                 <label style="color:#BB86FC; font-size:0.8rem;">Credenciales (Opcional):</label>
                 <input id="meUser" placeholder="Usuario / ID" style="margin-bottom:5px;">
                 <input id="mePass" placeholder="Contraseña">
             </div>
+            
+            <div style="background:#2a2a2a; padding:10px; border-radius:5px; margin-bottom:10px; border:1px solid #444;">
+                <label style="color:#00e676; font-size:0.8rem;">Datos de Transferencia:</label>
+                <input id="meCbu" placeholder="Alias o CBU" style="margin-bottom:5px;">
+                <input id="meHolder" placeholder="Titular de la cuenta">
+            </div>
+            
             <label>Comentarios:</label>
             <input id="meComm" placeholder="...">
+            
             <button class="btn btn-p" onclick="saveExp()">Guardar</button>
             <button class="btn btn-s" onclick="closeModal('modExp')">Cancelar</button>
             <button class="btn btn-d" style="margin-top:15px;" onclick="delExp()">🗑️ Borrar Gasto y Pagos</button>
@@ -471,6 +481,39 @@
     </div>
 
 <script>
+    // MANIFEST DINAMICO
+    const manifest = {
+        name: "Armado de Pagos",
+        short_name: "ArmadoPagos",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#121212",
+        theme_color: "#BB86FC",
+        icons: [{ src: "logo.jpg", sizes: "192x192", type: "image/jpeg" }]
+    };
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#myManifest').setAttribute('href', manifestURL);
+
+    // INSTALACION PWA
+    let deferredPrompt;
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        document.getElementById('installContainer').style.display = 'block';
+    });
+
+    async function installApp() {
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        } else {
+            alert("Para instalar en iPhone/iPad:\n\n1. Toca el botón 'Compartir' (cuadrado con flecha hacia arriba).\n2. Busca y selecciona 'Agregar a Inicio'.");
+        }
+    }
+
     const firebaseConfig = {
       apiKey: "AIzaSyA79gsaESM8m_9jJY-lYHHHHbIxkGeJ9jA",
       authDomain: "armadopagos.firebaseapp.com",
@@ -620,17 +663,6 @@
 
     function delCat(id) { if(confirm("¿Eliminar categoría?")) { appData.categories = appData.categories.filter(c => c.id !== id); saveData(); openModalCats(); renderFilters(); } }
 
-    // --- ZEN MODE ---
-    function toggleZen() {
-        document.body.classList.toggle('zen-mode');
-    }
-
-    // --- COLUMN WIDTH ---
-    function setColWidth(w) {
-        document.documentElement.style.setProperty('--col-w', w + 'px');
-    }
-
-    // --- MONETIZACION Y ADMIN ---
     function generateDynamicHash(g, m, y) { let h=0; const s=g+"_"+m+"_"+y+"_CYM_SECURE_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
@@ -762,7 +794,7 @@
     let edId=null;
     function openModalExp() {
         if(checkLock()) return; edId=null;
-        ['meName','meFolder','meLink','meUser','mePass','meComm'].forEach(i=>document.getElementById(i).value='');
+        ['meName','meFolder','meLink','meUser','mePass','meComm','meCbu','meHolder'].forEach(i=>document.getElementById(i).value='');
         const catSel = document.getElementById('meCat'); catSel.innerHTML = '';
         appData.categories.forEach(c => { const opt = document.createElement('option'); opt.value = c.name; opt.innerText = c.icon + ' ' + c.name; catSel.add(opt); });
         document.getElementById('modExp').style.display='flex';
@@ -771,9 +803,14 @@
         if(checkLock()) return; edId=id; const e=appData.expenses.find(x=>x.id==id);
         openModalExp(); edId=id;
         document.getElementById('meName').value=e.name; document.getElementById('meFolder').value=e.folder||''; document.getElementById('meLink').value=e.link||''; document.getElementById('meUser').value=e.user||''; document.getElementById('mePass').value=e.pass||''; document.getElementById('meComm').value=e.comment||''; document.getElementById('meCat').value=e.cat;
+        document.getElementById('meCbu').value=e.cbu||''; document.getElementById('meHolder').value=e.holder||'';
     }
     function saveExp() {
-        const obj={name:val('meName'), cat:val('meCat'), folder:val('meFolder'), link:val('meLink'), user:val('meUser'), pass:val('mePass'), comment:val('meComm')};
+        const obj={
+            name:val('meName'), cat:val('meCat'), folder:val('meFolder'), link:val('meLink'), 
+            user:val('meUser'), pass:val('mePass'), comment:val('meComm'),
+            cbu:val('meCbu'), holder:val('meHolder') // NUEVOS CAMPOS
+        };
         if(edId){ const idx=appData.expenses.findIndex(x=>x.id==edId); appData.expenses[idx]={...appData.expenses[idx], ...obj}; } else appData.expenses.push({id:Date.now(), ...obj});
         saveData(); closeModal('modExp');
     }
