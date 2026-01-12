@@ -24,12 +24,12 @@
         a { text-decoration: none; color: inherit; }
 
         /* --- MODO ZEN (CORREGIDO) --- */
-        /* Oculta Header, Tabs, Dashboard, Selector de Año y Botón Flotante */
+        /* Oculta Header, Tabs, Dashboard, Selector de Año, Footer y Botón Flotante */
         body.zen-mode .app-header, 
         body.zen-mode .tabs, 
         body.zen-mode .dashboard-grid,
         body.zen-mode .year-selector,
-        body.zen-mode .footer, 
+        body.zen-mode .footer,
         body.zen-mode .fab { display: none !important; }
         
         /* Expande la vista al 100% */
@@ -121,7 +121,7 @@
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
@@ -697,6 +697,17 @@
 
     function delCat(id) { if(confirm("¿Eliminar categoría?")) { appData.categories = appData.categories.filter(c => c.id !== id); saveData(); openModalCats(); renderFilters(); } }
 
+    // --- ZEN MODE ---
+    function toggleZen() {
+        document.body.classList.toggle('zen-mode');
+    }
+
+    // --- COLUMN WIDTH ---
+    function setColWidth(w) {
+        document.documentElement.style.setProperty('--col-w', w + 'px');
+    }
+
+    // --- MONETIZACION Y ADMIN ---
     function generateDynamicHash(g, m, y) { let h=0; const s=g+"_"+m+"_"+y+"_CYM_SECURE_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
     function unlockPro() {
         const code = document.getElementById('unlockCode').value.trim().toUpperCase();
@@ -765,7 +776,11 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
+                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
                 if(p.amt || p.paid) {
+                    // Si esta pagado y tiene monto, sumar. O si no esta pagado y tiene monto, sumar.
+                    // En tu logica original, p.amt puede existir aunque este pagado.
+                    // Asumimos que queremos sumar el valor monetario siempre.
                     if(p.amt) monthTotals[i] += parseFloat(p.amt);
                 }
 
@@ -793,6 +808,7 @@
             body += '</tr>';
         });
 
+        // FILA DE TOTALES CON ALINEACION DERECHA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
         monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
         totalRowHTML += '</tr>';
