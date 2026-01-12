@@ -23,15 +23,6 @@
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; transition: 0.3s; }
         a { text-decoration: none; color: inherit; }
 
-        /* --- MODO ZEN (CORREGIDO) --- */
-        body.zen-mode .app-header, 
-        body.zen-mode .tabs, 
-        body.zen-mode .dashboard-grid,
-        body.zen-mode .year-selector,
-        body.zen-mode .footer,
-        body.zen-mode .fab { display: none !important; }
-        body.zen-mode .view { height: 100vh; padding-top: 5px; }
-
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #1e1e1e; }
@@ -88,9 +79,23 @@
         .filter-icon:hover { color: #fff; border-color: #BB86FC; color: #BB86FC; }
 
         /* TABLA SCROLLABLE */
-        .grid-con { overflow: auto; background: #1e1e1e; border-radius: 8px 8px 0 0; border: 1px solid #333; flex: 1; position: relative; padding-bottom: 100px; }
+        .grid-con { 
+            overflow: auto; 
+            background: #1e1e1e; 
+            border-radius: 8px 8px 0 0; 
+            border: 1px solid #333; 
+            flex: 1; 
+            position: relative;
+            padding-bottom: 100px; 
+        }
+        
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
-        th { background: #252525; position: sticky; top: 0; padding: 8px; color: #aaa; border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; font-size: 0.85rem; box-shadow: 0 2px 5px rgba(0,0,0,0.3); }
+        
+        th { 
+            background: #252525; position: sticky; top: 0; padding: 8px; color: #aaa; 
+            border-bottom: 2px solid #444; z-index: 20; cursor: pointer; user-select: none; font-size: 0.85rem; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+        }
         td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 45px; padding: 0; vertical-align: middle; }
         
         :root { --col-w: 150px; }
@@ -103,7 +108,7 @@
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
@@ -159,6 +164,15 @@
         .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
         .acc-detail { display: none; background: #151515; padding: 15px; border-top: 1px solid #333; }
         .acc-detail.open { display: block; animation: fadeIn 0.3s; }
+
+        /* --- MODO ZEN ESTILOS FINALES --- */
+        body.zen-mode .app-header, 
+        body.zen-mode .tabs, 
+        body.zen-mode .dashboard-grid,
+        body.zen-mode .year-selector,
+        body.zen-mode .footer,
+        body.zen-mode .fab { display: none !important; }
+        body.zen-mode .view { height: 100vh; padding-top: 5px; }
     </style>
 </head>
 <body>
@@ -486,7 +500,7 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
+    // MANIFEST DINAMICO
     const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const logoUrl = appUrl + "logo.jpg";
     
@@ -512,7 +526,6 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        // El botón ya está visible siempre
     });
 
     async function installApp() {
@@ -557,6 +570,16 @@
     function calcInput(el) { const val = smartParse(el.value); if(val) el.value = val; }
     function stringToColor(str) { if(!str) return 'transparent'; let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#' + "00000".substring(0, 6 - c.length) + c; }
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
+
+    // --- ZEN MODE FUNCTION ---
+    function toggleZen() {
+        document.body.classList.toggle('zen-mode');
+    }
+
+    // --- COLUMN WIDTH ---
+    function setColWidth(w) {
+        document.documentElement.style.setProperty('--col-w', w + 'px');
+    }
 
     db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString()); } });
 
@@ -747,11 +770,7 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
-                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
                 if(p.amt || p.paid) {
-                    // Si esta pagado y tiene monto, sumar. O si no esta pagado y tiene monto, sumar.
-                    // En tu logica original, p.amt puede existir aunque este pagado.
-                    // Asumimos que queremos sumar el valor monetario siempre.
                     if(p.amt) monthTotals[i] += parseFloat(p.amt);
                 }
 
