@@ -23,6 +23,15 @@
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; transition: 0.3s; }
         a { text-decoration: none; color: inherit; }
 
+        /* --- MODO ZEN --- */
+        body.zen-mode .app-header, 
+        body.zen-mode .tabs, 
+        body.zen-mode .dashboard-grid,
+        body.zen-mode .year-selector,
+        body.zen-mode .footer,
+        body.zen-mode .fab { display: none !important; }
+        body.zen-mode .view { height: 100vh; padding-top: 5px; }
+
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: #1e1e1e; }
@@ -108,7 +117,7 @@
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
@@ -164,15 +173,6 @@
         .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
         .acc-detail { display: none; background: #151515; padding: 15px; border-top: 1px solid #333; }
         .acc-detail.open { display: block; animation: fadeIn 0.3s; }
-
-        /* --- MODO ZEN ESTILOS FINALES --- */
-        body.zen-mode .app-header, 
-        body.zen-mode .tabs, 
-        body.zen-mode .dashboard-grid,
-        body.zen-mode .year-selector,
-        body.zen-mode .footer,
-        body.zen-mode .fab { display: none !important; }
-        body.zen-mode .view { height: 100vh; padding-top: 5px; }
     </style>
 </head>
 <body>
@@ -500,7 +500,7 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO
+    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
     const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const logoUrl = appUrl + "logo.jpg";
     
@@ -526,6 +526,7 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        // El botón ya está visible siempre
     });
 
     async function installApp() {
@@ -770,6 +771,7 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
+                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
                 if(p.amt || p.paid) {
                     if(p.amt) monthTotals[i] += parseFloat(p.amt);
                 }
@@ -871,12 +873,56 @@
         for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
         document.getElementById('modCell').style.display='flex';
     }
+
+    // LOGICA DE DESCUENTO DE SALDO
     function saveCell() {
-        const k=`${selCell.eid}_${year}_${selCell.m}`; const amt=smartParse(val('mcAmt')); const day=val('mcDay'); const paid=document.getElementById('mcPaid').checked;
-        if(amt||day||paid) appData.payments[k]={amt,day,accId:val('mcAcc'),paid}; else delete appData.payments[k];
-        if(document.getElementById('mcRepeat').checked && day) { const tm=parseInt(document.getElementById('mcRepMonth').value); for(let i=selCell.m+1;i<=tm;i++){ const nk=`${selCell.eid}_${year}_${i}`; if(!appData.payments[nk])appData.payments[nk]={}; appData.payments[nk].day=day; } }
-        saveData(); closeModal('modCell');
+        const k = `${selCell.eid}_${year}_${selCell.m}`;
+        const rawAmt = val('mcAmt');
+        const amt = smartParse(rawAmt);
+        const day = val('mcDay');
+        const paid = document.getElementById('mcPaid').checked;
+        const selectedAccId = val('mcAcc');
+        
+        // Check si estaba pagado antes
+        const prevPayment = appData.payments[k];
+        const wasPaid = prevPayment && prevPayment.paid;
+
+        if(amt || day || paid) {
+            appData.payments[k] = { amt, day, accId: selectedAccId, paid };
+        } else {
+            delete appData.payments[k];
+        }
+        
+        // REPETIR VENCIMIENTO
+        if(document.getElementById('mcRepeat').checked && day) {
+            const targetM = parseInt(document.getElementById('mcRepMonth').value);
+            for(let i = selCell.m + 1; i <= targetM; i++) {
+                const nextK = `${selCell.eid}_${year}_${i}`;
+                if(!appData.payments[nextK]) appData.payments[nextK] = {};
+                appData.payments[nextK].day = day;
+            }
+        }
+
+        // DESCONTAR DEL SALDO (Solo si pasa a pagado y no estaba pagado antes)
+        if(paid && !wasPaid && amt > 0) {
+            if(confirm(`¿Descontar $${amt.toLocaleString()} del saldo de la cuenta seleccionada?`)) {
+                if(!selectedAccId) {
+                    alert("⚠️ Por favor, selecciona una cuenta en el desplegable 'Pagar con' y vuelve a guardar.");
+                    // No cerramos el modal para que elija
+                    return; 
+                }
+                const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
+                if(accIndex > -1) {
+                    appData.accounts[accIndex].bal -= parseFloat(amt);
+                    alert(`✅ Descontado. Nuevo saldo de ${appData.accounts[accIndex].name}: $${appData.accounts[accIndex].bal.toLocaleString()}`);
+                }
+            }
+        }
+
+        saveData(); 
+        closeModal('modCell');
     }
+
     function delCell(){ delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
     function delRecursive(){ if(confirm("¿Borrar este y siguientes?")){ for(let i=selCell.m; i<12; i++) delete appData.payments[`${selCell.eid}_${year}_${i}`]; saveData(); closeModal('modCell'); } }
 
