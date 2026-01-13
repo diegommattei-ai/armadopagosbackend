@@ -40,6 +40,8 @@
         div:where(.swal2-container) div:where(.swal2-popup) { background: #1e1e1e !important; color: #eee !important; border: 1px solid #333; }
         div:where(.swal2-container) h2:where(.swal2-title) { color: #BB86FC !important; }
         div:where(.swal2-icon).swal2-question { border-color: #BB86FC !important; color: #BB86FC !important; }
+        div:where(.swal2-icon).swal2-warning { border-color: #ffea00 !important; color: #ffea00 !important; }
+        div:where(.swal2-icon).swal2-success { border-color: #00e676 !important; color: #00e676 !important; }
 
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -119,7 +121,7 @@
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
@@ -521,21 +523,57 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO
+    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
     const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const logoUrl = appUrl + "logo.jpg";
-    const manifest = { name: "Armado de Pagos", short_name: "ArmadoPagos", start_url: ".", display: "standalone", background_color: "#121212", theme_color: "#BB86FC", icons: [{ src: logoUrl, sizes: "192x192", type: "image/jpeg" }, { src: logoUrl, sizes: "512x512", type: "image/jpeg" }] };
-    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    document.querySelector('#myManifest').setAttribute('href', URL.createObjectURL(blob));
+    
+    const manifest = {
+        name: "Armado de Pagos",
+        short_name: "ArmadoPagos",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#121212",
+        theme_color: "#BB86FC",
+        icons: [
+            { src: logoUrl, sizes: "192x192", type: "image/jpeg" },
+            { src: logoUrl, sizes: "512x512", type: "image/jpeg" }
+        ]
+    };
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#myManifest').setAttribute('href', manifestURL);
 
     // INSTALACION PWA
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // El botón ya está visible siempre
+    });
+
     async function installApp() {
-        if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; deferredPrompt = null; }
-        else { 
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        } else {
             const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-            Swal.fire({ title: 'Instalar App', text: isIOS ? 'Toca Compartir y luego "Agregar a Inicio"' : 'Busca "Instalar aplicación" en el menú de tu navegador.', icon: 'info', confirmButtonColor: '#BB86FC' });
+            if (isIOS) {
+                Swal.fire({
+                    title: 'Instalar en iPhone',
+                    html: '1. Toca el botón <b>Compartir</b> (cuadrado con flecha).<br>2. Busca y selecciona <b>Agregar a Inicio</b>.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Instalar Aplicación',
+                    text: 'Busca la opción "Instalar aplicación" o "Agregar a la pantalla principal" en el menú de tu navegador.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
+            }
         }
     }
 
@@ -562,14 +600,21 @@
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
 
+    // --- FUNCIONES MATEMATICAS Y DE FORMATO ARGENTINO ---
     function smartParse(str) { try { if(!str) return 0; const s = str.toString().replace('.','').replace(',','.').replace(/[^-()\d/*+.]/g, ''); return eval(s) || 0; } catch(e) { return 0; } }
     function calcInput(el) { el.value = smartParse(el.value); }
     function stringToColor(str) { if(!str) return 'transparent'; let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#' + "00000".substring(0, 6 - c.length) + c; }
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
     // --- ZEN MODE FUNCTION ---
-    function toggleZen() { document.body.classList.toggle('zen-mode'); }
-    function setColWidth(w) { document.documentElement.style.setProperty('--col-w', w + 'px'); }
+    function toggleZen() {
+        document.body.classList.toggle('zen-mode');
+    }
+
+    // --- COLUMN WIDTH ---
+    function setColWidth(w) {
+        document.documentElement.style.setProperty('--col-w', w + 'px');
+    }
 
     db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString('es-AR')); } });
 
@@ -739,7 +784,7 @@
     function addUser(id){if(currentUser.email!==ADMIN_EMAIL)return;const e=prompt("Email:");if(e&&e.includes('@'))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayUnion(e.trim().toLowerCase())}).then(()=>renderAdmin());}
     function deleteGroup(id){if(confirm("¿Borrar grupo?"))db.collection('groups').doc(id).delete();db.collection('data').doc(id).delete().then(()=>renderAdmin());}
 
-    // --- IMPORT / EXPORT (TRADUCTOR INTELIGENTE) ---
+    // --- BACKUP CON TRADUCTOR INTELIGENTE ---
     function restoreBackup(i){
         if(isExpired)return alert("Vencido");
         const f=i.files[0];if(!f)return;
@@ -747,23 +792,29 @@
         r.onload=e=>{
             try{
                 const d=JSON.parse(e.target.result);
-                // ADAPTADOR IMPORTACION LOCAL -> ONLINE (Si es necesario, aunque Online es más flexible)
-                // En este caso, Online usa 'amt', Local usa 'amount'.
-                // Si viene de local (amount), lo paso a amt.
+                // ADAPTADOR IMPORTACION LOCAL -> ONLINE
+                // Local usa 'amount', Online usa 'amt'. Convertimos amount -> amt
                 if (d.payments) {
                     for (let key in d.payments) {
                         let pay = d.payments[key];
-                        // Mapear 'amount' (Local) a 'amt' (Online)
                         if (pay.amount !== undefined && pay.amt === undefined) pay.amt = pay.amount;
+                        // Asegurar formato float para Online
                         pay.amt = parseFloat(pay.amt) || 0;
                     }
                 }
-                // Categorias: Local (Strings) -> Online (Objects)
+                // Local usa 'balance', Online usa 'bal'. Convertimos balance -> bal
+                if (d.accounts) {
+                    d.accounts.forEach(a => {
+                        if (a.balance !== undefined && a.bal === undefined) a.bal = a.balance;
+                         a.bal = parseFloat(a.bal) || 0;
+                    });
+                }
+                // Categorias: Local es String[], Online es Object[]. Convertimos.
                 if (d.categories && d.categories.length > 0 && typeof d.categories[0] === 'string') {
                     d.categories = d.categories.map(c => ({ id: Date.now() + Math.random(), name: c, icon: '🏷️' }));
                 }
-                
-                if(confirm("Importar backup?")){
+
+                if(confirm("Importar?")){
                     appData={expenses:d.expenses||[], payments:d.payments||{}, accounts:d.accounts||[], categories:d.categories||[]};
                     saveData(); alert("Listo");
                 }
@@ -771,7 +822,7 @@
         };
         r.readAsText(f);
     }
-    
+
     function downloadBackup(){const b=new Blob([JSON.stringify({...appData,meta:{group:currentGroup,date:new Date()}})],{type:"application/json"});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`Backup_${currentGroup}.json`;a.click();}
     function saveData(){if(currentGroup)db.collection('data').doc(currentGroup).set(appData);}
     function nukeExpenses(){if(checkLock())return;if(confirm("¿Borrar TODO?")){appData.expenses=[];appData.payments={};saveData();alert("Borrado");}}
@@ -806,14 +857,14 @@
                 }
 
                 const day = (p.day!==undefined && p.day!=='') ? p.day : '';
-                // FORMATO ARGENTINA ONLINE
+                // FORMATO ARGENTINA
                 const amt = p.amt ? '$'+parseFloat(p.amt).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '';
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
                 
                 // CLICK EVENT FIX: Puesto en el div contenedor
                 body += `<td class="${st}" style="padding:0; position:relative;">
-                    <div onclick="openCell(${e.id},${i})" class="cell-container">
+                    <div onclick="openCell('${e.id}',${i})" class="cell-container">
                         <div class="cell-day">${day}</div>
                         <div class="cell-data"><span class="cell-amt">${amt}</span>${p.accId ? `<div class="acc-dot" style="background:${ac}" title="${an}"></div>` : ''}</div>
                     </div>
@@ -822,7 +873,7 @@
             body += '</tr>';
         });
 
-        // FORMATO ARGENTINA TOTALES
+        // FILA DE TOTALES - FORMATO ARGENTINA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
         monthTotals.forEach(val => { totalRowHTML += `<td>$${parseFloat(val).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>`; });
         totalRowHTML += '</tr>';
@@ -925,6 +976,7 @@
         const sel = document.getElementById('mcRepMonth'); sel.innerHTML = '';
         const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
+        
         document.getElementById('modCell').style.display='flex';
     }
 
@@ -942,8 +994,11 @@
             label.innerText = "PAGADO"; label.style.color = "#00e676"; 
         } else {
             label.innerText = "NO PAGADO";
-            if (dueDate < today) { label.style.color = "#ff5252"; slider.classList.add('red'); }
-            else { label.style.color = "#ffea00"; slider.classList.add('yellow'); }
+            if (dueDate < today) {
+                label.style.color = "#ff5252"; slider.classList.add('red');
+            } else {
+                label.style.color = "#ffea00"; slider.classList.add('yellow');
+            }
         }
     }
 
