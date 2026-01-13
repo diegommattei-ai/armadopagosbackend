@@ -523,21 +523,57 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO
+    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
     const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const logoUrl = appUrl + "logo.jpg";
-    const manifest = { name: "Armado de Pagos", short_name: "ArmadoPagos", start_url: ".", display: "standalone", background_color: "#121212", theme_color: "#BB86FC", icons: [{ src: logoUrl, sizes: "192x192", type: "image/jpeg" }, { src: logoUrl, sizes: "512x512", type: "image/jpeg" }] };
-    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    document.querySelector('#myManifest').setAttribute('href', URL.createObjectURL(blob));
+    
+    const manifest = {
+        name: "Armado de Pagos",
+        short_name: "ArmadoPagos",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#121212",
+        theme_color: "#BB86FC",
+        icons: [
+            { src: logoUrl, sizes: "192x192", type: "image/jpeg" },
+            { src: logoUrl, sizes: "512x512", type: "image/jpeg" }
+        ]
+    };
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#myManifest').setAttribute('href', manifestURL);
 
     // INSTALACION PWA
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // El botón ya está visible siempre
+    });
+
     async function installApp() {
-        if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; deferredPrompt = null; }
-        else { 
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        } else {
             const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-            Swal.fire({ title: 'Instalar App', text: isIOS ? 'Toca Compartir y luego "Agregar a Inicio"' : 'Busca "Instalar aplicación" en el menú de tu navegador.', icon: 'info', confirmButtonColor: '#BB86FC' });
+            if (isIOS) {
+                Swal.fire({
+                    title: 'Instalar en iPhone',
+                    html: '1. Toca el botón <b>Compartir</b> (cuadrado con flecha).<br>2. Busca y selecciona <b>Agregar a Inicio</b>.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Instalar Aplicación',
+                    text: 'Busca la opción "Instalar aplicación" o "Agregar a la pantalla principal" en el menú de tu navegador.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
+            }
         }
     }
 
@@ -571,8 +607,14 @@
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
     // --- ZEN MODE FUNCTION ---
-    function toggleZen() { document.body.classList.toggle('zen-mode'); }
-    function setColWidth(w) { document.documentElement.style.setProperty('--col-w', w + 'px'); }
+    function toggleZen() {
+        document.body.classList.toggle('zen-mode');
+    }
+
+    // --- COLUMN WIDTH ---
+    function setColWidth(w) {
+        document.documentElement.style.setProperty('--col-w', w + 'px');
+    }
 
     db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString('es-AR')); } });
 
@@ -820,7 +862,7 @@
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
                 
-                // CLICK EVENT FIX: Sin comillas en el ID
+                // CLICK EVENT FIX: Sin comillas en el ID, en el div contenedor
                 body += `<td class="${st}" style="padding:0; position:relative;">
                     <div onclick="openCell(${e.id},${i})" class="cell-container">
                         <div class="cell-day">${day}</div>
