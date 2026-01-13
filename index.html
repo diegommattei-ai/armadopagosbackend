@@ -635,7 +635,7 @@
         document.documentElement.style.setProperty('--col-w', w + 'px');
     }
 
-    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString()); } });
+    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString('es-AR')); } });
 
     auth.onAuthStateChanged(user => {
         if(user) {
@@ -838,7 +838,8 @@
                 }
 
                 const day = (p.day!==undefined && p.day!=='') ? p.day : '';
-                const amt = p.amt ? '$'+parseInt(p.amt).toLocaleString() : '';
+                // FORMATO ARGENTINA (FLOAT CON PUNTO MILES)
+                const amt = p.amt ? '$'+parseFloat(p.amt).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '';
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
                 
@@ -852,9 +853,9 @@
             body += '</tr>';
         });
 
-        // FILA DE TOTALES CON ALINEACION DERECHA
+        // FORMATO ARGENTINA EN TOTALES
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
-        monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
+        monthTotals.forEach(val => { totalRowHTML += `<td>$${parseFloat(val).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>`; });
         totalRowHTML += '</tr>';
 
         t.innerHTML += body + totalRowHTML + '</tbody>';
@@ -878,11 +879,15 @@
             let h=''; let tot=0;
             appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`; } });
             const proj=(parseFloat(a.bal)||0)-tot; s.innerHTML+=`<option value="${a.id}">${a.name}</option>`;
-            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${proj.toLocaleString()}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">$${parseFloat(a.bal).toLocaleString()}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${proj.toLocaleString()}</span></div></div></div></div>`;
+            
+            // FORMATO ARGENTINA EN CUENTAS
+            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${proj.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">$${parseFloat(a.bal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${proj.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span></div></div></div></div>`;
         });
     }
     function toggleAcc(id){document.getElementById(`accDet-${id}`).classList.toggle('open');}
-    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseInt(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText='$'+a.toLocaleString(); document.getElementById('dDebt').innerText='$'+d.toLocaleString(); document.getElementById('dNet').innerText='$'+(a-d).toLocaleString(); }
+    
+    // FORMATO ARGENTINA EN DASHBOARD
+    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseFloat(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText='$'+a.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}); document.getElementById('dDebt').innerText='$'+d.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}); document.getElementById('dNet').innerText='$'+(a-d).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
 
     // --- CRUD ---
     let edId=null;
@@ -918,15 +923,41 @@
 
     function openCell(eid, m) {
         if(checkLock()) return; selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
-        document.getElementById('mcAmt').value = p.amt||''; document.getElementById('mcDay').value = p.day||''; document.getElementById('mcAcc').value = p.accId||''; document.getElementById('mcPaid').checked = p.paid||false;
-        document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
         
         // --- LOGICA DE COLORES DEL TOGGLE ---
-        updatePaidLabel(); // Inicializar estado
+        // (Aseguramos que el estado del toggle y el color sea correcto al abrir)
+        const dayVal = parseInt(p.day) || 0;
+        const today = new Date(); today.setHours(0,0,0,0);
+        let dueDate;
+        if (dayVal > 0) dueDate = new Date(year, m, dayVal);
+        else dueDate = new Date(year, m + 1, 0); 
         
+        const slider = document.getElementById('mcPaidSlider');
+        const label = document.getElementById('mcPaidLabel');
+        const chk = document.getElementById('mcPaid');
+
+        chk.checked = p.paid || false;
+        slider.className = 'slider'; // Reset
+
+        if(chk.checked) {
+            label.innerText = "PAGADO"; label.style.color = "#00e676";
+        } else {
+            label.innerText = "NO PAGADO";
+            if (dueDate < today) { label.style.color="#ff5252"; slider.classList.add('red'); }
+            else { label.style.color="#ffea00"; slider.classList.add('yellow'); }
+        }
+        // ------------------------------------
+
+        document.getElementById('mcAmt').value = p.amt||''; 
+        document.getElementById('mcDay').value = p.day||''; 
+        renderAccounts(); // Actualizar select
+        document.getElementById('mcAcc').value = p.accId||''; 
+        
+        document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
         const sel = document.getElementById('mcRepMonth'); sel.innerHTML = '';
         const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
+        
         document.getElementById('modCell').style.display='flex';
     }
 
@@ -934,7 +965,6 @@
         const chk = document.getElementById('mcPaid');
         const slider = document.getElementById('mcPaidSlider');
         const label = document.getElementById('mcPaidLabel');
-        
         const dayVal = parseInt(val('mcDay')) || 0;
         const today = new Date(); today.setHours(0,0,0,0);
         let dueDate;
@@ -944,16 +974,13 @@
         slider.classList.remove('red', 'yellow');
 
         if(chk.checked) {
-            label.innerText = "PAGADO";
-            label.style.color = "#00e676"; 
+            label.innerText = "PAGADO"; label.style.color = "#00e676"; 
         } else {
             label.innerText = "NO PAGADO";
             if (dueDate < today) {
-                label.style.color = "#ff5252"; 
-                slider.classList.add('red');
+                label.style.color = "#ff5252"; slider.classList.add('red');
             } else {
-                label.style.color = "#ffea00"; 
-                slider.classList.add('yellow');
+                label.style.color = "#ffea00"; slider.classList.add('yellow');
             }
         }
     }
@@ -968,96 +995,76 @@
         const selectedAccId = val('mcAcc');
         const accName = selectedAccId ? getAccName(selectedAccId) : "la cuenta";
         
-        // Construimos el nuevo objeto de pago
+        const prevPayment = appData.payments[k];
+        const wasPaid = prevPayment && prevPayment.paid;
+
+        // Construir objeto (NOTA: Online usa 'amt', Local usa 'amount'. Pero aqui estamos en ONLINE CODE)
+        // El codigo online original usaba 'amt'. Mantengo 'amt'.
         const newPaymentObj = { amt, day, accId: selectedAccId, paid };
         
-        // Revisamos el estado ACTUAL GUARDADO (antes de modificar nada)
-        const currentStoredPayment = appData.payments[k];
-        const wasPaid = currentStoredPayment && currentStoredPayment.paid;
-
-        // CASO A: Se está marcando como PAGADO por primera vez y hay monto
-        if (paid && !wasPaid && amt > 0) {
-            
-            // Sub-caso: No hay cuenta seleccionada
-            if (!selectedAccId) {
-                closeModal('modCell'); // Cerrar primero como pidió el usuario
-                
-                Swal.fire({
-                    title: 'Falta Cuenta',
-                    text: 'Marcaste pagado pero no elegiste con qué cuenta.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#333', 
-                    cancelButtonColor: '#BB86FC',
-                    confirmButtonText: 'Solo marcar pagado',
-                    cancelButtonText: 'Volver para seleccionar',
-                    reverseButtons: true
-                }).then((result) => {
-                    if (result.isConfirmed) {
-                        // Opción: Solo marcar (Guardar sin cuenta)
-                        appData.payments[k] = newPaymentObj;
-                        handleRepeat();
-                        saveData();
-                    } else {
-                        // Opción: Volver (Reabrir modal)
-                        document.getElementById('modCell').style.display = 'flex';
-                    }
-                });
-                return; // STOP. No seguir.
-            }
-
-            // Sub-caso: Hay cuenta seleccionada -> Preguntar descuento
-            closeModal('modCell'); // Cerrar primero
-
-            const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
-            const currentBal = accIndex > -1 ? appData.accounts[accIndex].bal : 0;
-
-            Swal.fire({
-                title: 'Confirmar Pago',
-                html: `Saldo de <b>${accName}</b>: $${currentBal.toLocaleString()}<br><br>¿Descontar <b>$${amt.toLocaleString()}</b>?`,
-                icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#BB86FC',
-                cancelButtonColor: '#333',
-                confirmButtonText: 'Sí, descontar',
-                cancelButtonText: 'No, solo marcar'
-            }).then((result) => {
-                // Guardar siempre el pago
-                appData.payments[k] = newPaymentObj;
-                handleRepeat();
-
-                if (result.isConfirmed) {
-                    // Aplicar descuento
-                    if(accIndex > -1) {
-                        appData.accounts[accIndex].bal -= parseFloat(amt);
-                        Swal.fire('Descontado', `Nuevo saldo: $${appData.accounts[accIndex].bal.toLocaleString()}`, 'success');
-                    }
-                }
-                saveData();
-            });
-            return; // STOP.
-        }
-
-        // CASO B: Guardado normal (no es pago nuevo, o es edición simple, o desmarcar)
+        // Si hay data valida
         if (amt || day || paid) {
-            appData.payments[k] = newPaymentObj;
+             // LOGICA DE NUEVO PAGO PARA DESCUENTO
+             if(paid && !wasPaid && amt > 0) {
+                 if(!selectedAccId) {
+                     closeModal('modCell');
+                     Swal.fire({
+                        title: 'Falta Cuenta', text: 'No seleccionaste con qué pagar.', icon: 'warning',
+                        showCancelButton: true, confirmButtonColor: '#333', cancelButtonColor: '#BB86FC',
+                        confirmButtonText: 'Guardar igual', cancelButtonText: 'Volver a seleccionar', reverseButtons: true
+                     }).then((r) => {
+                        if(r.isConfirmed) {
+                            appData.payments[k] = newPaymentObj; handleRepeat(); saveData(); renderGrid();
+                        } else {
+                            document.getElementById('modCell').style.display='flex';
+                        }
+                     });
+                     return;
+                 }
+                 
+                 closeModal('modCell');
+                 const accIdx = appData.accounts.findIndex(a=>a.id==selectedAccId);
+                 const currentBal = accIdx>-1 ? parseFloat(appData.accounts[accIdx].bal) : 0;
+                 
+                 // FORMATO ARG EN ALERTA
+                 const fmtAmt = amt.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+                 const fmtBal = currentBal.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+
+                 Swal.fire({
+                    title: 'Confirmar Pago',
+                    html: `Saldo de <b>${accName}</b>: $${fmtBal}<br><br>¿Descontar <b>$${fmtAmt}</b>?`,
+                    icon: 'question',
+                    showCancelButton: true, confirmButtonColor: '#BB86FC', cancelButtonColor: '#333',
+                    confirmButtonText: 'Sí, descontar', cancelButtonText: 'No, solo marcar'
+                 }).then((r) => {
+                    appData.payments[k] = newPaymentObj;
+                    handleRepeat();
+                    if(r.isConfirmed && accIdx>-1) {
+                        appData.accounts[accIdx].bal = currentBal - amt;
+                        const newBal = appData.accounts[accIdx].bal.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+                        Swal.fire('Listo', `Nuevo saldo: $${newBal}`, 'success');
+                    }
+                    saveData(); renderGrid(); renderAcc();
+                 });
+                 return;
+             }
+             appData.payments[k] = newPaymentObj;
         } else {
             delete appData.payments[k];
         }
+
         handleRepeat();
-        saveData();
-        closeModal('modCell');
+        saveData(); closeModal('modCell');
     }
 
-    // Funcion auxiliar para repetir pago
     function handleRepeat() {
         const day = val('mcDay');
         if(document.getElementById('mcRepeat').checked && day) {
-            const targetM = parseInt(document.getElementById('mcRepMonth').value);
-            for(let i = selCell.m + 1; i <= targetM; i++) {
-                const nextK = `${selCell.eid}_${year}_${i}`;
-                if(!appData.payments[nextK]) appData.payments[nextK] = {};
-                appData.payments[nextK].day = day;
+            const tm = parseInt(document.getElementById('mcRepMonth').value);
+            for(let i = selCell.m + 1; i <= tm; i++) {
+                const nk = `${selCell.eid}_${year}_${i}`;
+                if(!appData.payments[nk]) appData.payments[nk] = {};
+                appData.payments[nk].day = day;
             }
         }
     }
@@ -1075,29 +1082,7 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel() {
-        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        let headers = ['Concepto', 'Categoría'];
-        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
-        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
-        
-        let data = [headers];
-        appData.expenses.forEach(e => {
-            let row = [e.name, e.cat];
-            for(let i=0; i<12; i++) {
-                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
-                row.push(p.day || '');
-                row.push(p.amt ? parseFloat(p.amt) : '');
-            }
-            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
-            data.push(row);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
-        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
-    }
+    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
