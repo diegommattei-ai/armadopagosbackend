@@ -569,7 +569,6 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
-        // El botón ya está visible siempre
     });
 
     async function installApp() {
@@ -982,39 +981,41 @@
             
             // Sub-caso: No hay cuenta seleccionada
             if (!selectedAccId) {
-                 Swal.fire({
-                    title: 'Atención',
-                    text: 'No has seleccionado ninguna cuenta para descontar el saldo.',
+                closeModal('modCell'); // Cerrar primero como pidió el usuario
+                
+                Swal.fire({
+                    title: 'Falta Cuenta',
+                    text: 'Marcaste pagado pero no elegiste con qué cuenta.',
                     icon: 'warning',
                     showCancelButton: true,
-                    confirmButtonColor: '#333', // Solo marcar
-                    cancelButtonColor: '#BB86FC', // Volver
-                    confirmButtonText: 'Solo marcar como pagado',
-                    cancelButtonText: 'Volver para seleccionar',
+                    confirmButtonColor: '#333', 
+                    cancelButtonColor: '#BB86FC',
+                    confirmButtonText: 'Solo marcar pagado',
+                    cancelButtonText: 'Volver a seleccionar',
                     reverseButtons: true
-                 }).then((result) => {
+                }).then((result) => {
                     if (result.isConfirmed) {
-                        // El usuario eligió SOLO MARCAR
-                        // Guardamos el pago (sin ID de cuenta o vacío)
+                        // Opción: Solo marcar (Guardar sin cuenta)
                         appData.payments[k] = newPaymentObj;
+                        handleRepeat();
                         saveData();
-                        closeModal('modCell');
+                    } else {
+                        // Opción: Volver (Reabrir modal)
+                        document.getElementById('modCell').style.display = 'flex';
                     }
-                    // Si cancela (Volver), NO HACEMOS NADA. 
-                    // appData no se toca. El modal sigue abierto.
-                 });
-                 return; // Detenemos la ejecución aquí
+                });
+                return; // STOP. No seguir.
             }
 
             // Sub-caso: Hay cuenta seleccionada -> Preguntar descuento
-            closeModal('modCell'); // Cerramos modal primero
-            
+            closeModal('modCell'); // Cerrar primero
+
             const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
             const currentBal = accIndex > -1 ? appData.accounts[accIndex].bal : 0;
 
             Swal.fire({
-                title: 'Armado de Pagos',
-                html: `Saldo actual de <b>${accName}</b>: $${currentBal.toLocaleString()}<br><br>¿Descontar <b>$${amt.toLocaleString()}</b>?`,
+                title: 'Confirmar Pago',
+                html: `Saldo de <b>${accName}</b>: $${currentBal.toLocaleString()}<br><br>¿Descontar <b>$${amt.toLocaleString()}</b>?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#BB86FC',
@@ -1022,44 +1023,36 @@
                 confirmButtonText: 'Sí, descontar',
                 cancelButtonText: 'No, solo marcar'
             }).then((result) => {
-                 if (result.isConfirmed) {
-                     // Descontar
-                     if(accIndex > -1) {
-                         appData.accounts[accIndex].bal -= parseFloat(amt);
-                         Swal.fire({
-                            title: 'Listo',
-                            html: `Nuevo saldo de <b>${accName}</b>:<br>$${appData.accounts[accIndex].bal.toLocaleString()}`,
-                            icon: 'success',
-                            confirmButtonColor: '#BB86FC'
-                        });
-                     }
-                 }
-                 // Guardamos el pago finalmente
-                 appData.payments[k] = newPaymentObj;
-                 
-                 // Manejo de repetición (si aplica)
-                 if(document.getElementById('mcRepeat').checked && day) {
-                    const targetM = parseInt(document.getElementById('mcRepMonth').value);
-                    for(let i = selCell.m + 1; i <= targetM; i++) {
-                        const nextK = `${selCell.eid}_${year}_${i}`;
-                        if(!appData.payments[nextK]) appData.payments[nextK] = {};
-                        appData.payments[nextK].day = day;
-                    }
-                 }
+                // Guardar siempre el pago
+                appData.payments[k] = newPaymentObj;
+                handleRepeat();
 
-                 saveData();
+                if (result.isConfirmed) {
+                    // Aplicar descuento
+                    if(accIndex > -1) {
+                        appData.accounts[accIndex].bal -= parseFloat(amt);
+                        Swal.fire('Descontado', `Nuevo saldo: $${appData.accounts[accIndex].bal.toLocaleString()}`, 'success');
+                    }
+                }
+                saveData();
             });
-            return; // Detenemos aquí, ya que el save se hace dentro del then
+            return; // STOP.
         }
 
-        // CASO B: Guardado normal (no es un nuevo pago, o no hay monto, o se desmarca)
+        // CASO B: Guardado normal (no es pago nuevo, o es edición simple, o desmarcar)
         if (amt || day || paid) {
             appData.payments[k] = newPaymentObj;
         } else {
             delete appData.payments[k];
         }
-        
-        // Manejo de repetición
+        handleRepeat();
+        saveData();
+        closeModal('modCell');
+    }
+
+    // Funcion auxiliar para repetir pago
+    function handleRepeat() {
+        const day = val('mcDay');
         if(document.getElementById('mcRepeat').checked && day) {
             const targetM = parseInt(document.getElementById('mcRepMonth').value);
             for(let i = selCell.m + 1; i <= targetM; i++) {
@@ -1068,9 +1061,6 @@
                 appData.payments[nextK].day = day;
             }
         }
-        
-        saveData();
-        closeModal('modCell');
     }
 
     function delCell(){ delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
@@ -1086,29 +1076,7 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel() {
-        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        let headers = ['Concepto', 'Categoría'];
-        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
-        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
-        
-        let data = [headers];
-        appData.expenses.forEach(e => {
-            let row = [e.name, e.cat];
-            for(let i=0; i<12; i++) {
-                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
-                row.push(p.day || '');
-                row.push(p.amt ? parseFloat(p.amt) : '');
-            }
-            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
-            data.push(row);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
-        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
-    }
+    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
