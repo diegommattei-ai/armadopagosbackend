@@ -17,6 +17,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-auth-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
         /* ESTILOS (Dark Theme) */
@@ -31,6 +32,11 @@
         body.zen-mode .footer,
         body.zen-mode .fab { display: none !important; }
         body.zen-mode .view { height: 100vh; padding-top: 5px; }
+
+        /* PERSONALIZACION SWEETALERT (Alertas) */
+        div:where(.swal2-container) div:where(.swal2-popup) { background: #1e1e1e !important; color: #eee !important; border: 1px solid #333; }
+        div:where(.swal2-container) h2:where(.swal2-title) { color: #BB86FC !important; }
+        div:where(.swal2-icon).swal2-question { border-color: #BB86FC !important; color: #BB86FC !important; }
 
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -117,7 +123,7 @@
 
         /* DISEÑO CELDA SPLIT */
         .cell-container { display: flex; height: 100%; width: 100%; cursor: pointer; }
-        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 800; color: #fff; }
+        .cell-day { width: 25px; background: #151515; border-right: 1px solid #333; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 800; color: #fff; }
         .cell-data { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; position: relative; }
         .cell-amt { font-size: 0.8rem; font-weight: bold; color: #fff; }
         .acc-dot { position: absolute; top: 3px; right: 3px; width: 6px; height: 6px; border-radius: 50%; }
@@ -315,7 +321,7 @@
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#BB86FC;">
             <h3 style="color:#BB86FC; margin-top:0;">📲 App en tu Celular</h3>
             <p style="font-size:0.8rem;">Instala la app para acceder directo desde tu pantalla de inicio.</p>
-            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">INSTALAR APLICACIÓN</button>
+            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">📲 INSTALAR APLICACIÓN</button>
         </div>
 
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
@@ -537,9 +543,19 @@
         } else {
             const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
             if (isIOS) {
-                alert("Para instalar en iPhone/iPad:\n\n1. Toca el botón 'Compartir' (cuadrado con flecha hacia arriba).\n2. Busca y selecciona 'Agregar a Inicio'.");
+                Swal.fire({
+                    title: 'Instalar en iPhone',
+                    html: '1. Toca el botón <b>Compartir</b> (cuadrado con flecha).<br>2. Busca y selecciona <b>Agregar a Inicio</b>.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
             } else {
-                alert("Para instalar:\n\nBusca la opción 'Instalar aplicación' o 'Agregar a la pantalla principal' en el menú de tu navegador (los tres puntitos).");
+                Swal.fire({
+                    title: 'Instalar Aplicación',
+                    text: 'Busca la opción "Instalar aplicación" o "Agregar a la pantalla principal" en el menú de tu navegador.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
             }
         }
     }
@@ -771,7 +787,6 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
-                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
                 if(p.amt || p.paid) {
                     if(p.amt) monthTotals[i] += parseFloat(p.amt);
                 }
@@ -800,7 +815,6 @@
             body += '</tr>';
         });
 
-        // FILA DE TOTALES CON ALINEACION DERECHA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
         monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
         totalRowHTML += '</tr>';
@@ -874,7 +888,7 @@
         document.getElementById('modCell').style.display='flex';
     }
 
-    // LOGICA DE DESCUENTO DE SALDO
+    // LOGICA DE DESCUENTO DE SALDO CON SWEETALERT
     function saveCell() {
         const k = `${selCell.eid}_${year}_${selCell.m}`;
         const rawAmt = val('mcAmt');
@@ -905,18 +919,33 @@
 
         // DESCONTAR DEL SALDO (Solo si pasa a pagado y no estaba pagado antes)
         if(paid && !wasPaid && amt > 0) {
-            if(confirm(`¿Descontar $${amt.toLocaleString()} del saldo de la cuenta seleccionada?`)) {
-                if(!selectedAccId) {
-                    alert("⚠️ Por favor, selecciona una cuenta en el desplegable 'Pagar con' y vuelve a guardar.");
-                    // No cerramos el modal para que elija
-                    return; 
+            // USAR SWEET ALERT EN LUGAR DE CONFIRM
+            Swal.fire({
+                title: 'Armado de Pagos',
+                text: `¿Descontar $${amt.toLocaleString()} del saldo de la cuenta seleccionada?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#BB86FC',
+                cancelButtonColor: '#333',
+                confirmButtonText: 'Sí, descontar',
+                cancelButtonText: 'No, solo marcar'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    if(!selectedAccId) {
+                         Swal.fire('Error', 'Selecciona una cuenta en el desplegable primero.', 'error');
+                    } else {
+                        const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
+                        if(accIndex > -1) {
+                            appData.accounts[accIndex].bal -= parseFloat(amt);
+                            Swal.fire('Listo', `Nuevo saldo: $${appData.accounts[accIndex].bal.toLocaleString()}`, 'success');
+                        }
+                    }
                 }
-                const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
-                if(accIndex > -1) {
-                    appData.accounts[accIndex].bal -= parseFloat(amt);
-                    alert(`✅ Descontado. Nuevo saldo de ${appData.accounts[accIndex].name}: $${appData.accounts[accIndex].bal.toLocaleString()}`);
-                }
-            }
+                // SIEMPRE GUARDAR DESPUES DE LA DECISION
+                saveData(); 
+                closeModal('modCell');
+            });
+            return; // DETENER EJECUCION AQUI, ESPERAR AL PROMISE
         }
 
         saveData(); 
