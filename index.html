@@ -20,19 +20,16 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        /* VARIABLE ANCHO COLUMNA */
-        :root { --col-w: 160px; }
-
         /* ESTILOS (Dark Theme) */
         body { font-family: 'Segoe UI', Roboto, sans-serif; background-color: #121212; color: #eee; margin: 0; padding-bottom: 0; display: flex; flex-direction: column; align-items: center; height: 100vh; overflow: hidden; transition: 0.3s; }
         a { text-decoration: none; color: inherit; }
 
-        /* MODO ZEN */
+        /* --- MODO ZEN --- */
         body.zen-mode .app-header, 
         body.zen-mode .tabs, 
         body.zen-mode .dashboard-grid,
         body.zen-mode .year-selector,
-        body.zen-mode .footer, 
+        body.zen-mode .footer,
         body.zen-mode .fab { display: none !important; }
         body.zen-mode .view { height: 100vh; padding-top: 5px; }
 
@@ -62,13 +59,22 @@
         .group-tag.pro { background: linear-gradient(45deg, #00e676, #00c853); color: #000; border: none; box-shadow: 0 0 10px rgba(0,230,118,0.3); }
         .group-tag.expired { background: #ff5252; color: #fff; border: none; }
 
-        /* PANTALLAS AUTH */
+        /* PANTALLAS */
         #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
         
         /* BOTON GOOGLE OFICIAL */
-        .btn-google { background: #ffffff !important; color: #1f1f1f !important; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: Roboto, sans-serif; border: 1px solid #ccc !important; }
+        .btn-google { 
+            background: #ffffff !important; 
+            color: #1f1f1f !important; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            font-family: Roboto, sans-serif; 
+            border: 1px solid #ccc !important;
+        }
         .btn-google:hover { background: #f2f2f2 !important; }
         
         .pass-wrapper { position: relative; width: 100%; }
@@ -102,7 +108,16 @@
         .filter-icon:hover { color: #fff; border-color: #BB86FC; color: #BB86FC; }
 
         /* TABLA SCROLLABLE */
-        .grid-con { overflow: auto; background: #1e1e1e; border-radius: 8px 8px 0 0; border: 1px solid #333; flex: 1; position: relative; padding-bottom: 100px; }
+        .grid-con { 
+            overflow: auto; 
+            background: #1e1e1e; 
+            border-radius: 8px 8px 0 0; 
+            border: 1px solid #333; 
+            flex: 1; 
+            position: relative;
+            padding-bottom: 100px; 
+        }
+        
         table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 900px; }
         
         th { 
@@ -112,6 +127,7 @@
         }
         td { border-bottom: 1px solid #333; border-right: 1px solid #333; height: 45px; padding: 0; vertical-align: middle; }
         
+        :root { --col-w: 150px; }
         .col-fix { position: sticky; left: 0; background: #1e1e1e; border-right: 2px solid #444 !important; z-index: 10; min-width: var(--col-w); max-width: var(--col-w); padding: 5px; transition: 0.1s; }
         th.col-fix { z-index: 30; }
         
@@ -156,14 +172,18 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
-        /* TOGGLE SWITCH */
+        /* TOGGLE SWITCH (Perilla) */
         .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
         .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #00e676; }
+        
+        input:checked + .slider { background-color: #00e676; } /* Verde Pagado */
         input:checked + .slider:before { transform: translateX(24px); }
-        .slider.red { background-color: #ff5252; } .slider.yellow { background-color: #ffea00; }
+        
+        /* Estados Rojo y Amarillo cuando no está checkeado */
+        .slider.red { background-color: #ff5252; } /* Vencido */
+        .slider.yellow { background-color: #ffea00; } /* Futuro */
 
         /* ESTADOS DE PAGO */
         .status-paid { background: rgba(0, 230, 118, 0.15) !important; border-left: 3px solid #00e676; }
@@ -523,21 +543,57 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO
+    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
     const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const logoUrl = appUrl + "logo.jpg";
-    const manifest = { name: "Armado de Pagos", short_name: "ArmadoPagos", start_url: ".", display: "standalone", background_color: "#121212", theme_color: "#BB86FC", icons: [{ src: logoUrl, sizes: "192x192", type: "image/jpeg" }, { src: logoUrl, sizes: "512x512", type: "image/jpeg" }] };
-    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
-    document.querySelector('#myManifest').setAttribute('href', URL.createObjectURL(blob));
+    
+    const manifest = {
+        name: "Armado de Pagos",
+        short_name: "ArmadoPagos",
+        start_url: ".",
+        display: "standalone",
+        background_color: "#121212",
+        theme_color: "#BB86FC",
+        icons: [
+            { src: logoUrl, sizes: "192x192", type: "image/jpeg" },
+            { src: logoUrl, sizes: "512x512", type: "image/jpeg" }
+        ]
+    };
+    const stringManifest = JSON.stringify(manifest);
+    const blob = new Blob([stringManifest], {type: 'application/json'});
+    const manifestURL = URL.createObjectURL(blob);
+    document.querySelector('#myManifest').setAttribute('href', manifestURL);
 
     // INSTALACION PWA
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        // El botón ya está visible siempre
+    });
+
     async function installApp() {
-        if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; deferredPrompt = null; }
-        else { 
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            deferredPrompt = null;
+        } else {
             const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-            Swal.fire({ title: 'Instalar App', text: isIOS ? 'Toca Compartir y luego "Agregar a Inicio"' : 'Busca "Instalar aplicación" en el menú de tu navegador.', icon: 'info', confirmButtonColor: '#BB86FC' });
+            if (isIOS) {
+                Swal.fire({
+                    title: 'Instalar en iPhone',
+                    html: '1. Toca el botón <b>Compartir</b> (cuadrado con flecha).<br>2. Busca y selecciona <b>Agregar a Inicio</b>.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
+            } else {
+                Swal.fire({
+                    title: 'Instalar Aplicación',
+                    text: 'Busca la opción "Instalar aplicación" o "Agregar a la pantalla principal" en el menú de tu navegador.',
+                    icon: 'info',
+                    confirmButtonColor: '#BB86FC'
+                });
+            }
         }
     }
 
@@ -564,17 +620,22 @@
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
 
-    // --- FUNCIONES MATEMATICAS Y DE FORMATO ARGENTINO ---
-    function smartParse(str) { try { if(!str) return 0; const s = str.toString().replace('.','').replace(',','.').replace(/[^-()\d/*+.]/g, ''); return eval(s) || 0; } catch(e) { return 0; } }
-    function calcInput(el) { el.value = smartParse(el.value); }
+    function smartParse(str) { try { if(!str) return 0; let clean = str.toString().replace(/,/g, '.').replace(/[^-()\d/*+.]/g, ''); return eval(clean) || 0; } catch(e) { return 0; } }
+    function calcInput(el) { const val = smartParse(el.value); if(val) el.value = val; }
     function stringToColor(str) { if(!str) return 'transparent'; let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#' + "00000".substring(0, 6 - c.length) + c; }
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
     // --- ZEN MODE FUNCTION ---
-    function toggleZen() { document.body.classList.toggle('zen-mode'); }
-    function setColWidth(w) { document.documentElement.style.setProperty('--col-w', w + 'px'); }
+    function toggleZen() {
+        document.body.classList.toggle('zen-mode');
+    }
 
-    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString('es-AR')); } });
+    // --- COLUMN WIDTH ---
+    function setColWidth(w) {
+        document.documentElement.style.setProperty('--col-w', w + 'px');
+    }
+
+    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString()); } });
 
     auth.onAuthStateChanged(user => {
         if(user) {
@@ -742,41 +803,7 @@
     function addUser(id){if(currentUser.email!==ADMIN_EMAIL)return;const e=prompt("Email:");if(e&&e.includes('@'))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayUnion(e.trim().toLowerCase())}).then(()=>renderAdmin());}
     function deleteGroup(id){if(confirm("¿Borrar grupo?"))db.collection('groups').doc(id).delete();db.collection('data').doc(id).delete().then(()=>renderAdmin());}
 
-    // --- IMPORT / EXPORT (TRADUCTOR INTELIGENTE) ---
-    function restoreBackup(i){
-        if(isExpired)return alert("Vencido");
-        const f=i.files[0];if(!f)return;
-        const r=new FileReader();
-        r.onload=e=>{
-            try{
-                const d=JSON.parse(e.target.result);
-                // ADAPTADOR LOCAL -> ONLINE
-                if (d.payments) {
-                    for (let key in d.payments) {
-                        let pay = d.payments[key];
-                        if (pay.amount !== undefined && pay.amt === undefined) pay.amt = pay.amount;
-                        pay.amt = parseFloat(pay.amt) || 0;
-                    }
-                }
-                if (d.accounts) {
-                    d.accounts.forEach(a => {
-                        if (a.balance !== undefined && a.bal === undefined) a.bal = a.balance;
-                         a.bal = parseFloat(a.bal) || 0;
-                    });
-                }
-                if (d.categories && d.categories.length > 0 && typeof d.categories[0] === 'string') {
-                    d.categories = d.categories.map(c => ({ id: Date.now() + Math.random(), name: c, icon: '🏷️' }));
-                }
-
-                if(confirm("Importar backup?")){
-                    appData={expenses:d.expenses||[], payments:d.payments||{}, accounts:d.accounts||[], categories:d.categories||[]};
-                    saveData(); alert("Listo");
-                }
-            }catch(z){alert("Error");}
-        };
-        r.readAsText(f);
-    }
-    
+    function restoreBackup(i){if(isExpired)return alert("Vencido");const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);let nx=[],np={},na=[],nc=[];if(Array.isArray(d.expenses))nx=d.expenses;if(d.payments)np=d.payments;if(Array.isArray(d.accounts))na=d.accounts;if(Array.isArray(d.categories))nc=d.categories;if(confirm("Importar?")){appData={expenses:nx,payments:np,accounts:na,categories:nc.length?nc:appData.categories};saveData();alert("Listo");}}catch(z){alert("Error");}};r.readAsText(f);}
     function downloadBackup(){const b=new Blob([JSON.stringify({...appData,meta:{group:currentGroup,date:new Date()}})],{type:"application/json"});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`Backup_${currentGroup}.json`;a.click();}
     function saveData(){if(currentGroup)db.collection('data').doc(currentGroup).set(appData);}
     function nukeExpenses(){if(checkLock())return;if(confirm("¿Borrar TODO?")){appData.expenses=[];appData.payments={};saveData();alert("Borrado");}}
@@ -811,12 +838,10 @@
                 }
 
                 const day = (p.day!==undefined && p.day!=='') ? p.day : '';
-                // FORMATO ARGENTINA ONLINE
-                const amt = p.amt ? '$'+parseFloat(p.amt).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}) : '';
+                const amt = p.amt ? '$'+parseInt(p.amt).toLocaleString() : '';
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
                 
-                // CLICK EVENT FIX: Sin comillas en el ID
                 body += `<td class="${st}" style="padding:0; position:relative;">
                     <div onclick="openCell(${e.id},${i})" class="cell-container">
                         <div class="cell-day">${day}</div>
@@ -827,9 +852,9 @@
             body += '</tr>';
         });
 
-        // FORMATO ARGENTINA TOTALES
+        // FILA DE TOTALES CON ALINEACION DERECHA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
-        monthTotals.forEach(val => { totalRowHTML += `<td>$${parseFloat(val).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</td>`; });
+        monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
         totalRowHTML += '</tr>';
 
         t.innerHTML += body + totalRowHTML + '</tbody>';
@@ -851,17 +876,13 @@
         const now=new Date();
         appData.accounts.forEach(a=>{
             let h=''; let tot=0;
-            appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseFloat(p.amt).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span></div>`; } });
+            appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`; } });
             const proj=(parseFloat(a.bal)||0)-tot; s.innerHTML+=`<option value="${a.id}">${a.name}</option>`;
-            
-            // FORMATO ARGENTINA CUENTAS
-            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${proj.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">$${parseFloat(a.bal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${proj.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2})}</span></div></div></div></div>`;
+            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${proj.toLocaleString()}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">$${parseFloat(a.bal).toLocaleString()}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${proj.toLocaleString()}</span></div></div></div></div>`;
         });
     }
     function toggleAcc(id){document.getElementById(`accDet-${id}`).classList.toggle('open');}
-    
-    // FORMATO ARGENTINA DASHBOARD
-    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseFloat(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText='$'+a.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}); document.getElementById('dDebt').innerText='$'+d.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}); document.getElementById('dNet').innerText='$'+(a-d).toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2}); }
+    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseInt(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText='$'+a.toLocaleString(); document.getElementById('dDebt').innerText='$'+d.toLocaleString(); document.getElementById('dNet').innerText='$'+(a-d).toLocaleString(); }
 
     // --- CRUD ---
     let edId=null;
@@ -897,36 +918,12 @@
 
     function openCell(eid, m) {
         if(checkLock()) return; selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
-        
-        // --- LOGICA DE COLORES DEL TOGGLE (Igual a Local) ---
-        const dayVal = parseInt(p.day) || 0;
-        const today = new Date(); today.setHours(0,0,0,0);
-        let dueDate;
-        if (dayVal > 0) dueDate = new Date(year, m, dayVal);
-        else dueDate = new Date(year, m + 1, 0); 
-        
-        const slider = document.getElementById('mcPaidSlider');
-        const label = document.getElementById('mcPaidLabel');
-        const chk = document.getElementById('mcPaid');
-
-        chk.checked = p.paid || false;
-        slider.className = 'slider'; 
-
-        if(chk.checked) {
-            label.innerText = "PAGADO"; label.style.color = "#00e676";
-        } else {
-            label.innerText = "NO PAGADO";
-            if (dueDate < today) { label.style.color="#ff5252"; slider.classList.add('red'); }
-            else { label.style.color="#ffea00"; slider.classList.add('yellow'); }
-        }
-        // ------------------------------------
-
-        document.getElementById('mcAmt').value = p.amt||''; 
-        document.getElementById('mcDay').value = p.day||''; 
-        renderAccounts(); // Actualizar select
-        document.getElementById('mcAcc').value = p.accId||''; 
-        
+        document.getElementById('mcAmt').value = p.amt||''; document.getElementById('mcDay').value = p.day||''; document.getElementById('mcAcc').value = p.accId||''; document.getElementById('mcPaid').checked = p.paid||false;
         document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
+        
+        // --- LOGICA DE COLORES DEL TOGGLE ---
+        updatePaidLabel(); // Inicializar estado
+        
         const sel = document.getElementById('mcRepMonth'); sel.innerHTML = '';
         const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
@@ -937,25 +934,31 @@
         const chk = document.getElementById('mcPaid');
         const slider = document.getElementById('mcPaidSlider');
         const label = document.getElementById('mcPaidLabel');
+        
         const dayVal = parseInt(val('mcDay')) || 0;
         const today = new Date(); today.setHours(0,0,0,0);
         let dueDate;
         if (dayVal > 0) dueDate = new Date(year, selCell.m, dayVal);
         else dueDate = new Date(year, selCell.m + 1, 0); 
+        
         slider.classList.remove('red', 'yellow');
+
         if(chk.checked) {
-            label.innerText = "PAGADO"; label.style.color = "#00e676"; 
+            label.innerText = "PAGADO";
+            label.style.color = "#00e676"; 
         } else {
             label.innerText = "NO PAGADO";
             if (dueDate < today) {
-                label.style.color = "#ff5252"; slider.classList.add('red');
+                label.style.color = "#ff5252"; 
+                slider.classList.add('red');
             } else {
-                label.style.color = "#ffea00"; slider.classList.add('yellow');
+                label.style.color = "#ffea00"; 
+                slider.classList.add('yellow');
             }
         }
     }
 
-    // LOGICA DE DESCUENTO DE SALDO CON SWEETALERT (Igual a Local)
+    // LOGICA DE DESCUENTO DE SALDO CON SWEETALERT
     function saveCell() {
         const k = `${selCell.eid}_${year}_${selCell.m}`;
         const rawAmt = val('mcAmt');
@@ -965,71 +968,96 @@
         const selectedAccId = val('mcAcc');
         const accName = selectedAccId ? getAccName(selectedAccId) : "la cuenta";
         
-        const prevPayment = appData.payments[k];
-        const wasPaid = prevPayment && prevPayment.paid;
-
+        // Construimos el nuevo objeto de pago
         const newPaymentObj = { amt, day, accId: selectedAccId, paid };
         
-        if (amt || day || paid) {
-             if(paid && !wasPaid && amt > 0) {
-                 if(!selectedAccId) {
-                     closeModal('modCell');
-                     Swal.fire({
-                        title: 'Falta Cuenta', text: 'No seleccionaste con qué pagar.', icon: 'warning',
-                        showCancelButton: true, confirmButtonColor: '#333', cancelButtonColor: '#BB86FC',
-                        confirmButtonText: 'Guardar igual', cancelButtonText: 'Volver a seleccionar', reverseButtons: true
-                     }).then((r) => {
-                        if(r.isConfirmed) {
-                            appData.payments[k] = newPaymentObj; handleRepeat(); saveData(); renderGrid();
-                        } else {
-                            document.getElementById('modCell').style.display='flex';
-                        }
-                     });
-                     return;
-                 }
-                 
-                 closeModal('modCell');
-                 const accIdx = appData.accounts.findIndex(a=>a.id==selectedAccId);
-                 const currentBal = accIdx>-1 ? parseFloat(appData.accounts[accIdx].bal) : 0;
-                 
-                 const fmtAmt = amt.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-                 const fmtBal = currentBal.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
+        // Revisamos el estado ACTUAL GUARDADO (antes de modificar nada)
+        const currentStoredPayment = appData.payments[k];
+        const wasPaid = currentStoredPayment && currentStoredPayment.paid;
 
-                 Swal.fire({
-                    title: 'Confirmar Pago',
-                    html: `Saldo de <b>${accName}</b>: $${fmtBal}<br><br>¿Descontar <b>$${fmtAmt}</b>?`,
-                    icon: 'question',
-                    showCancelButton: true, confirmButtonColor: '#BB86FC', cancelButtonColor: '#333',
-                    confirmButtonText: 'Sí, descontar', cancelButtonText: 'No, solo marcar'
-                 }).then((r) => {
-                    appData.payments[k] = newPaymentObj;
-                    handleRepeat();
-                    if(r.isConfirmed && accIdx>-1) {
-                        appData.accounts[accIdx].bal = currentBal - amt;
-                        const newBal = appData.accounts[accIdx].bal.toLocaleString('es-AR', {minimumFractionDigits: 0, maximumFractionDigits: 2});
-                        Swal.fire('Listo', `Nuevo saldo: $${newBal}`, 'success');
+        // CASO A: Se está marcando como PAGADO por primera vez y hay monto
+        if (paid && !wasPaid && amt > 0) {
+            
+            // Sub-caso: No hay cuenta seleccionada
+            if (!selectedAccId) {
+                closeModal('modCell'); // Cerrar primero como pidió el usuario
+                
+                Swal.fire({
+                    title: 'Falta Cuenta',
+                    text: 'Marcaste pagado pero no elegiste con qué cuenta.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#333', 
+                    cancelButtonColor: '#BB86FC',
+                    confirmButtonText: 'Solo marcar pagado',
+                    cancelButtonText: 'Volver para seleccionar',
+                    reverseButtons: true
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Opción: Solo marcar (Guardar sin cuenta)
+                        appData.payments[k] = newPaymentObj;
+                        handleRepeat();
+                        saveData();
+                    } else {
+                        // Opción: Volver (Reabrir modal)
+                        document.getElementById('modCell').style.display = 'flex';
                     }
-                    saveData(); renderGrid(); renderAcc();
-                 });
-                 return;
-             }
-             appData.payments[k] = newPaymentObj;
+                });
+                return; // STOP. No seguir.
+            }
+
+            // Sub-caso: Hay cuenta seleccionada -> Preguntar descuento
+            closeModal('modCell'); // Cerrar primero
+
+            const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
+            const currentBal = accIndex > -1 ? appData.accounts[accIndex].bal : 0;
+
+            Swal.fire({
+                title: 'Confirmar Pago',
+                html: `Saldo de <b>${accName}</b>: $${currentBal.toLocaleString()}<br><br>¿Descontar <b>$${amt.toLocaleString()}</b>?`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#BB86FC',
+                cancelButtonColor: '#333',
+                confirmButtonText: 'Sí, descontar',
+                cancelButtonText: 'No, solo marcar'
+            }).then((result) => {
+                // Guardar siempre el pago
+                appData.payments[k] = newPaymentObj;
+                handleRepeat();
+
+                if (result.isConfirmed) {
+                    // Aplicar descuento
+                    if(accIndex > -1) {
+                        appData.accounts[accIndex].bal -= parseFloat(amt);
+                        Swal.fire('Descontado', `Nuevo saldo: $${appData.accounts[accIndex].bal.toLocaleString()}`, 'success');
+                    }
+                }
+                saveData();
+            });
+            return; // STOP.
+        }
+
+        // CASO B: Guardado normal (no es pago nuevo, o es edición simple, o desmarcar)
+        if (amt || day || paid) {
+            appData.payments[k] = newPaymentObj;
         } else {
             delete appData.payments[k];
         }
-
         handleRepeat();
-        saveData(); closeModal('modCell');
+        saveData();
+        closeModal('modCell');
     }
 
+    // Funcion auxiliar para repetir pago
     function handleRepeat() {
         const day = val('mcDay');
         if(document.getElementById('mcRepeat').checked && day) {
-            const tm = parseInt(document.getElementById('mcRepMonth').value);
-            for(let i = selCell.m + 1; i <= tm; i++) {
-                const nk = `${selCell.eid}_${year}_${i}`;
-                if(!appData.payments[nk]) appData.payments[nk] = {};
-                appData.payments[nk].day = day;
+            const targetM = parseInt(document.getElementById('mcRepMonth').value);
+            for(let i = selCell.m + 1; i <= targetM; i++) {
+                const nextK = `${selCell.eid}_${year}_${i}`;
+                if(!appData.payments[nextK]) appData.payments[nextK] = {};
+                appData.payments[nextK].day = day;
             }
         }
     }
@@ -1047,7 +1075,29 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
+    function exportExcel() {
+        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        let headers = ['Concepto', 'Categoría'];
+        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
+        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
+        
+        let data = [headers];
+        appData.expenses.forEach(e => {
+            let row = [e.name, e.cat];
+            for(let i=0; i<12; i++) {
+                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
+                row.push(p.day || '');
+                row.push(p.amt ? parseFloat(p.amt) : '');
+            }
+            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
+            data.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
+        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
+    }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
