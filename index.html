@@ -33,7 +33,7 @@
         body.zen-mode .fab { display: none !important; }
         body.zen-mode .view { height: 100vh; padding-top: 5px; }
 
-        /* PERSONALIZACION SWEETALERT (Alertas) */
+        /* PERSONALIZACION SWEETALERT */
         div:where(.swal2-container) div:where(.swal2-popup) { background: #1e1e1e !important; color: #eee !important; border: 1px solid #333; }
         div:where(.swal2-container) h2:where(.swal2-title) { color: #BB86FC !important; }
         div:where(.swal2-icon).swal2-question { border-color: #BB86FC !important; color: #BB86FC !important; }
@@ -61,7 +61,19 @@
         #authScreen, #groupScreen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #050505; z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; }
         .auth-box { background: #1e1e1e; padding: 30px; border-radius: 15px; border: 1px solid #333; width: 90%; max-width: 350px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         .auth-btn { width: 100%; padding: 12px; margin-top: 10px; border-radius: 8px; border: none; font-weight: bold; cursor: pointer; transition: 0.2s; }
-        .btn-google { background: #fff; color: #333; display: flex; align-items: center; justify-content: center; gap: 10px; font-family: Roboto, sans-serif; }
+        
+        /* BOTON GOOGLE OFICIAL */
+        .btn-google { 
+            background: #ffffff !important; 
+            color: #1f1f1f !important; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 10px; 
+            font-family: Roboto, sans-serif; 
+            border: 1px solid #ccc !important;
+        }
+        .btn-google:hover { background: #f2f2f2 !important; }
         
         .pass-wrapper { position: relative; width: 100%; }
         .pass-toggle { position: absolute; right: 15px; top: 15px; cursor: pointer; color: #aaa; font-size: 1.2rem; }
@@ -202,7 +214,12 @@
             <button class="auth-btn btn-s" onclick="registerEmail()">Crear Cuenta</button>
             <div style="margin:20px 0; border-top:1px solid #333; padding-top:15px; color:#555; font-size:0.8rem;">O CONTINUA CON</div>
             <button class="auth-btn btn-google" onclick="loginGoogle()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20"> 
+                <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/>
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.715H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/>
+                    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/>
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.162 6.656 3.58 9 3.58z" fill="#EA4335"/>
+                </svg>
                 <span style="font-weight:500;">Acceder con Google</span>
             </button>
             <p id="authMsg" style="color:#ff5252; margin-top:10px; font-size:0.9rem;"></p>
@@ -321,7 +338,7 @@
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#BB86FC;">
             <h3 style="color:#BB86FC; margin-top:0;">📲 App en tu Celular</h3>
             <p style="font-size:0.8rem;">Instala la app para acceder directo desde tu pantalla de inicio.</p>
-            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">📲 INSTALAR APLICACIÓN</button>
+            <button class="btn btn-p" onclick="installApp()" style="background:#fff; color:#000; font-weight:800;">INSTALAR APLICACIÓN</button>
         </div>
 
         <div class="dash-card" style="text-align:left; margin-bottom:15px; border-color:#00e676;">
@@ -787,6 +804,7 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
+                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
                 if(p.amt || p.paid) {
                     if(p.amt) monthTotals[i] += parseFloat(p.amt);
                 }
@@ -815,6 +833,7 @@
             body += '</tr>';
         });
 
+        // FILA DE TOTALES CON ALINEACION DERECHA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
         monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
         totalRowHTML += '</tr>';
@@ -897,7 +916,6 @@
         const paid = document.getElementById('mcPaid').checked;
         const selectedAccId = val('mcAcc');
         
-        // Check si estaba pagado antes
         const prevPayment = appData.payments[k];
         const wasPaid = prevPayment && prevPayment.paid;
 
@@ -907,7 +925,6 @@
             delete appData.payments[k];
         }
         
-        // REPETIR VENCIMIENTO
         if(document.getElementById('mcRepeat').checked && day) {
             const targetM = parseInt(document.getElementById('mcRepMonth').value);
             for(let i = selCell.m + 1; i <= targetM; i++) {
@@ -917,9 +934,11 @@
             }
         }
 
-        // DESCONTAR DEL SALDO (Solo si pasa a pagado y no estaba pagado antes)
+        // --- CIERRE DE MODAL ANTES DE LA ALERTA ---
+        closeModal('modCell'); 
+        // ------------------------------------------
+
         if(paid && !wasPaid && amt > 0) {
-            // USAR SWEET ALERT EN LUGAR DE CONFIRM
             Swal.fire({
                 title: 'Armado de Pagos',
                 text: `¿Descontar $${amt.toLocaleString()} del saldo de la cuenta seleccionada?`,
@@ -941,15 +960,11 @@
                         }
                     }
                 }
-                // SIEMPRE GUARDAR DESPUES DE LA DECISION
                 saveData(); 
-                closeModal('modCell');
             });
-            return; // DETENER EJECUCION AQUI, ESPERAR AL PROMISE
+        } else {
+            saveData();
         }
-
-        saveData(); 
-        closeModal('modCell');
     }
 
     function delCell(){ delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
