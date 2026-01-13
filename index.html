@@ -37,6 +37,8 @@
         div:where(.swal2-container) div:where(.swal2-popup) { background: #1e1e1e !important; color: #eee !important; border: 1px solid #333; }
         div:where(.swal2-container) h2:where(.swal2-title) { color: #BB86FC !important; }
         div:where(.swal2-icon).swal2-question { border-color: #BB86FC !important; color: #BB86FC !important; }
+        div:where(.swal2-icon).swal2-warning { border-color: #ffea00 !important; color: #ffea00 !important; }
+        div:where(.swal2-icon).swal2-success { border-color: #00e676 !important; color: #00e676 !important; }
 
         /* SCROLLBAR */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -915,7 +917,9 @@
         const day = val('mcDay');
         const paid = document.getElementById('mcPaid').checked;
         const selectedAccId = val('mcAcc');
+        const accName = selectedAccId ? getAccName(selectedAccId) : "la cuenta";
         
+        // Check si estaba pagado antes
         const prevPayment = appData.payments[k];
         const wasPaid = prevPayment && prevPayment.paid;
 
@@ -925,6 +929,7 @@
             delete appData.payments[k];
         }
         
+        // REPETIR VENCIMIENTO
         if(document.getElementById('mcRepeat').checked && day) {
             const targetM = parseInt(document.getElementById('mcRepMonth').value);
             for(let i = selCell.m + 1; i <= targetM; i++) {
@@ -934,14 +939,37 @@
             }
         }
 
-        // --- CIERRE DE MODAL ANTES DE LA ALERTA ---
-        closeModal('modCell'); 
-        // ------------------------------------------
-
+        // DESCONTAR DEL SALDO (Solo si pasa a pagado y no estaba pagado antes)
         if(paid && !wasPaid && amt > 0) {
+            // SI NO HAY CUENTA SELECCIONADA
+            if(!selectedAccId) {
+                Swal.fire({
+                    title: 'Atención',
+                    text: 'No has seleccionado ninguna cuenta para descontar el saldo.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#333', // Solo marcar
+                    cancelButtonColor: '#BB86FC', // Volver
+                    confirmButtonText: 'Solo marcar como pagado',
+                    cancelButtonText: 'Volver para seleccionar'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Solo marcar
+                        appData.payments[k].accId = ''; // asegurar vacío
+                        saveData();
+                        closeModal('modCell');
+                    }
+                    // Si cancela, no hace nada (se queda en el modal)
+                });
+                return; // DETIENE EJECUCIÓN AQUÍ
+            }
+
+            // SI HAY CUENTA, CIERRA EL MODAL PRIMERO
+            closeModal('modCell');
+
             Swal.fire({
                 title: 'Armado de Pagos',
-                text: `¿Descontar $${amt.toLocaleString()} del saldo de la cuenta seleccionada?`,
+                html: `¿Descontar <b>$${amt.toLocaleString()}</b> del saldo de <b>${accName}</b>?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#BB86FC',
@@ -950,21 +978,24 @@
                 cancelButtonText: 'No, solo marcar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    if(!selectedAccId) {
-                         Swal.fire('Error', 'Selecciona una cuenta en el desplegable primero.', 'error');
-                    } else {
-                        const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
-                        if(accIndex > -1) {
-                            appData.accounts[accIndex].bal -= parseFloat(amt);
-                            Swal.fire('Listo', `Nuevo saldo: $${appData.accounts[accIndex].bal.toLocaleString()}`, 'success');
-                        }
+                    const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
+                    if(accIndex > -1) {
+                        appData.accounts[accIndex].bal -= parseFloat(amt);
+                        Swal.fire({
+                            title: 'Listo',
+                            html: `Nuevo saldo de <b>${accName}</b>:<br>$${appData.accounts[accIndex].bal.toLocaleString()}`,
+                            icon: 'success',
+                            confirmButtonColor: '#BB86FC'
+                        });
                     }
                 }
                 saveData(); 
             });
-        } else {
-            saveData();
+            return;
         }
+
+        saveData(); 
+        closeModal('modCell');
     }
 
     function delCell(){ delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
@@ -980,29 +1011,7 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel() {
-        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        let headers = ['Concepto', 'Categoría'];
-        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
-        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
-        
-        let data = [headers];
-        appData.expenses.forEach(e => {
-            let row = [e.name, e.cat];
-            for(let i=0; i<12; i++) {
-                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
-                row.push(p.day || '');
-                row.push(p.amt ? parseFloat(p.amt) : '');
-            }
-            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
-            data.push(row);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
-        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
-    }
+    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
