@@ -620,7 +620,7 @@
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
 
-    // --- NUEVA FUNCION FORMATO ARGENTINO ---
+    // --- NUEVA FUNCION FORMATO ARGENTINO VISUAL ---
     function formatMoney(amount) {
         if (amount === '' || amount === undefined || amount === null) return '$0';
         let num = parseFloat(amount);
@@ -629,22 +629,51 @@
         return '$' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
-    // --- SMART PARSE ADAPTADO A FORMATO ARGENTINO ---
+    // --- SMART PARSE CORREGIDO (Lógica Solicitada) ---
+    // Reglas:
+    // 1. En carga manual, el usuario NO pone punto de miles.
+    // 2. Si pone coma (10,50) es decimal.
+    // 3. Si pone punto (10.50) es decimal.
+    // 4. Si hay cuentas (100+50,5), se reemplaza coma por punto decimal ANTES de evaluar.
     function smartParse(str) { 
         try { 
             if(!str) return 0; 
             let clean = str.toString();
-            // 1. Eliminar puntos de miles (ej: 1.500 -> 1500)
-            clean = clean.replace(/\./g, '');
-            // 2. Reemplazar coma por punto decimal (ej: 1500,50 -> 1500.50 para JS)
+
+            // CASO ESPECIAL: Si viene formateado con signo $ y puntos de miles (ej: $1.500,00)
+            // Esto ocurre cuando se edita un campo que ya se formateó.
+            if(clean.includes('$') || (clean.includes('.') && clean.includes(','))) {
+                 // Quitamos todo lo que no sea número, coma, punto, o signo matemático básico
+                 clean = clean.replace(/[^-()\d/*+.,]/g, '');
+                 // Quitamos los puntos (miles) para dejar solo la coma como decimal
+                 clean = clean.replace(/\./g, '');
+            } 
+            
+            // REGLA DE ORO DEL USUARIO: "Lo que pone como separador es decimal"
+            // Reemplazamos todas las comas por puntos para que JS entienda el decimal.
             clean = clean.replace(/,/g, '.');
-            // 3. Sanitizar
+
+            // Limpieza final de caracteres no matemáticos
             clean = clean.replace(/[^-()\d/*+.]/g, ''); 
-            return eval(clean) || 0; 
+
+            // Evaluar la operación matemática (ej: 100+50.5)
+            let result = eval(clean);
+            return result || 0; 
+
         } catch(e) { return 0; } 
     }
 
-    function calcInput(el) { const val = smartParse(el.value); if(val) el.value = val; }
+    // Al salir del input, calculamos y luego mostramos bonito
+    function calcInput(el) { 
+        const val = smartParse(el.value); 
+        if(val || val === 0) {
+            // Guardamos el valor numérico puro en el atributo value (para que al guardar en DB sea numero)
+            // Pero al usuario le mostramos el formateado sin el signo $ para que pueda seguir editando si quiere
+            // O mejor: Le mostramos formateado. Si vuelve a editar, smartParse manejará el formato.
+            el.value = val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+        }
+    }
+
     function stringToColor(str) { if(!str) return 'transparent'; let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#' + "00000".substring(0, 6 - c.length) + c; }
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
@@ -941,7 +970,12 @@
 
     function openCell(eid, m) {
         if(checkLock()) return; selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
-        document.getElementById('mcAmt').value = p.amt||''; document.getElementById('mcDay').value = p.day||''; document.getElementById('mcAcc').value = p.accId||''; document.getElementById('mcPaid').checked = p.paid||false;
+        // Cargamos el valor sin formato al principio para edición facil, o con formato.
+        // Preferible usar la funcion calcInput al renderizar, pero aqui es input directo.
+        const rawAmt = p.amt || '';
+        document.getElementById('mcAmt').value = rawAmt ? parseFloat(rawAmt).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : ''; 
+        
+        document.getElementById('mcDay').value = p.day||''; document.getElementById('mcAcc').value = p.accId||''; document.getElementById('mcPaid').checked = p.paid||false;
         document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
         
         // --- LOGICA DE COLORES DEL TOGGLE ---
