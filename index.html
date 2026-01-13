@@ -620,7 +620,30 @@
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
 
-    function smartParse(str) { try { if(!str) return 0; let clean = str.toString().replace(/,/g, '.').replace(/[^-()\d/*+.]/g, ''); return eval(clean) || 0; } catch(e) { return 0; } }
+    // --- NUEVA FUNCION FORMATO ARGENTINO ---
+    function formatMoney(amount) {
+        if (amount === '' || amount === undefined || amount === null) return '$0';
+        let num = parseFloat(amount);
+        if (isNaN(num)) return '$0';
+        // es-AR usa punto para mil, coma para decimal. Max 2 decimales.
+        return '$' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    // --- SMART PARSE ADAPTADO A FORMATO ARGENTINO ---
+    function smartParse(str) { 
+        try { 
+            if(!str) return 0; 
+            let clean = str.toString();
+            // 1. Eliminar puntos de miles (ej: 1.500 -> 1500)
+            clean = clean.replace(/\./g, '');
+            // 2. Reemplazar coma por punto decimal (ej: 1500,50 -> 1500.50 para JS)
+            clean = clean.replace(/,/g, '.');
+            // 3. Sanitizar
+            clean = clean.replace(/[^-()\d/*+.]/g, ''); 
+            return eval(clean) || 0; 
+        } catch(e) { return 0; } 
+    }
+
     function calcInput(el) { const val = smartParse(el.value); if(val) el.value = val; }
     function stringToColor(str) { if(!str) return 'transparent'; let hash = 0; for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#' + "00000".substring(0, 6 - c.length) + c; }
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
@@ -635,7 +658,7 @@
         document.documentElement.style.setProperty('--col-w', w + 'px');
     }
 
-    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString()); } });
+    db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = formatMoney(globalPrice)); } });
 
     auth.onAuthStateChanged(user => {
         if(user) {
@@ -838,7 +861,7 @@
                 }
 
                 const day = (p.day!==undefined && p.day!=='') ? p.day : '';
-                const amt = p.amt ? '$'+parseInt(p.amt).toLocaleString() : '';
+                const amt = p.amt ? formatMoney(p.amt) : '';
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
                 
@@ -854,7 +877,7 @@
 
         // FILA DE TOTALES CON ALINEACION DERECHA
         let totalRowHTML = `<tr class="row-total"><td class="col-fix">TOTAL A PAGAR</td>`;
-        monthTotals.forEach(val => { totalRowHTML += `<td>$${parseInt(val).toLocaleString()}</td>`; });
+        monthTotals.forEach(val => { totalRowHTML += `<td>${formatMoney(val)}</td>`; });
         totalRowHTML += '</tr>';
 
         t.innerHTML += body + totalRowHTML + '</tbody>';
@@ -876,13 +899,13 @@
         const now=new Date();
         appData.accounts.forEach(a=>{
             let h=''; let tot=0;
-            appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-$${parseInt(p.amt).toLocaleString()}</span></div>`; } });
+            appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-${formatMoney(p.amt)}</span></div>`; } });
             const proj=(parseFloat(a.bal)||0)-tot; s.innerHTML+=`<option value="${a.id}">${a.name}</option>`;
-            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: $${proj.toLocaleString()}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">$${parseFloat(a.bal).toLocaleString()}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">$${parseFloat(a.bal).toLocaleString()}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>$${proj.toLocaleString()}</span></div></div></div></div>`;
+            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: ${formatMoney(proj)}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">${formatMoney(a.bal)}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">${formatMoney(a.bal)}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>${formatMoney(proj)}</span></div></div></div></div>`;
         });
     }
     function toggleAcc(id){document.getElementById(`accDet-${id}`).classList.toggle('open');}
-    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseInt(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText='$'+a.toLocaleString(); document.getElementById('dDebt').innerText='$'+d.toLocaleString(); document.getElementById('dNet').innerText='$'+(a-d).toLocaleString(); }
+    function calcDash(){ let d=0,a=0; const now=new Date(); appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.amt&&!p.paid) d+=parseFloat(p.amt); }); appData.accounts.forEach(ac=>a+=parseFloat(ac.bal)); document.getElementById('dTotal').innerText=formatMoney(a); document.getElementById('dDebt').innerText=formatMoney(d); document.getElementById('dNet').innerText=formatMoney(a-d); }
 
     // --- CRUD ---
     let edId=null;
@@ -1014,7 +1037,7 @@
 
             Swal.fire({
                 title: 'Confirmar Pago',
-                html: `Saldo de <b>${accName}</b>: $${currentBal.toLocaleString()}<br><br>¿Descontar <b>$${amt.toLocaleString()}</b>?`,
+                html: `Saldo de <b>${accName}</b>: ${formatMoney(currentBal)}<br><br>¿Descontar <b>${formatMoney(amt)}</b>?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#BB86FC',
@@ -1030,7 +1053,7 @@
                     // Aplicar descuento
                     if(accIndex > -1) {
                         appData.accounts[accIndex].bal -= parseFloat(amt);
-                        Swal.fire('Descontado', `Nuevo saldo: $${appData.accounts[accIndex].bal.toLocaleString()}`, 'success');
+                        Swal.fire('Descontado', `Nuevo saldo: ${formatMoney(appData.accounts[accIndex].bal)}`, 'success');
                     }
                 }
                 saveData();
