@@ -172,6 +172,19 @@
         .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 3000; justify-content: center; align-items: center; }
         .modal-box { background: #252525; padding: 20px; border-radius: 10px; width: 90%; max-width: 400px; border: 1px solid #555; max-height: 90vh; overflow-y: auto; }
 
+        /* TOGGLE SWITCH (Perilla) */
+        .switch { position: relative; display: inline-block; width: 50px; height: 26px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        
+        input:checked + .slider { background-color: #00e676; } /* Verde Pagado */
+        input:checked + .slider:before { transform: translateX(24px); }
+        
+        /* Estados Rojo y Amarillo cuando no está checkeado */
+        .slider.red { background-color: #ff5252; } /* Vencido */
+        .slider.yellow { background-color: #ffea00; } /* Futuro */
+
         /* ESTADOS DE PAGO */
         .status-paid { background: rgba(0, 230, 118, 0.15) !important; border-left: 3px solid #00e676; }
         .status-pend { background: rgba(255, 82, 82, 0.15); border-left: 3px solid #ff5252; } 
@@ -499,10 +512,15 @@
                     <select id="mcRepMonth"></select>
                 </div>
             </div>
+            
             <div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;">
-                <input type="checkbox" id="mcPaid" style="width:20px; margin:0;">
-                <label style="margin:0; cursor:pointer;" for="mcPaid">MARCAR COMO PAGADO</label>
+                <label class="switch">
+                  <input type="checkbox" id="mcPaid">
+                  <span class="slider" id="mcPaidSlider"></span>
+                </label>
+                <label style="margin:0; cursor:pointer; font-weight:bold;" for="mcPaid">ESTADO DEL PAGO</label>
             </div>
+
             <button class="btn btn-p" onclick="saveCell()">Guardar</button>
             <button class="btn btn-s" onclick="closeModal('modCell')">Cancelar</button>
             <div style="display:flex; gap:5px; margin-top:10px;">
@@ -806,7 +824,6 @@
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 
-                // SUMA TOTAL: SUMA TODO (VENCIDO, PROXIMO, PAGADO)
                 if(p.amt || p.paid) {
                     if(p.amt) monthTotals[i] += parseFloat(p.amt);
                 }
@@ -903,6 +920,28 @@
         if(checkLock()) return; selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
         document.getElementById('mcAmt').value = p.amt||''; document.getElementById('mcDay').value = p.day||''; document.getElementById('mcAcc').value = p.accId||''; document.getElementById('mcPaid').checked = p.paid||false;
         document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
+        
+        // --- LOGICA DE COLORES DEL TOGGLE ---
+        const slider = document.getElementById('mcPaidSlider');
+        slider.className = 'slider'; // Reset classes
+        const today = new Date(); today.setHours(0,0,0,0);
+        const dayVal = parseInt(p.day) || 0;
+        let dueDate;
+        
+        if (dayVal > 0) {
+            dueDate = new Date(year, m, dayVal);
+        } else {
+            // Si no hay dia, asumimos fin de mes para el color
+            dueDate = new Date(year, m + 1, 0); 
+        }
+
+        if (dueDate < today) {
+            slider.classList.add('red'); // Vencido
+        } else {
+            slider.classList.add('yellow'); // Futuro
+        }
+        // ------------------------------------
+
         const sel = document.getElementById('mcRepMonth'); sel.innerHTML = '';
         const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
@@ -919,7 +958,6 @@
         const selectedAccId = val('mcAcc');
         const accName = selectedAccId ? getAccName(selectedAccId) : "la cuenta";
         
-        // Check si estaba pagado antes
         const prevPayment = appData.payments[k];
         const wasPaid = prevPayment && prevPayment.paid;
 
@@ -929,7 +967,6 @@
             delete appData.payments[k];
         }
         
-        // REPETIR VENCIMIENTO
         if(document.getElementById('mcRepeat').checked && day) {
             const targetM = parseInt(document.getElementById('mcRepMonth').value);
             for(let i = selCell.m + 1; i <= targetM; i++) {
@@ -939,7 +976,10 @@
             }
         }
 
-        // DESCONTAR DEL SALDO (Solo si pasa a pagado y no estaba pagado antes)
+        // --- CIERRE DE MODAL ANTES DE LA ALERTA ---
+        closeModal('modCell'); 
+        // ------------------------------------------
+
         if(paid && !wasPaid && amt > 0) {
             // SI NO HAY CUENTA SELECCIONADA
             if(!selectedAccId) {
@@ -951,25 +991,29 @@
                     confirmButtonColor: '#333', // Solo marcar
                     cancelButtonColor: '#BB86FC', // Volver
                     confirmButtonText: 'Solo marcar como pagado',
-                    cancelButtonText: 'Volver para seleccionar'
+                    cancelButtonText: 'Volver para seleccionar',
+                    reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Solo marcar
-                        appData.payments[k].accId = ''; // asegurar vacío
+                        // Solo marcar (ConfirmButton es 'Solo marcar')
+                        appData.payments[k].accId = ''; 
                         saveData();
-                        closeModal('modCell');
+                    } else if (result.dismiss === Swal.DismissReason.cancel) {
+                        // Volver (CancelButton es 'Volver')
+                        // REABRIR MODAL
+                        document.getElementById('modCell').style.display='flex';
                     }
-                    // Si cancela, no hace nada (se queda en el modal)
                 });
                 return; // DETIENE EJECUCIÓN AQUÍ
             }
 
-            // SI HAY CUENTA, CIERRA EL MODAL PRIMERO
-            closeModal('modCell');
+            // SI HAY CUENTA
+            const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
+            const currentBal = accIndex > -1 ? appData.accounts[accIndex].bal : 0;
 
             Swal.fire({
                 title: 'Armado de Pagos',
-                html: `¿Descontar <b>$${amt.toLocaleString()}</b> del saldo de <b>${accName}</b>?`,
+                html: `Saldo actual de <b>${accName}</b>: $${currentBal.toLocaleString()}<br><br>¿Descontar <b>$${amt.toLocaleString()}</b>?`,
                 icon: 'question',
                 showCancelButton: true,
                 confirmButtonColor: '#BB86FC',
@@ -978,7 +1022,6 @@
                 cancelButtonText: 'No, solo marcar'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
                     if(accIndex > -1) {
                         appData.accounts[accIndex].bal -= parseFloat(amt);
                         Swal.fire({
@@ -995,7 +1038,6 @@
         }
 
         saveData(); 
-        closeModal('modCell');
     }
 
     function delCell(){ delete appData.payments[`${selCell.eid}_${year}_${selCell.m}`]; saveData(); closeModal('modCell'); }
@@ -1011,7 +1053,29 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
+    function exportExcel() {
+        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        let headers = ['Concepto', 'Categoría'];
+        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
+        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
+        
+        let data = [headers];
+        appData.expenses.forEach(e => {
+            let row = [e.name, e.cat];
+            for(let i=0; i<12; i++) {
+                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
+                row.push(p.day || '');
+                row.push(p.amt ? parseFloat(p.amt) : '');
+            }
+            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
+            data.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
+        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
+    }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
