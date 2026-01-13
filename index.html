@@ -569,6 +569,7 @@
     window.addEventListener('beforeinstallprompt', (e) => {
         e.preventDefault();
         deferredPrompt = e;
+        // El botón ya está visible siempre
     });
 
     async function installApp() {
@@ -934,26 +935,24 @@
         const slider = document.getElementById('mcPaidSlider');
         const label = document.getElementById('mcPaidLabel');
         
-        // Calcular si está vencido para el color "NO PAGADO"
         const dayVal = parseInt(val('mcDay')) || 0;
         const today = new Date(); today.setHours(0,0,0,0);
         let dueDate;
         if (dayVal > 0) dueDate = new Date(year, selCell.m, dayVal);
-        else dueDate = new Date(year, selCell.m + 1, 0); // Fin de mes
+        else dueDate = new Date(year, selCell.m + 1, 0); 
         
-        // Limpiar clases
         slider.classList.remove('red', 'yellow');
 
         if(chk.checked) {
             label.innerText = "PAGADO";
-            label.style.color = "#00e676"; // Verde
+            label.style.color = "#00e676"; 
         } else {
             label.innerText = "NO PAGADO";
             if (dueDate < today) {
-                label.style.color = "#ff5252"; // Rojo
+                label.style.color = "#ff5252"; 
                 slider.classList.add('red');
             } else {
-                label.style.color = "#ffea00"; // Amarillo
+                label.style.color = "#ffea00"; 
                 slider.classList.add('yellow');
             }
         }
@@ -991,7 +990,7 @@
                     confirmButtonColor: '#333', 
                     cancelButtonColor: '#BB86FC',
                     confirmButtonText: 'Solo marcar pagado',
-                    cancelButtonText: 'Volver a seleccionar',
+                    cancelButtonText: 'Volver para seleccionar',
                     reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
@@ -1076,7 +1075,29 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
+    function exportExcel() {
+        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        let headers = ['Concepto', 'Categoría'];
+        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
+        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
+        
+        let data = [headers];
+        appData.expenses.forEach(e => {
+            let row = [e.name, e.cat];
+            for(let i=0; i<12; i++) {
+                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
+                row.push(p.day || '');
+                row.push(p.amt ? parseFloat(p.amt) : '');
+            }
+            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
+            data.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
+        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
+    }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
