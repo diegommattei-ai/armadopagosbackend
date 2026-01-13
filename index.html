@@ -515,10 +515,10 @@
             
             <div style="margin:15px 0; display:flex; gap:10px; align-items:center; background:#333; padding:10px; border-radius:5px;">
                 <label class="switch">
-                  <input type="checkbox" id="mcPaid">
+                  <input type="checkbox" id="mcPaid" onchange="updatePaidLabel()">
                   <span class="slider" id="mcPaidSlider"></span>
                 </label>
-                <label style="margin:0; cursor:pointer; font-weight:bold;" for="mcPaid">ESTADO DEL PAGO</label>
+                <label id="mcPaidLabel" style="margin:0; cursor:pointer; font-weight:bold; width:120px;">NO PAGADO</label>
             </div>
 
             <button class="btn btn-p" onclick="saveCell()">Guardar</button>
@@ -922,30 +922,42 @@
         document.getElementById('mcRepeat').checked = false; document.getElementById('mcRepOpt').style.display = 'none';
         
         // --- LOGICA DE COLORES DEL TOGGLE ---
-        const slider = document.getElementById('mcPaidSlider');
-        slider.className = 'slider'; // Reset classes
-        const today = new Date(); today.setHours(0,0,0,0);
-        const dayVal = parseInt(p.day) || 0;
-        let dueDate;
+        updatePaidLabel(); // Inicializar estado
         
-        if (dayVal > 0) {
-            dueDate = new Date(year, m, dayVal);
-        } else {
-            // Si no hay dia, asumimos fin de mes para el color
-            dueDate = new Date(year, m + 1, 0); 
-        }
-
-        if (dueDate < today) {
-            slider.classList.add('red'); // Vencido
-        } else {
-            slider.classList.add('yellow'); // Futuro
-        }
-        // ------------------------------------
-
         const sel = document.getElementById('mcRepMonth'); sel.innerHTML = '';
         const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
         for(let i=m+1; i<12; i++) { const opt = document.createElement('option'); opt.value = i; opt.text = months[i]; sel.add(opt); }
         document.getElementById('modCell').style.display='flex';
+    }
+
+    function updatePaidLabel() {
+        const chk = document.getElementById('mcPaid');
+        const slider = document.getElementById('mcPaidSlider');
+        const label = document.getElementById('mcPaidLabel');
+        
+        // Calcular si está vencido para el color "NO PAGADO"
+        const dayVal = parseInt(val('mcDay')) || 0;
+        const today = new Date(); today.setHours(0,0,0,0);
+        let dueDate;
+        if (dayVal > 0) dueDate = new Date(year, selCell.m, dayVal);
+        else dueDate = new Date(year, selCell.m + 1, 0); // Fin de mes
+        
+        // Limpiar clases
+        slider.classList.remove('red', 'yellow');
+
+        if(chk.checked) {
+            label.innerText = "PAGADO";
+            label.style.color = "#00e676"; // Verde
+        } else {
+            label.innerText = "NO PAGADO";
+            if (dueDate < today) {
+                label.style.color = "#ff5252"; // Rojo
+                slider.classList.add('red');
+            } else {
+                label.style.color = "#ffea00"; // Amarillo
+                slider.classList.add('yellow');
+            }
+        }
     }
 
     // LOGICA DE DESCUENTO DE SALDO CON SWEETALERT
@@ -1053,29 +1065,7 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel() {
-        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-        let headers = ['Concepto', 'Categoría'];
-        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
-        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
-        
-        let data = [headers];
-        appData.expenses.forEach(e => {
-            let row = [e.name, e.cat];
-            for(let i=0; i<12; i++) {
-                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
-                row.push(p.day || '');
-                row.push(p.amt ? parseFloat(p.amt) : '');
-            }
-            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
-            data.push(row);
-        });
-
-        const ws = XLSX.utils.aoa_to_sheet(data);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
-        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
-    }
+    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
