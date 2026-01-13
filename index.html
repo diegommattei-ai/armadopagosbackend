@@ -523,57 +523,21 @@
     </div>
 
 <script>
-    // MANIFEST DINAMICO CON RUTA ABSOLUTA AUTOMATICA
+    // MANIFEST DINAMICO
     const appUrl = window.location.href.substring(0, window.location.href.lastIndexOf('/') + 1);
     const logoUrl = appUrl + "logo.jpg";
-    
-    const manifest = {
-        name: "Armado de Pagos",
-        short_name: "ArmadoPagos",
-        start_url: ".",
-        display: "standalone",
-        background_color: "#121212",
-        theme_color: "#BB86FC",
-        icons: [
-            { src: logoUrl, sizes: "192x192", type: "image/jpeg" },
-            { src: logoUrl, sizes: "512x512", type: "image/jpeg" }
-        ]
-    };
-    const stringManifest = JSON.stringify(manifest);
-    const blob = new Blob([stringManifest], {type: 'application/json'});
-    const manifestURL = URL.createObjectURL(blob);
-    document.querySelector('#myManifest').setAttribute('href', manifestURL);
+    const manifest = { name: "Armado de Pagos", short_name: "ArmadoPagos", start_url: ".", display: "standalone", background_color: "#121212", theme_color: "#BB86FC", icons: [{ src: logoUrl, sizes: "192x192", type: "image/jpeg" }, { src: logoUrl, sizes: "512x512", type: "image/jpeg" }] };
+    const blob = new Blob([JSON.stringify(manifest)], {type: 'application/json'});
+    document.querySelector('#myManifest').setAttribute('href', URL.createObjectURL(blob));
 
     // INSTALACION PWA
     let deferredPrompt;
-    window.addEventListener('beforeinstallprompt', (e) => {
-        e.preventDefault();
-        deferredPrompt = e;
-        // El botón ya está visible siempre
-    });
-
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt = e; });
     async function installApp() {
-        if (deferredPrompt) {
-            deferredPrompt.prompt();
-            const { outcome } = await deferredPrompt.userChoice;
-            deferredPrompt = null;
-        } else {
+        if (deferredPrompt) { deferredPrompt.prompt(); const { outcome } = await deferredPrompt.userChoice; deferredPrompt = null; }
+        else { 
             const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-            if (isIOS) {
-                Swal.fire({
-                    title: 'Instalar en iPhone',
-                    html: '1. Toca el botón <b>Compartir</b> (cuadrado con flecha).<br>2. Busca y selecciona <b>Agregar a Inicio</b>.',
-                    icon: 'info',
-                    confirmButtonColor: '#BB86FC'
-                });
-            } else {
-                Swal.fire({
-                    title: 'Instalar Aplicación',
-                    text: 'Busca la opción "Instalar aplicación" o "Agregar a la pantalla principal" en el menú de tu navegador.',
-                    icon: 'info',
-                    confirmButtonColor: '#BB86FC'
-                });
-            }
+            Swal.fire({ title: 'Instalar App', text: isIOS ? 'Toca Compartir y luego "Agregar a Inicio"' : 'Busca "Instalar aplicación" en el menú de tu navegador.', icon: 'info', confirmButtonColor: '#BB86FC' });
         }
     }
 
@@ -607,14 +571,8 @@
     function getAccName(id) { const acc = appData.accounts.find(a => a.id == id); return acc ? acc.name : ''; }
 
     // --- ZEN MODE FUNCTION ---
-    function toggleZen() {
-        document.body.classList.toggle('zen-mode');
-    }
-
-    // --- COLUMN WIDTH ---
-    function setColWidth(w) {
-        document.documentElement.style.setProperty('--col-w', w + 'px');
-    }
+    function toggleZen() { document.body.classList.toggle('zen-mode'); }
+    function setColWidth(w) { document.documentElement.style.setProperty('--col-w', w + 'px'); }
 
     db.collection('config').doc('pricing').onSnapshot(doc => { if(doc.exists) { globalPrice = doc.data().val || 0; document.querySelectorAll('.uiPriceDisplay').forEach(el => el.innerText = '$' + parseInt(globalPrice).toLocaleString('es-AR')); } });
 
@@ -792,24 +750,20 @@
         r.onload=e=>{
             try{
                 const d=JSON.parse(e.target.result);
-                // ADAPTADOR IMPORTACION LOCAL -> ONLINE
+                // ADAPTADOR LOCAL -> ONLINE
                 if (d.payments) {
                     for (let key in d.payments) {
                         let pay = d.payments[key];
-                        // Mapear 'amount' (Local) a 'amt' (Online)
                         if (pay.amount !== undefined && pay.amt === undefined) pay.amt = pay.amount;
-                        // Asegurar formato float para Online
                         pay.amt = parseFloat(pay.amt) || 0;
                     }
                 }
                 if (d.accounts) {
                     d.accounts.forEach(a => {
-                        // Mapear 'balance' (Local) a 'bal' (Online)
                         if (a.balance !== undefined && a.bal === undefined) a.bal = a.balance;
-                        a.bal = parseFloat(a.bal) || 0;
+                         a.bal = parseFloat(a.bal) || 0;
                     });
                 }
-                // Categorias: Local es String[], Online es Object[]. Convertimos.
                 if (d.categories && d.categories.length > 0 && typeof d.categories[0] === 'string') {
                     d.categories = d.categories.map(c => ({ id: Date.now() + Math.random(), name: c, icon: '🏷️' }));
                 }
@@ -862,7 +816,7 @@
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
                 
-                // CLICK EVENT FIX: Sin comillas en el ID, en el div contenedor
+                // CLICK EVENT FIX: Sin comillas en el ID
                 body += `<td class="${st}" style="padding:0; position:relative;">
                     <div onclick="openCell(${e.id},${i})" class="cell-container">
                         <div class="cell-day">${day}</div>
