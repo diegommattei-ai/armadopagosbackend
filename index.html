@@ -1065,7 +1065,29 @@
     }
     function changeYear(d){ year+=d; document.getElementById('dispYear').innerText=year; renderAll(); }
     function closeModal(id){ document.getElementById(id).style.display='none'; }
-    function exportExcel(){ const ws=XLSX.utils.table_to_sheet(document.getElementById('mainTable')); const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,"Pagos"); XLSX.writeFile(wb,"Pagos.xlsx"); }
+    function exportExcel() {
+        const months = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        let headers = ['Concepto', 'Categoría'];
+        months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
+        headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
+        
+        let data = [headers];
+        appData.expenses.forEach(e => {
+            let row = [e.name, e.cat];
+            for(let i=0; i<12; i++) {
+                const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
+                row.push(p.day || '');
+                row.push(p.amt ? parseFloat(p.amt) : '');
+            }
+            row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
+            data.push(row);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(data);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
+        XLSX.writeFile(wb, `ArmadoPagos_${year}.xlsx`);
+    }
 
     // FAB DRAG LOGIC
     const fab = document.getElementById('fabBtn');
