@@ -935,26 +935,24 @@
         const slider = document.getElementById('mcPaidSlider');
         const label = document.getElementById('mcPaidLabel');
         
-        // Calcular si está vencido para el color "NO PAGADO"
         const dayVal = parseInt(val('mcDay')) || 0;
         const today = new Date(); today.setHours(0,0,0,0);
         let dueDate;
         if (dayVal > 0) dueDate = new Date(year, selCell.m, dayVal);
-        else dueDate = new Date(year, selCell.m + 1, 0); // Fin de mes
+        else dueDate = new Date(year, selCell.m + 1, 0); 
         
-        // Limpiar clases
         slider.classList.remove('red', 'yellow');
 
         if(chk.checked) {
             label.innerText = "PAGADO";
-            label.style.color = "#00e676"; // Verde
+            label.style.color = "#00e676"; 
         } else {
             label.innerText = "NO PAGADO";
             if (dueDate < today) {
-                label.style.color = "#ff5252"; // Rojo
+                label.style.color = "#ff5252"; 
                 slider.classList.add('red');
             } else {
-                label.style.color = "#ffea00"; // Amarillo
+                label.style.color = "#ffea00"; 
                 slider.classList.add('yellow');
             }
         }
