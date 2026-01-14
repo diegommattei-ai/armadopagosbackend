@@ -613,63 +613,46 @@
     const ADMIN_EMAIL = "diegomatteiblanco@gmail.com";
     let currentUser = null;
     let currentGroup = null;
-    let appData = { expenses:[], payments:{}, accounts:[], categories:[] };
+    // Estructura por defecto
+    const DEFAULT_DATA = { 
+        expenses:[], payments:{}, accounts:[], 
+        categories: [ {id:'c1',name:'Hogar',icon:'🏠'}, {id:'c2',name:'Oficina',icon:'🏢'}, {id:'c3',name:'Auto',icon:'🚗'}, {id:'c4',name:'Personal',icon:'👤'}, {id:'c5',name:'Tarjetas',icon:'💳'} ] 
+    };
+    let appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+
     let year = 2026;
     let selCell = null;
     let isExpired = false;
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
 
-    // --- NUEVA FUNCION FORMATO ARGENTINO VISUAL ---
+    // --- FUNCION FORMATO ARGENTINO VISUAL ---
     function formatMoney(amount) {
         if (amount === '' || amount === undefined || amount === null) return '$0';
         let num = parseFloat(amount);
         if (isNaN(num)) return '$0';
-        // es-AR usa punto para mil, coma para decimal. Max 2 decimales.
         return '$' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
-    // --- SMART PARSE CORREGIDO (Lógica Solicitada) ---
-    // Reglas:
-    // 1. En carga manual, el usuario NO pone punto de miles.
-    // 2. Si pone coma (10,50) es decimal.
-    // 3. Si pone punto (10.50) es decimal.
-    // 4. Si hay cuentas (100+50,5), se reemplaza coma por punto decimal ANTES de evaluar.
+    // --- SMART PARSE ---
     function smartParse(str) { 
         try { 
             if(!str) return 0; 
             let clean = str.toString();
-
-            // CASO ESPECIAL: Si viene formateado con signo $ y puntos de miles (ej: $1.500,00)
-            // Esto ocurre cuando se edita un campo que ya se formateó.
             if(clean.includes('$') || (clean.includes('.') && clean.includes(','))) {
-                 // Quitamos todo lo que no sea número, coma, punto, o signo matemático básico
                  clean = clean.replace(/[^-()\d/*+.,]/g, '');
-                 // Quitamos los puntos (miles) para dejar solo la coma como decimal
                  clean = clean.replace(/\./g, '');
             } 
-            
-            // REGLA DE ORO DEL USUARIO: "Lo que pone como separador es decimal"
-            // Reemplazamos todas las comas por puntos para que JS entienda el decimal.
             clean = clean.replace(/,/g, '.');
-
-            // Limpieza final de caracteres no matemáticos
             clean = clean.replace(/[^-()\d/*+.]/g, ''); 
-
-            // Evaluar la operación matemática (ej: 100+50.5)
             let result = eval(clean);
             return result || 0; 
-
         } catch(e) { return 0; } 
     }
 
-    // Al salir del input, calculamos y luego mostramos bonito
     function calcInput(el) { 
         const val = smartParse(el.value); 
         if(val || val === 0) {
-            // Guardamos el valor numérico puro en el atributo value (para que al guardar en DB sea numero)
-            // Pero al usuario le mostramos el formateado sin el signo $ para que pueda seguir editando si quiere
-            // O mejor: Le mostramos formateado. Si vuelve a editar, smartParse manejará el formato.
             el.value = val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
     }
@@ -742,6 +725,8 @@
         updateBadge(info.validUntil);
         document.getElementById('confGName').innerText = name;
         document.getElementById('confPin').innerText = info.pin;
+        
+        // --- FIX: ESCUCHA DE DATOS ---
         db.collection('data').doc(name).onSnapshot(doc => {
             if(doc.exists) {
                 appData = doc.data();
@@ -749,9 +734,14 @@
                 if(!appData.payments) appData.payments = {};
                 if(!appData.accounts) appData.accounts = [];
                 if(!appData.categories || appData.categories.length === 0) {
-                    appData.categories = [ {id:'c1',name:'Hogar',icon:'🏠'}, {id:'c2',name:'Oficina',icon:'🏢'}, {id:'c3',name:'Auto',icon:'🚗'}, {id:'c4',name:'Personal',icon:'👤'}, {id:'c5',name:'Tarjetas',icon:'💳'} ];
+                    appData.categories = JSON.parse(JSON.stringify(DEFAULT_DATA.categories));
                 }
-            } else saveData();
+            } else {
+                // FIX CRITICO: Si el doc fue borrado (por admin), reseteamos appData a CERO en memoria
+                // para evitar que se vuelva a guardar "lo viejo" automáticamente.
+                appData = JSON.parse(JSON.stringify(DEFAULT_DATA));
+                saveData(); // Crea el doc limpio
+            }
             renderAll();
         });
     }
@@ -855,7 +845,47 @@
     function addUser(id){if(currentUser.email!==ADMIN_EMAIL)return;const e=prompt("Email:");if(e&&e.includes('@'))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayUnion(e.trim().toLowerCase())}).then(()=>renderAdmin());}
     function deleteGroup(id){if(confirm("¿Borrar grupo?"))db.collection('groups').doc(id).delete();db.collection('data').doc(id).delete().then(()=>renderAdmin());}
 
-    function restoreBackup(i){if(isExpired)return alert("Vencido");const f=i.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const d=JSON.parse(e.target.result);let nx=[],np={},na=[],nc=[];if(Array.isArray(d.expenses))nx=d.expenses;if(d.payments)np=d.payments;if(Array.isArray(d.accounts))na=d.accounts;if(Array.isArray(d.categories))nc=d.categories;if(confirm("Importar?")){appData={expenses:nx,payments:np,accounts:na,categories:nc.length?nc:appData.categories};saveData();alert("Listo");}}catch(z){alert("Error");}};r.readAsText(f);}
+    // --- FIX: ADAPTADOR DE RESTORE PARA CATEGORIAS LOCALES ---
+    function restoreBackup(i){
+        if(isExpired)return alert("Vencido");
+        const f=i.files[0];if(!f)return;
+        const r=new FileReader();
+        r.onload=e=>{
+            try{
+                const d=JSON.parse(e.target.result);
+                let nx=[],np={},na=[],nc=[];
+                if(Array.isArray(d.expenses)) nx=d.expenses;
+                if(d.payments) np=d.payments;
+                if(Array.isArray(d.accounts)) na=d.accounts;
+                
+                // DETECCION DE FORMATO DE CATEGORIAS
+                if(Array.isArray(d.categories)) {
+                    // Si el primer elemento es un string, es formato Local. Convertimos.
+                    if(d.categories.length > 0 && typeof d.categories[0] === 'string') {
+                         nc = d.categories.map((catName, idx) => ({
+                             id: 'imported_' + idx + '_' + Date.now(),
+                             name: catName,
+                             icon: '🏷️'
+                         }));
+                    } else {
+                         // Formato Online (ya son objetos)
+                         nc = d.categories;
+                    }
+                } else {
+                    // Si no hay categorías, usamos las actuales por defecto
+                    nc = appData.categories;
+                }
+
+                if(confirm("Importar?")){
+                    appData={expenses:nx,payments:np,accounts:na,categories:nc};
+                    saveData();
+                    alert("Listo");
+                }
+            } catch(z){ alert("Error"); }
+        };
+        r.readAsText(f);
+    }
+    
     function downloadBackup(){const b=new Blob([JSON.stringify({...appData,meta:{group:currentGroup,date:new Date()}})],{type:"application/json"});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=`Backup_${currentGroup}.json`;a.click();}
     function saveData(){if(currentGroup)db.collection('data').doc(currentGroup).set(appData);}
     function nukeExpenses(){if(checkLock())return;if(confirm("¿Borrar TODO?")){appData.expenses=[];appData.payments={};saveData();alert("Borrado");}}
@@ -971,7 +1001,6 @@
     function openCell(eid, m) {
         if(checkLock()) return; selCell = {eid, m}; const k = `${eid}_${year}_${m}`; const p = appData.payments[k] || {};
         // Cargamos el valor sin formato al principio para edición facil, o con formato.
-        // Preferible usar la funcion calcInput al renderizar, pero aqui es input directo.
         const rawAmt = p.amt || '';
         document.getElementById('mcAmt').value = rawAmt ? parseFloat(rawAmt).toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) : ''; 
         
@@ -1025,10 +1054,8 @@
         const selectedAccId = val('mcAcc');
         const accName = selectedAccId ? getAccName(selectedAccId) : "la cuenta";
         
-        // Construimos el nuevo objeto de pago
         const newPaymentObj = { amt, day, accId: selectedAccId, paid };
         
-        // Revisamos el estado ACTUAL GUARDADO (antes de modificar nada)
         const currentStoredPayment = appData.payments[k];
         const wasPaid = currentStoredPayment && currentStoredPayment.paid;
 
@@ -1037,35 +1064,23 @@
             
             // Sub-caso: No hay cuenta seleccionada
             if (!selectedAccId) {
-                closeModal('modCell'); // Cerrar primero como pidió el usuario
-                
+                closeModal('modCell'); 
                 Swal.fire({
-                    title: 'Falta Cuenta',
-                    text: 'Marcaste pagado pero no elegiste con qué cuenta.',
-                    icon: 'warning',
-                    showCancelButton: true,
-                    confirmButtonColor: '#333', 
-                    cancelButtonColor: '#BB86FC',
-                    confirmButtonText: 'Solo marcar pagado',
-                    cancelButtonText: 'Volver para seleccionar',
-                    reverseButtons: true
+                    title: 'Falta Cuenta', text: 'Marcaste pagado pero no elegiste con qué cuenta.', icon: 'warning',
+                    showCancelButton: true, confirmButtonColor: '#333', cancelButtonColor: '#BB86FC',
+                    confirmButtonText: 'Solo marcar pagado', cancelButtonText: 'Volver para seleccionar', reverseButtons: true
                 }).then((result) => {
                     if (result.isConfirmed) {
-                        // Opción: Solo marcar (Guardar sin cuenta)
                         appData.payments[k] = newPaymentObj;
                         handleRepeat();
                         saveData();
-                    } else {
-                        // Opción: Volver (Reabrir modal)
-                        document.getElementById('modCell').style.display = 'flex';
-                    }
+                    } else { document.getElementById('modCell').style.display = 'flex'; }
                 });
-                return; // STOP. No seguir.
+                return;
             }
 
             // Sub-caso: Hay cuenta seleccionada -> Preguntar descuento
-            closeModal('modCell'); // Cerrar primero
-
+            closeModal('modCell'); 
             const accIndex = appData.accounts.findIndex(a => a.id == selectedAccId);
             const currentBal = accIndex > -1 ? appData.accounts[accIndex].bal : 0;
 
@@ -1073,18 +1088,12 @@
                 title: 'Confirmar Pago',
                 html: `Saldo de <b>${accName}</b>: ${formatMoney(currentBal)}<br><br>¿Descontar <b>${formatMoney(amt)}</b>?`,
                 icon: 'question',
-                showCancelButton: true,
-                confirmButtonColor: '#BB86FC',
-                cancelButtonColor: '#333',
-                confirmButtonText: 'Sí, descontar',
-                cancelButtonText: 'No, solo marcar'
+                showCancelButton: true, confirmButtonColor: '#BB86FC', cancelButtonColor: '#333',
+                confirmButtonText: 'Sí, descontar', cancelButtonText: 'No, solo marcar'
             }).then((result) => {
-                // Guardar siempre el pago
                 appData.payments[k] = newPaymentObj;
                 handleRepeat();
-
                 if (result.isConfirmed) {
-                    // Aplicar descuento
                     if(accIndex > -1) {
                         appData.accounts[accIndex].bal -= parseFloat(amt);
                         Swal.fire('Descontado', `Nuevo saldo: ${formatMoney(appData.accounts[accIndex].bal)}`, 'success');
@@ -1092,21 +1101,17 @@
                 }
                 saveData();
             });
-            return; // STOP.
+            return;
         }
 
-        // CASO B: Guardado normal (no es pago nuevo, o es edición simple, o desmarcar)
-        if (amt || day || paid) {
-            appData.payments[k] = newPaymentObj;
-        } else {
-            delete appData.payments[k];
-        }
+        // CASO B: Guardado normal
+        if (amt || day || paid) appData.payments[k] = newPaymentObj;
+        else delete appData.payments[k];
         handleRepeat();
         saveData();
         closeModal('modCell');
     }
 
-    // Funcion auxiliar para repetir pago
     function handleRepeat() {
         const day = val('mcDay');
         if(document.getElementById('mcRepeat').checked && day) {
@@ -1137,7 +1142,6 @@
         let headers = ['Concepto', 'Categoría'];
         months.forEach(m => { headers.push(`${m} Venc.`); headers.push(`${m} Importe`); });
         headers.push('CBU/Alias', 'Titular', 'Link Carpeta', 'Link Pago', 'Usuario', 'Clave', 'Comentarios');
-        
         let data = [headers];
         appData.expenses.forEach(e => {
             let row = [e.name, e.cat];
@@ -1149,7 +1153,6 @@
             row.push(e.cbu || '', e.holder || '', e.folder || '', e.link || '', e.user || '', e.pass || '', e.comment || '');
             data.push(row);
         });
-
         const ws = XLSX.utils.aoa_to_sheet(data);
         const wb = XLSX.utils.book_new();
         XLSX.utils.book_append_sheet(wb, ws, "Pagos " + year);
@@ -1161,7 +1164,6 @@
     let isDragging = false;
     let hasMoved = false;
     let offsetX, offsetY;
-
     const startDrag = (e) => {
         hasMoved = false;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1171,7 +1173,6 @@
         offsetY = clientY - rect.top;
         isDragging = true;
     };
-
     const doDrag = (e) => {
         if (!isDragging) return;
         const clientX = e.touches ? e.touches[0].clientX : e.clientX;
@@ -1189,20 +1190,10 @@
         fab.style.right = 'auto'; 
         fab.style.bottom = 'auto';
     };
-
     const endDrag = () => { isDragging = false; };
-
-    fab.addEventListener('click', (e) => {
-        if (hasMoved) { e.preventDefault(); e.stopPropagation(); } else { openModalExp(); }
-    });
-
-    fab.addEventListener('mousedown', startDrag);
-    document.addEventListener('mousemove', doDrag);
-    document.addEventListener('mouseup', endDrag);
-    
-    fab.addEventListener('touchstart', startDrag);
-    fab.addEventListener('touchmove', doDrag);
-    fab.addEventListener('touchend', endDrag);
+    fab.addEventListener('click', (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); } else { openModalExp(); } });
+    fab.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', doDrag); document.addEventListener('mouseup', endDrag);
+    fab.addEventListener('touchstart', startDrag); fab.addEventListener('touchmove', doDrag); fab.addEventListener('touchend', endDrag);
 </script>
 </body>
 </html>
