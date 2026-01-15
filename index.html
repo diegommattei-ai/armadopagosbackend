@@ -634,26 +634,51 @@
         return '$' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
-    // --- SMART PARSE ---
+    // --- 1. LÓGICA MATEMÁTICA (Interpreta lo que escribís) ---
     function smartParse(str) { 
         try { 
             if(!str) return 0; 
             let clean = str.toString();
-            if(clean.includes('$') || (clean.includes('.') && clean.includes(','))) {
-                 clean = clean.replace(/[^-()\d/*+.,]/g, '');
+
+            // Detectamos si es una cuenta matemática (tiene + - * /)
+            // Si es cuenta, limpiamos puntos de miles en toda la cadena
+            if (clean.match(/[\+\-\*\/]/)) {
+                 clean = clean.replace(/\./g, ''); // Borrar puntos de miles (1.000 -> 1000)
+                 clean = clean.replace(/,/g, '.'); // Coma decimal a Punto (10,50 -> 10.50)
+            } else {
+                 // Si es un número solo, aplicamos limpieza agresiva
+                 // 1. Quitamos cualquier punto que haya (miles)
                  clean = clean.replace(/\./g, '');
-            } 
-            clean = clean.replace(/,/g, '.');
+                 // 2. Si quedó una coma, la volvemos punto (decimal)
+                 clean = clean.replace(/,/g, '.');
+            }
+            
+            // Seguridad: Solo permitimos números y signos matemáticos
             clean = clean.replace(/[^-()\d/*+.]/g, ''); 
+
             let result = eval(clean);
             return result || 0; 
         } catch(e) { return 0; } 
     }
 
+    // --- 2. FORMATO VISUAL (Pone los puntos cuando salís de la celda) ---
     function calcInput(el) { 
-        const val = smartParse(el.value); 
+        let val = smartParse(el.value);
         if(val || val === 0) {
-            el.value = val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+            // FORZAMOS MANUALMENTE EL FORMATO ARGENTINO
+            // (Ignoramos la configuración de idioma del navegador)
+            
+            // 1. Separamos enteros de decimales (si los hay)
+            let parts = val.toString().split('.'); 
+            let integerPart = parts[0];
+            let decimalPart = parts.length > 1 ? ',' + parts[1].substring(0,2) : '';
+
+            // 2. Agregamos los PUNTOS de miles con una expresión regular (Regex)
+            // Esto convierte 500000 en 500.000 obligatoriamente
+            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
+
+            // 3. Resultado final en pantalla
+            el.value = integerPart + decimalPart;
         }
     }
 
