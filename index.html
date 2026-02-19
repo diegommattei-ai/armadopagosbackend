@@ -315,29 +315,86 @@
     </div>
 
     <div id="view-help" class="view">
-        <div class="dash-card" style="text-align:left;">
-            <h3 style="color:#BB86FC;">📖 Manual de Uso</h3>
-            <p><strong>1. Carga tu Dinero:</strong> Ve a la pestaña "Cuentas" y carga tus saldos reales (Banco, Efectivo).</p>
-            <p><strong>2. Define tus Gastos:</strong> Usa el botón (+) para crear tus gastos fijos.</p>
-            <p><strong>3. Categorías:</strong> Usa el engranaje ⚙️ para crear categorías propias.</p>
+        <div class="dash-card" style="text-align:left; padding: 20px;">
+            <h2 style="color:#BB86FC; text-align:center; margin-top:0;">📖 Manual de Usuario</h2>
+            <p style="text-align:center; color:#aaa; font-size:0.9rem; margin-bottom:20px;">Domina tus finanzas en 5 pasos.</p>
+
+            <hr style="border-color:#333; margin-bottom:20px;">
+
+            <h4 style="color:#00e676; margin-bottom:5px;">PASO 1: Tus Fondos (Cuentas)</h4>
+            <p style="font-size:0.9rem;">Antes de gastar, necesitamos saber qué tienes. Ve a la pestaña <strong>💳 Cuentas</strong>.</p>
+            <ul style="font-size:0.85rem; color:#ccc; padding-left:20px;">
+                <li>Crea tus cajas reales: "Banco Galicia", "Efectivo", "MercadoPago".</li>
+                <li>Ingresa el <strong>Saldo Inicial</strong> (lo que tienes hoy).</li>
+                <li><strong>El Dato Clave:</strong> Verás dos números. El <em>Saldo Real</em> (tu dinero hoy) y el <em>Proyectado</em> (lo que te quedará después de pagar todas las deudas del mes).</li>
+            </ul>
+
+            <h4 style="color:#BB86FC; margin-bottom:5px;">PASO 2: Tus Gastos (Planilla)</h4>
+            <p style="font-size:0.9rem;">En la pestaña <strong>📝 Planilla</strong>, usa el botón flotante <strong>(+)</strong> para agregar tus obligaciones. Además del nombre, puedes completar estos datos opcionales para automatizar tu mes:</p>
             
-            <div style="margin-top:15px; border-top:1px solid #333; padding-top:10px;">
-               <p style="margin-bottom:10px;"><strong>Referencias de Colores:</strong></p>
-               <div style="display:flex;gap:10px;align-items:center;margin-bottom:5px"><div style="width:15px;height:15px;background:rgba(0, 230, 118, 0.15);border-left:3px solid #00e676"></div><span style="font-size:0.9rem">Pagado</span></div>
-               <div style="display:flex;gap:10px;align-items:center;margin-bottom:5px"><div style="width:15px;height:15px;background:rgba(255, 234, 0, 0.15);border-left:3px solid #ffea00"></div><span style="font-size:0.9rem">Próximo a Vencer</span></div>
-               <div style="display:flex;gap:10px;align-items:center"><div style="width:15px;height:15px;background:rgba(255, 82, 82, 0.15);border-left:3px solid #ff5252"></div><span style="font-size:0.9rem">Vencido (Impago)</span></div>
+            <div style="background:#2a2a2a; border:1px solid #444; border-radius:8px; padding:10px; margin-top:5px;">
+                <p style="margin-top:0; color:#fff; font-size:0.85rem; font-weight:bold;">🚀 Guía de Campos Avanzados:</p>
+                <ul style="font-size:0.8rem; color:#ccc; padding-left:20px; margin-bottom:0;">
+                    <li style="margin-bottom:8px;">
+                        <strong>📂 Link Carpeta:</strong> Pega el enlace a una carpeta de Google Drive donde guardas las facturas. 
+                        <br><span style="color:#00e676">Beneficio:</span> Aparecerá un icono de carpeta en la planilla para ir directo a tus comprobantes.
+                    </li>
+                    <li style="margin-bottom:8px;">
+                        <strong>🔗 Link de Pago:</strong> Copia la URL de la web donde pagas este servicio (ej: Visa Home, Portal de Gas, etc).
+                        <br><span style="color:#00e676">Beneficio:</span> Al tocar el icono de cadena 🔗, te abrirá la página de pago en un clic.
+                    </li>
+                    <li style="margin-bottom:8px;">
+                        <strong>🔑 Credenciales:</strong> ¿Siempre olvidas tu Número de Cliente, NIS o la clave de ese servicio? Escríbelos en "Usuario/ID" y "Contraseña".
+                        <br><span style="color:#00e676">Beneficio:</span> Un icono de llave 🔑 te mostrará esos datos cuando los necesites (¡No guardes claves bancarias críticas!).
+                    </li>
+                    <li>
+                        <strong>🏦 Datos Transferencia:</strong> Si pagas alquiler o expensas, carga el CBU/Alias y el Titular.
+                        <br><span style="color:#00e676">Beneficio:</span> Tendrás los datos de destino siempre a mano al editar el gasto.
+                    </li>
+                </ul>
             </div>
 
-            <hr style="border-color:#333; margin:20px 0;">
-            <h3 style="color:#00e676;">👑 Plan PRO (<span class="uiPriceDisplay">$...</span>/mes)</h3>
-            <p>Todos los grupos nuevos tienen <strong>30 días de prueba gratuita</strong>.</p>
-            <p><strong>¿Cómo renovar?</strong></p>
-            <ol>
-                <li>Al finalizar el periodo, realiza el pago del mes.</li>
-                <li>Envía el comprobante por WhatsApp.</li>
-                <li>Recibirás una <strong>Clave Mensual</strong>.</li>
-                <li>Ingresa la clave en "Configuración".</li>
-            </ol>
+            <h4 style="color:#ffea00; margin-bottom:5px; margin-top:20px;">PASO 3: Registrar un Pago</h4>
+            <p style="font-size:0.9rem;">Cuando pagues algo, toca la celda correspondiente al Mes/Gasto (ej: Marzo/Internet).</p>
+            <ul style="font-size:0.85rem; color:#ccc; padding-left:20px;">
+                <li>Ingresa el <strong>Monto</strong> final del cupón.</li>
+                <li>Selecciona con qué <strong>Cuenta</strong> pagaste.</li>
+                <li>Activa el interruptor de <strong>PAGADO</strong>.</li>
+                <li>⚠️ <strong>Automático:</strong> La App te preguntará si quieres descontar ese dinero de tu cuenta. ¡Dile que SÍ para mantener tus saldos actualizados!</li>
+            </ul>
+
+            <h4 style="color:#ff5252; margin-bottom:5px;">PASO 4: Entendiendo los Colores</h4>
+            <div style="background:#252525; padding:10px; border-radius:8px; margin-top:5px; font-size:0.85rem;">
+               <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+                   <div style="width:12px;height:12px;background:#00e676;border-radius:50%"></div>
+                   <span><strong>Verde:</strong> ¡Listo! Ya está pagado.</span>
+               </div>
+               <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+                   <div style="width:12px;height:12px;background:#ffea00;border-radius:50%"></div>
+                   <span><strong>Amarillo:</strong> Pendiente (Aún no vence).</span>
+               </div>
+               <div style="display:flex;gap:10px;align-items:center;">
+                   <div style="width:12px;height:12px;background:#ff5252;border-radius:50%"></div>
+                   <span><strong>Rojo:</strong> ¡Vencido! La fecha pasó y no registraste pago.</span>
+               </div>
+            </div>
+
+            <h4 style="color:#00B1EA; margin-bottom:5px;">PASO 5: Herramientas Útiles</h4>
+            <ul style="font-size:0.85rem; color:#ccc; padding-left:20px;">
+                <li><strong>Filtros:</strong> Arriba puedes filtrar por "Casa", "Auto", etc.</li>
+                <li><strong>Modo Zen (⛶):</strong> Oculta los menús para ver más datos en pantalla.</li>
+                <li><strong>Exportar (📥):</strong> Descarga tu año completo a Excel.</li>
+            </ul>
+        </div>
+
+        <div class="dash-card" style="text-align:left; margin-top:15px; border-color:#00e676;">
+            <h3 style="color:#00e676; margin-top:0;">👑 Plan PRO (<span class="uiPriceDisplay">$...</span>/mes)</h3>
+            <p style="font-size:0.9rem;">Mantén tu grupo activo y apoya el desarrollo.</p>
+            <p style="font-size:0.85rem; color:#aaa;">
+                1. Realiza el pago mensual.<br>
+                2. Envía comprobante por WhatsApp.<br>
+                3. Recibe tu Clave de Desbloqueo.
+            </p>
         </div>
         
         <div style="margin-top:20px; text-align:center;">
@@ -634,51 +691,26 @@
         return '$' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
-    // --- 1. LÓGICA MATEMÁTICA (Interpreta lo que escribís) ---
+    // --- SMART PARSE ---
     function smartParse(str) { 
         try { 
             if(!str) return 0; 
             let clean = str.toString();
-
-            // Detectamos si es una cuenta matemática (tiene + - * /)
-            // Si es cuenta, limpiamos puntos de miles en toda la cadena
-            if (clean.match(/[\+\-\*\/]/)) {
-                 clean = clean.replace(/\./g, ''); // Borrar puntos de miles (1.000 -> 1000)
-                 clean = clean.replace(/,/g, '.'); // Coma decimal a Punto (10,50 -> 10.50)
-            } else {
-                 // Si es un número solo, aplicamos limpieza agresiva
-                 // 1. Quitamos cualquier punto que haya (miles)
+            if(clean.includes('$') || (clean.includes('.') && clean.includes(','))) {
+                 clean = clean.replace(/[^-()\d/*+.,]/g, '');
                  clean = clean.replace(/\./g, '');
-                 // 2. Si quedó una coma, la volvemos punto (decimal)
-                 clean = clean.replace(/,/g, '.');
-            }
-            
-            // Seguridad: Solo permitimos números y signos matemáticos
+            } 
+            clean = clean.replace(/,/g, '.');
             clean = clean.replace(/[^-()\d/*+.]/g, ''); 
-
             let result = eval(clean);
             return result || 0; 
         } catch(e) { return 0; } 
     }
 
-    // --- 2. FORMATO VISUAL (Pone los puntos cuando salís de la celda) ---
     function calcInput(el) { 
-        let val = smartParse(el.value);
+        const val = smartParse(el.value); 
         if(val || val === 0) {
-            // FORZAMOS MANUALMENTE EL FORMATO ARGENTINO
-            // (Ignoramos la configuración de idioma del navegador)
-            
-            // 1. Separamos enteros de decimales (si los hay)
-            let parts = val.toString().split('.'); 
-            let integerPart = parts[0];
-            let decimalPart = parts.length > 1 ? ',' + parts[1].substring(0,2) : '';
-
-            // 2. Agregamos los PUNTOS de miles con una expresión regular (Regex)
-            // Esto convierte 500000 en 500.000 obligatoriamente
-            integerPart = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ".");
-
-            // 3. Resultado final en pantalla
-            el.value = integerPart + decimalPart;
+            el.value = val.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
         }
     }
 
@@ -843,26 +875,99 @@
     
     function savePrice() { if(currentUser.email!==ADMIN_EMAIL) return; const val=document.getElementById('adminPriceInput').value; if(val) db.collection('config').doc('pricing').set({val:parseInt(val)}).then(()=>alert("Guardado")); }
     function renderAdmin() {
-        if(currentUser.email!==ADMIN_EMAIL) return;
-        const selY=document.getElementById('adminYear');
-        if(selY.options.length<2) { selY.innerHTML=""; const cy=new Date().getFullYear(); for(let i=0;i<=5;i++) { const o=document.createElement('option'); o.value=cy+i; o.text=cy+i; selY.add(o); } }
-        document.getElementById('adminPriceInput').value=globalPrice;
-        const selM=document.getElementById('adminMonth').value; const currentY=selY.value;
-        const listDiv=document.getElementById('adminList'); listDiv.innerHTML='<p style="text-align:center">Cargando...</p>';
-        let s={u:0,g:0,a:0,e:0};
-        db.collection('groups').get().then(snap=>{
-            let h='<table class="admin-table"><thead><tr><th>Grupo</th><th>Vence</th><th>Clave</th></tr></thead><tbody>';
-            snap.forEach(doc=>{
-                const g=doc.data(); const v=new Date(g.validUntil||0); const exp=v<new Date();
-                s.g++; s.u+=(g.members?g.members.length:0); if(exp)s.e++; else s.a++;
-                const c=generateDynamicHash(doc.id,parseInt(selM),parseInt(currentY));
-                let mHtml=g.members.map(m=>`<div>${m===g.owner?'★':''} ${m} ${m!==g.owner?`<span class="del-user" onclick="kickUser('${doc.id}','${m}')">[x]</span>`:''}</div>`).join('');
-                mHtml+=`<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
-                h+=`<tr><td><strong style="color:#fff">${doc.id}</strong><br><div style="font-size:0.7rem;margin-top:5px">${mHtml}</div></td><td><span class="tag-adm" onclick="modDate('${doc.id}','${g.validUntil}')" style="background:${exp?'#ff5252':'#00e676'};color:#000">${v.toLocaleDateString()} ✏️</span><div style="margin-top:5px"><button class="btn-s" style="padding:2px 5px;font-size:0.7rem;color:#ff5252;border-color:#ff5252" onclick="deleteGroup('${doc.id}')">🗑️</button></div></td><td><button class="btn-s" style="padding:10px;color:#BB86FC;border:1px solid #BB86FC" onclick="prompt('Copia:','${c}')">🔑 ${c}</button></td></tr>`;
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        
+        const selY = document.getElementById('adminYear');
+        if(selY.options.length < 2) { 
+            selY.innerHTML = ""; 
+            const cy = new Date().getFullYear(); 
+            for(let i=0; i<=5; i++) { 
+                const o = document.createElement('option'); 
+                o.value = cy + i; 
+                o.text = cy + i; 
+                selY.add(o); 
+            } 
+        }
+        
+        document.getElementById('adminPriceInput').value = globalPrice;
+        const selM = document.getElementById('adminMonth').value; 
+        const currentY = selY.value;
+        const listDiv = document.getElementById('adminList'); 
+        listDiv.innerHTML = '<p style="text-align:center">Cargando datos y contando registros...</p>';
+
+        let s = {u:0, g:0, a:0, e:0};
+
+        // Modificamos aquí para usar async/await y poder consultar los datos internos de cada grupo
+        db.collection('groups').get().then(async snap => {
+            let h = '<table class="admin-table"><thead><tr><th>Grupo / Datos</th><th>Vence</th><th>Clave</th></tr></thead><tbody>';
+            
+            // Creamos un array de promesas para buscar los datos de cada grupo
+            const rowPromises = snap.docs.map(async doc => {
+                const g = doc.data(); 
+                const v = new Date(g.validUntil || 0); 
+                const exp = v < new Date();
+                
+                // Estadísticas generales
+                s.g++; 
+                s.u += (g.members ? g.members.length : 0); 
+                if(exp) s.e++; else s.a++;
+
+                // Generar clave
+                const c = generateDynamicHash(doc.id, parseInt(selM), parseInt(currentY));
+                
+                // --- NUEVO: CONSULTA DE CANTIDAD DE REGISTROS ---
+                let statsInfo = '<span style="font-size:0.7rem; color:#777">Verificando datos...</span>';
+                try {
+                    const dataSnap = await db.collection('data').doc(doc.id).get();
+                    if (dataSnap.exists) {
+                        const d = dataSnap.data();
+                        const cantGastos = d.expenses ? d.expenses.length : 0;
+                        const cantCuentas = d.accounts ? d.accounts.length : 0;
+                        statsInfo = `<div style="font-size:0.75rem; color:#BB86FC; margin-top:3px; border-top:1px dashed #444; padding-top:2px;">
+                                        Gastos: <b>${cantGastos}</b> | Cuentas: <b>${cantCuentas}</b>
+                                     </div>`;
+                    } else {
+                        statsInfo = `<div style="font-size:0.75rem; color:#777; margin-top:3px;">Sin datos cargados</div>`;
+                    }
+                } catch (err) {
+                    console.error(err);
+                }
+                // ------------------------------------------------
+
+                let mHtml = g.members.map(m => `<div>${m === g.owner ? '★' : ''} ${m} ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}','${m}')">[x]</span>` : ''}</div>`).join('');
+                mHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
+
+                // Retornamos el HTML de la fila
+                return `<tr>
+                    <td>
+                        <strong style="color:#fff">${doc.id}</strong>
+                        ${statsInfo}
+                        <div style="font-size:0.7rem; margin-top:5px">${mHtml}</div>
+                    </td>
+                    <td>
+                        <span class="tag-adm" onclick="modDate('${doc.id}','${g.validUntil}')" style="background:${exp ? '#ff5252' : '#00e676'}; color:#000">
+                            ${v.toLocaleDateString()} ✏️
+                        </span>
+                        <div style="margin-top:5px">
+                            <button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252" onclick="deleteGroup('${doc.id}')">🗑️</button>
+                        </div>
+                    </td>
+                    <td>
+                        <button class="btn-s" style="padding:10px; color:#BB86FC; border:1px solid #BB86FC" onclick="prompt('Copia:','${c}')">🔑 ${c}</button>
+                    </td>
+                </tr>`;
             });
-            h+='</tbody></table>'; listDiv.innerHTML=h;
-            document.getElementById('statUsers').innerText=s.u; document.getElementById('statGroups').innerText=s.g;
-            document.getElementById('statActive').innerText=s.a; document.getElementById('statExpired').innerText=s.e;
+
+            // Esperamos a que todas las consultas de datos terminen
+            const rows = await Promise.all(rowPromises);
+            h += rows.join('');
+            h += '</tbody></table>';
+            
+            listDiv.innerHTML = h;
+            document.getElementById('statUsers').innerText = s.u; 
+            document.getElementById('statGroups').innerText = s.g;
+            document.getElementById('statActive').innerText = s.a; 
+            document.getElementById('statExpired').innerText = s.e;
         });
     }
     function modDate(id,c){if(currentUser.email!==ADMIN_EMAIL)return;const n=prompt("Fecha YYYY-MM-DD:",c?c.split('T')[0]:'');if(n){const d=new Date(n);if(!isNaN(d.getTime()))db.collection('groups').doc(id).update({validUntil:d.toISOString()});}}
