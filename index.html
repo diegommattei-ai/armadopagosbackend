@@ -691,17 +691,21 @@
         return '$' + num.toLocaleString('es-AR', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
     }
 
-    // --- SMART PARSE ---
+    // --- SMART PARSE MEJORADO ---
     function smartParse(str) { 
         try { 
             if(!str) return 0; 
             let clean = str.toString();
-            if(clean.includes('$') || (clean.includes('.') && clean.includes(','))) {
-                 clean = clean.replace(/[^-()\d/*+.,]/g, '');
-                 clean = clean.replace(/\./g, '');
+            
+            // Si tiene el signo $, o tiene comas, o tiene un punto seguido de 3 números (formato de miles como "348.000")
+            if(clean.includes('$') || clean.includes(',') || clean.match(/\.\d{3}/)) {
+                 clean = clean.replace(/[^-()\d/*+.,]/g, ''); // Limpiamos letras
+                 clean = clean.replace(/\./g, ''); // Volamos los puntos de miles
             } 
-            clean = clean.replace(/,/g, '.');
-            clean = clean.replace(/[^-()\d/*+.]/g, ''); 
+            
+            clean = clean.replace(/,/g, '.'); // Convertimos la coma en el punto decimal real para Javascript
+            clean = clean.replace(/[^-()\d/*+.]/g, ''); // Limpieza final de seguridad
+            
             let result = eval(clean);
             return result || 0; 
         } catch(e) { return 0; } 
