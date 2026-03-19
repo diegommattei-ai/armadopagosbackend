@@ -206,6 +206,18 @@
         .acc-head { display: flex; justify-content: space-between; align-items: center; padding: 15px; cursor: pointer; }
         .acc-detail { display: none; background: #151515; padding: 15px; border-top: 1px solid #333; }
         .acc-detail.open { display: block; animation: fadeIn 0.3s; }
+
+        /* OSCURECER CELDA SELECCIONADA Y PREVENIR SELECCION DE TEXTO */
+        .cell-selected {
+            box-shadow: inset 0 0 0 1000px rgba(0, 0, 0, 0.45) !important;
+            border: 2px solid #BB86FC !important;
+            border-radius: 4px;
+        }
+        .cell-container {
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none; 
+        }
     </style>
 </head>
 <body>
@@ -310,7 +322,10 @@
     </div>
 
     <div id="view-cuentas" class="view">
-        <button class="btn btn-p" onclick="openModalAcc()">+ Nueva Cuenta</button>
+        <div style="display:flex; gap:10px;">
+            <button class="btn btn-p" onclick="openModalAcc()">+ Nueva Cuenta</button>
+            <button class="btn btn-s" style="border-color:#00e676; color:#00e676;" onclick="openModalReport()">📊 Reporte de Pagos</button>
+        </div>
         <div id="accList" style="margin-top:15px;"></div>
     </div>
 
@@ -381,9 +396,15 @@
 
             <h4 style="color:#00B1EA; margin-bottom:5px;">PASO 5: Herramientas Útiles</h4>
             <ul style="font-size:0.85rem; color:#ccc; padding-left:20px;">
-                <li><strong>Filtros:</strong> Arriba puedes filtrar por "Casa", "Auto", etc.</li>
-                <li><strong>Modo Zen (⛶):</strong> Oculta los menús para ver más datos en pantalla.</li>
-                <li><strong>Exportar (📥):</strong> Descarga tu año completo a Excel.</li>
+                <li style="margin-bottom:8px;">
+                    <strong>🧮 Sumatoria Rápida:</strong> Mantené presionado cualquier importe (medio segundo) para entrar al modo suma. Luego tocá otros importes para ir sumándolos. El total aparecerá en un panel flotante que podés mover por la pantalla. Para salir, tocá la "✖" negra.
+                </li>
+                <li style="margin-bottom:8px;">
+                    <strong>📊 Reporte de Pagos:</strong> En la pestaña <strong>💳 Cuentas</strong>, usá este botón para ver el detalle de todo lo pagado en un periodo. Podés filtrar por cuenta y descargarlo en un Excel interactivo (incluye fórmulas de totales automáticas).
+                </li>
+                <li style="margin-bottom:8px;"><strong>Filtros:</strong> Arriba puedes filtrar la grilla por categorías ("Casa", "Auto", etc).</li>
+                <li style="margin-bottom:8px;"><strong>Modo Zen (⛶):</strong> Oculta los menús superiores para ver más meses en pantalla.</li>
+                <li><strong>Exportar Año (📥):</strong> Descarga tu grilla anual completa a Excel.</li>
             </ul>
         </div>
 
@@ -589,6 +610,25 @@
 
     <div id="modAcc" class="modal"><div class="modal-box"><h3>Nueva Cuenta</h3><input id="maName" placeholder="Nombre"><input type="text" id="maBal" onchange="calcInput(this)" placeholder="Saldo Inicial (Ej: 5000+200)"><button class="btn btn-p" onclick="saveAcc()">Guardar</button><button class="btn btn-s" onclick="closeModal('modAcc')">Cancelar</button></div></div>
 
+    <div id="modRep" class="modal">
+        <div class="modal-box">
+            <h3 style="color:#00e676; margin-top:0;">📊 Reporte de Pagos</h3>
+            <div style="display:flex; gap:10px; margin-bottom:10px;">
+                <div style="flex:1"><label style="font-size:0.8rem">Desde:</label><input type="date" id="repFrom" style="margin-top:0;"></div>
+                <div style="flex:1"><label style="font-size:0.8rem">Hasta:</label><input type="date" id="repTo" style="margin-top:0;"></div>
+            </div>
+            <label style="font-size:0.8rem">Filtrar por Cuenta:</label>
+            <select id="repAcc" style="margin-top:0;">
+                </select>
+            <div style="display:flex; gap:10px; margin-top:10px;">
+                <button class="btn btn-p" onclick="generateReport()">Generar</button>
+                <button class="btn btn-s" style="border-color:#00e676; color:#00e676; font-weight:bold;" onclick="exportReportExcel()">📥 Excel</button>
+                <button class="btn btn-s" onclick="closeModal('modRep')">Cerrar</button>
+            </div>
+            <div id="repResults" style="margin-top:15px; max-height: 40vh; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
     <div id="modLock" class="modal" style="z-index:9999;">
         <div class="modal-box" style="border:2px solid #ff5252;">
             <h2 style="color:#ff5252">⚠️ Servicio Vencido</h2>
@@ -597,6 +637,11 @@
             <p style="font-size:0.8rem; color:#aaa;">Código DEMO disponible: "DEMO"</p>
             <button class="btn btn-p" onclick="closeModal('modLock'); switchTab('config');">Ir a Pagar</button>
         </div>
+    </div>
+
+    <div id="sumFloater" style="display:none; position:fixed; bottom:95px; left:50%; transform:translateX(-50%); background:#BB86FC; color:#000; padding:10px 20px; border-radius:25px; z-index:9000; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.6); align-items:center; gap:15px; border: 2px solid #fff; cursor: move; touch-action: none; user-select: none;">
+        <span>Suma: <span id="sumFloaterVal" style="font-size:1.2rem;">$0</span></span>
+        <button onclick="exitSumMode()" style="background:#000; color:#BB86FC; border:none; border-radius:50%; width:30px; height:30px; font-weight:bold; font-size:1rem; cursor:pointer; display:flex; justify-content:center; align-items:center;">✖</button>
     </div>
 
 <script>
@@ -682,6 +727,53 @@
     let isExpired = false;
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
+
+    // --- LÓGICA DE SUMA MULTIPLE ---
+    let pressTimer;
+    let isLongPress = false;
+    let isSumMode = false;
+    let sumTotal = 0;
+    let selectedElements = new Set();
+
+    function startPress(e, amt, el) {
+        if (isSumMode) return;
+        isLongPress = false;
+        pressTimer = setTimeout(() => {
+            isLongPress = true;
+            if (navigator.vibrate) navigator.vibrate(50);
+            toggleSumCell(el, amt);
+        }, 500);
+    }
+    function endPress() { clearTimeout(pressTimer); }
+    function cancelPress() { clearTimeout(pressTimer); }
+
+    function cellClick(e, eid, m, amt, el) {
+        if (isLongPress) { isLongPress = false; return; }
+        if (isSumMode) { toggleSumCell(el, amt); } else { openCell(eid, m); }
+    }
+
+    function toggleSumCell(el, amt) {
+        if (!isSumMode) {
+            isSumMode = true; sumTotal = 0;
+            document.getElementById('sumFloater').style.display = 'flex';
+            selectedElements.clear();
+        }
+        const val = parseFloat(amt) || 0;
+        if (selectedElements.has(el)) {
+            selectedElements.delete(el); sumTotal -= val; el.classList.remove('cell-selected');
+            if (selectedElements.size === 0) exitSumMode();
+        } else {
+            selectedElements.add(el); sumTotal += val; el.classList.add('cell-selected');
+        }
+        document.getElementById('sumFloaterVal').innerText = formatMoney(sumTotal);
+    }
+
+    function exitSumMode() {
+        isSumMode = false; sumTotal = 0;
+        document.getElementById('sumFloater').style.display = 'none';
+        selectedElements.forEach(el => el.classList.remove('cell-selected'));
+        selectedElements.clear();
+    } 
 
     // --- FUNCION FORMATO ARGENTINO VISUAL ---
     function formatMoney(amount) {
@@ -1057,9 +1149,17 @@
                 const amt = p.amt ? formatMoney(p.amt) : '';
                 const an = p.accId ? getAccName(p.accId) : '';
                 const ac = p.accId ? stringToColor(an) : 'transparent';
+                const cellAmtVal = p.amt ? smartParse(p.amt) : 0;
                 
                 body += `<td class="${st}" style="padding:0; position:relative;">
-                    <div onclick="openCell(${e.id},${i})" class="cell-container">
+                    <div class="cell-container"
+                         onmousedown="startPress(event, ${cellAmtVal}, this)" 
+                         onmouseup="endPress()" 
+                         onmouseleave="cancelPress()" 
+                         ontouchstart="startPress(event, ${cellAmtVal}, this)" 
+                         ontouchend="endPress()" 
+                         ontouchmove="cancelPress()"
+                         onclick="cellClick(event, ${e.id}, ${i}, ${cellAmtVal}, this)">
                         <div class="cell-day">${day}</div>
                         <div class="cell-data"><span class="cell-amt">${amt}</span>${p.accId ? `<div class="acc-dot" style="background:${ac}" title="${an}"></div>` : ''}</div>
                     </div>
@@ -1326,8 +1426,196 @@
     };
     const endDrag = () => { isDragging = false; };
     fab.addEventListener('click', (e) => { if (hasMoved) { e.preventDefault(); e.stopPropagation(); } else { openModalExp(); } });
-    fab.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', doDrag); document.addEventListener('mouseup', endDrag);
-    fab.addEventListener('touchstart', startDrag); fab.addEventListener('touchmove', doDrag); fab.addEventListener('touchend', endDrag);
-</script>
+        fab.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', doDrag); document.addEventListener('mouseup', endDrag);
+        fab.addEventListener('touchstart', startDrag); fab.addEventListener('touchmove', doDrag); fab.addEventListener('touchend', endDrag);
+
+        // --- DRAG PARA PANEL DE SUMA MULTIPLE ---
+        const sf = document.getElementById('sumFloater');
+        let sfDragging = false, sfOffsetX, sfOffsetY;
+        const sfStart = (e) => {
+            if(e.target.tagName.toLowerCase() === 'button' || e.target.innerText === '✖') return;
+            const cX = e.touches ? e.touches[0].clientX : e.clientX;
+            const cY = e.touches ? e.touches[0].clientY : e.clientY;
+            const rect = sf.getBoundingClientRect();
+            sfOffsetX = cX - rect.left; sfOffsetY = cY - rect.top;
+            sfDragging = true;
+            if (sf.style.transform) { sf.style.left = rect.left + 'px'; sf.style.transform = 'none'; }
+        };
+        const sfDrag = (e) => {
+            if (!sfDragging) return;
+            e.preventDefault();
+            const cX = e.touches ? e.touches[0].clientX : e.clientX;
+            const cY = e.touches ? e.touches[0].clientY : e.clientY;
+            sf.style.left = (cX - sfOffsetX) + 'px'; sf.style.top = (cY - sfOffsetY) + 'px';
+            sf.style.bottom = 'auto'; 
+        };
+        const sfEnd = () => { sfDragging = false; };
+        sf.addEventListener('mousedown', sfStart); document.addEventListener('mousemove', sfDrag); document.addEventListener('mouseup', sfEnd);
+        sf.addEventListener('touchstart', sfStart, {passive: false}); document.addEventListener('touchmove', sfDrag, {passive: false}); document.addEventListener('touchend', sfEnd);
+
+        // --- LÓGICA DE REPORTE DE PAGOS ---
+        function openModalReport() {
+            if(checkLock()) return;
+            const s = document.getElementById('repAcc');
+            s.innerHTML = '<option value="ALL">-- Todas --</option><option value="NONE">-- Sin Cuenta Asignada --</option>';
+            appData.accounts.forEach(a => { s.innerHTML += `<option value="${a.id}">${a.name}</option>`; });
+            
+            const now = new Date();
+            const yyyy = now.getFullYear(); const mm = String(now.getMonth() + 1).padStart(2, '0');
+            const lastDay = new Date(yyyy, now.getMonth() + 1, 0).getDate();
+            document.getElementById('repFrom').value = `${yyyy}-${mm}-01`;
+            document.getElementById('repTo').value = `${yyyy}-${mm}-${lastDay}`;
+            document.getElementById('repResults').innerHTML = '';
+            document.getElementById('modRep').style.display = 'flex';
+        }
+
+        function generateReport() {
+            const dFrom = new Date(document.getElementById('repFrom').value + "T00:00:00");
+            const dTo = new Date(document.getElementById('repTo').value + "T23:59:59");
+            const accFilter = document.getElementById('repAcc').value;
+            if (isNaN(dFrom) || isNaN(dTo)) return alert("Fechas inválidas");
+
+            let html = ''; let total = 0; let count = 0;
+            const sortedKeys = Object.keys(appData.payments).sort((a,b) => {
+                const partsA = a.split('_'); const partsB = b.split('_');
+                const dateA = new Date(partsA[1], partsA[2], appData.payments[a].day ? parseInt(appData.payments[a].day) : 1);
+                const dateB = new Date(partsB[1], partsB[2], appData.payments[b].day ? parseInt(appData.payments[b].day) : 1);
+                return dateB - dateA; // Orden descendente (más nuevos primero)
+            });
+
+            sortedKeys.forEach(k => {
+                const p = appData.payments[k];
+                if (!p.paid || !p.amt) return; // Solo contamos los gastos con tilde de pagado y con importe
+                
+                const parts = k.split('_'); const eid = parts[0]; const pYear = parseInt(parts[1]); const pMonth = parseInt(parts[2]);
+                const pDay = p.day ? parseInt(p.day) : 1; 
+                const pDate = new Date(pYear, pMonth, pDay);
+                
+                if (pDate >= dFrom && pDate <= dTo) {
+                    let match = false;
+                    if (accFilter === 'ALL') match = true;
+                    else if (accFilter === 'NONE' && !p.accId) match = true;
+                    else if (p.accId === accFilter) match = true;
+                    
+                    if (match) {
+                        const exp = appData.expenses.find(x => x.id == eid);
+                        const expName = exp ? exp.name : 'Desconocido';
+                        const accName = p.accId ? getAccName(p.accId) : 'Sin cuenta';
+                        total += parseFloat(p.amt); count++;
+                        
+                        html += `<div style="display:flex; justify-content:space-between; border-bottom:1px solid #333; padding:10px 0;">
+                            <div><strong style="font-size:0.9rem">${expName}</strong><br><span style="font-size:0.75rem; color:#aaa;">${pDate.toLocaleDateString()} • ${accName}</span></div>
+                            <div style="color:#00e676; font-weight:bold; font-size:1rem; align-self:center;">${formatMoney(p.amt)}</div>
+                        </div>`;
+                    }
+                }
+            });
+
+            if (count === 0) {
+                html = '<p style="text-align:center; color:#aaa; margin-top:20px;">No hay pagos en este periodo.</p>';
+            } else {
+                html = `<div style="background:#2a2a2a; padding:10px; border-radius:8px; margin-bottom:10px; border:1px solid #00e676; text-align:center;">
+                            <div style="font-size:0.8rem; color:#aaa;">TOTAL PAGADO</div>
+                            <div style="font-size:1.5rem; color:#00e676; font-weight:bold;">${formatMoney(total)}</div>
+                            <div style="font-size:0.75rem; color:#ccc;">${count} pagos registrados</div>
+                        </div>` + html;
+            }
+            document.getElementById('repResults').innerHTML = html;
+        }
+
+        // --- EXPORTAR REPORTE A EXCEL ---
+        function exportReportExcel() {
+            const dFrom = new Date(document.getElementById('repFrom').value + "T00:00:00");
+            const dTo = new Date(document.getElementById('repTo').value + "T23:59:59");
+            const accFilter = document.getElementById('repAcc').value;
+            if (isNaN(dFrom) || isNaN(dTo)) return alert("Fechas inválidas");
+
+            // Función auxiliar para obtener la letra de la columna en Excel (A, B, C...)
+            const getColLetter = (col) => { let s = ""; while (col >= 0) { s = String.fromCharCode(65 + (col % 26)) + s; col = Math.floor(col / 26) - 1; } return s; };
+
+            let headers = ['Nombre del gasto', 'Fecha'];
+            let accMap = {}; 
+            let colIndex = 2;
+            
+            appData.accounts.forEach(a => {
+                headers.push(a.name);
+                accMap[a.id] = colIndex++;
+            });
+            headers.push('Sin Cuenta');
+            const sinCuentaIdx = colIndex++;
+            headers.push('Total');
+            const totalIdx = colIndex;
+
+            let data = [headers];
+            
+            let totalsRow = new Array(headers.length).fill('');
+            totalsRow[0] = 'TOTALES';
+
+            const sortedKeys = Object.keys(appData.payments).sort((a,b) => {
+                const partsA = a.split('_'); const partsB = b.split('_');
+                const dateA = new Date(partsA[1], partsA[2], appData.payments[a].day ? parseInt(appData.payments[a].day) : 1);
+                const dateB = new Date(partsB[1], partsB[2], appData.payments[b].day ? parseInt(appData.payments[b].day) : 1);
+                return dateA - dateB; 
+            });
+
+            let count = 0;
+
+            sortedKeys.forEach(k => {
+                const p = appData.payments[k];
+                if (!p.paid || !p.amt) return;
+                
+                const parts = k.split('_'); const eid = parts[0]; const pYear = parseInt(parts[1]); const pMonth = parseInt(parts[2]);
+                const pDay = p.day ? parseInt(p.day) : 1; 
+                const pDate = new Date(pYear, pMonth, pDay);
+                
+                if (pDate >= dFrom && pDate <= dTo) {
+                    let match = false;
+                    if (accFilter === 'ALL') match = true;
+                    else if (accFilter === 'NONE' && !p.accId) match = true;
+                    else if (p.accId === accFilter) match = true;
+                    
+                    if (match) {
+                        const exp = appData.expenses.find(x => x.id == eid);
+                        const expName = exp ? exp.name : 'Desconocido';
+                        const amtVal = parseFloat(p.amt);
+                        
+                        let row = new Array(headers.length).fill('');
+                        row[0] = expName;
+                        row[1] = pDate.toLocaleDateString();
+                        
+                        let targetIdx = p.accId && accMap[p.accId] ? accMap[p.accId] : sinCuentaIdx;
+                        row[targetIdx] = amtVal;
+                        
+                        // FÓRMULA DE SUMA PARA LA COLUMNA TOTAL DE ESTA FILA (ej: =SUM(C2:E2))
+                        const excelRow = count + 2; // +2 porque data[0] son los títulos
+                        const startCol = getColLetter(2);
+                        const endCol = getColLetter(totalIdx - 1);
+                        row[totalIdx] = { t: 'n', f: `SUM(${startCol}${excelRow}:${endCol}${excelRow})` };
+                        
+                        data.push(row);
+                        count++;
+                    }
+                }
+            });
+
+            if (count === 0) return alert("No hay datos para exportar en este periodo.");
+
+            // FÓRMULAS PARA LA FILA FINAL DE TOTALES POR COLUMNA (ej: =SUM(C2:C15))
+            for(let i = 2; i <= totalIdx; i++) {
+                const colL = getColLetter(i);
+                totalsRow[i] = { t: 'n', f: `SUM(${colL}2:${colL}${count + 1})` };
+            }
+            data.push(totalsRow);
+
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            
+            ws['!cols'] = [{wch: 30}, {wch: 12}]; 
+            for(let i = 2; i <= totalIdx; i++) ws['!cols'].push({wch: 15});
+
+            XLSX.utils.book_append_sheet(wb, ws, "Reporte_Pagos");
+            XLSX.writeFile(wb, `Reporte_Pagos_${document.getElementById('repFrom').value}_al_${document.getElementById('repTo').value}.xlsx`);
+        }
+    </script>
 </body>
 </html>
