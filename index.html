@@ -410,20 +410,46 @@
 
         <div class="dash-card" style="text-align:left; margin-top:15px; border-color:#00e676;">
             <h3 style="color:#00e676; margin-top:0;">👑 Plan PRO (<span class="uiPriceDisplay">$...</span>/mes)</h3>
-            <p style="font-size:0.9rem;">Mantén tu grupo activo y apoya el desarrollo.</p>
+            <p style="font-size:0.9rem; color:#fff;">Para mantener tu grupo activo, sigue estos pasos:</p>
             <p style="font-size:0.85rem; color:#aaa;">
-                1. Realiza el pago mensual.<br>
-                2. Envía comprobante por WhatsApp.<br>
-                3. Recibe tu Clave de Desbloqueo.
+                1. Realiza la transferencia mensual.<br>
+                2. Informá el pago en el formulario.<br>
+                3. Recibirás tu Clave de Desbloqueo mensual.
             </p>
         </div>
         
-        <div style="margin-top:20px; text-align:center;">
-            <div class="cafe-row">
-                <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" style="flex:2; background:linear-gradient(45deg, #009EE3, #00B1EA); color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">☕ Invitar Cafecito</a>
-                <a href="https://wa.me/5492615734341?text=Hola!%20Te%20acabo%20de%20invitar%20un%20cafecito%20en%20la%20App" target="_blank" style="flex:1; background:#25D366; color:#fff; padding:10px; border-radius:20px; text-decoration:none; font-weight:bold; font-size:0.9rem;">🔔 Avisar</a>
+        <div style="margin-top:15px; text-align:left;">
+            <div style="background: #2a2a2a; padding: 15px; border-radius: 8px; border: 1px solid #444;">
+                <h4 style="margin: 0 0 10px 0; color: #BB86FC; display: flex; align-items: center; gap: 8px;">
+                    <span style="font-size: 1.2rem;">🏦</span> Datos para Transferencia
+                </h4>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #1e1e1e; padding: 8px 12px; border-radius: 5px; border: 1px solid #333;">
+                    <div>
+                        <span style="font-size: 0.75rem; color: #aaa; display: block; font-weight: bold;">Alias (MercadoPago)</span>
+                        <strong style="font-size: 1.1rem; color: #fff;">diegomattei.mp</strong>
+                    </div>
+                    <button class="btn-s" onclick="navigator.clipboard.writeText('diegomattei.mp'); alert('Alias copiado');" style="width: auto; margin:0; padding: 5px 10px; font-size:0.8rem;">📋 Copiar</button>
+                </div>
+
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; background: #1e1e1e; padding: 8px 12px; border-radius: 5px; border: 1px solid #333;">
+                    <div>
+                        <span style="font-size: 0.75rem; color: #aaa; display: block; font-weight: bold;">CVU</span>
+                        <strong style="font-size: 1rem; color: #fff;">0000003100053495343112</strong>
+                    </div>
+                    <button class="btn-s" onclick="navigator.clipboard.writeText('0000003100053495343112'); alert('CVU copiado');" style="width: auto; margin:0; padding: 5px 10px; font-size:0.8rem;">📋 Copiar</button>
+                </div>
+
+                <div style="font-size: 0.85rem; color: #ccc; background: #1e1e1e; padding: 10px 12px; border-radius: 5px; border: 1px solid #333;">
+                    <p style="margin: 0 0 5px 0;"><strong>Titular:</strong> Diego Gerardo Mattei</p>
+                    <p style="margin: 0;"><strong>CUIT:</strong> 24-29540526-7</p>
+                </div>
             </div>
-            <div style="font-size:0.7rem; color:#666; font-style:italic; margin-top:5px;">Ayudame a seguir desarrollando aplicaciones como esta ✨</div>
+
+            <div style="margin-top:15px;">
+                <a href="https://forms.gle/zWCSEHZbyxispA3j6" target="_blank" class="btn btn-p" style="display:block; text-align:center; box-sizing:border-box;">📝 Informar Pago y Subir Comprobante</a>
+            </div>
+            <div style="font-size:0.7rem; color:#666; font-style:italic; margin-top:10px; text-align:center;">Ayudame a seguir desarrollando aplicaciones como esta ✨</div>
         </div>
     </div>
 
@@ -467,10 +493,23 @@
             <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
                 <p style="font-size:0.85rem; color:#aaa;">Pagar Suscripción / Canjear:</p>
                 <div class="price-display">Valor Mensual: <span class="uiPriceDisplay">$...</span></div>
-                <div style="display:flex; gap:10px; margin-bottom:15px;">
-                    <a href="https://link.mercadopago.com.ar/cafecitocym" target="_blank" class="btn btn-p" style="margin:0; text-align:center; background:#009EE3; color:white;">Pagar con MP</a>
-                    <a href="https://wa.me/5492615734341?text=Hola!%20Ya%20hice%20el%20pago%20de%20mi%20grupo,%20envio%20comprobante." target="_blank" class="btn btn-s" style="margin:0; text-align:center; background:#25D366; color:white; border:none;">Enviar Comprobante</a>
+                
+                <div style="background: #2a2a2a; padding: 10px; border-radius: 8px; border: 1px solid #444; margin-bottom:15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 0.8rem; color: #ccc;"><strong>Alias:</strong> diegomattei.mp</span>
+                        <button class="btn-tool" onclick="navigator.clipboard.writeText('diegomattei.mp'); alert('Alias copiado');" style="margin:0; padding:2px 5px; width:auto; font-size:0.7rem;">📋 Copiar</button>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <span style="font-size: 0.8rem; color: #ccc;"><strong>CVU:</strong> 0000003100053495343112</span>
+                        <button class="btn-tool" onclick="navigator.clipboard.writeText('0000003100053495343112'); alert('CVU copiado');" style="margin:0; padding:2px 5px; width:auto; font-size:0.7rem;">📋 Copiar</button>
+                    </div>
+                    <div style="font-size: 0.75rem; color: #aaa;">
+                        Titular: Diego Gerardo Mattei | CUIT: 24-29540526-7
+                    </div>
                 </div>
+
+                <a href="https://forms.gle/zWCSEHZbyxispA3j6" target="_blank" class="btn btn-s" style="display:block; text-align:center; border-color:#BB86FC; color:#BB86FC; margin-bottom:15px;">📝 Informar Pago en el Formulario</a>
+
                 <div style="display:flex; gap:5px;">
                     <input type="text" id="unlockCode" placeholder="INGRESAR CÓDIGO MES/AÑO" style="margin:0; text-align:center;">
                     <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">OK</button>
