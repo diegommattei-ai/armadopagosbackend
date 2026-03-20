@@ -509,11 +509,7 @@
                 </div>
 
                 <a href="https://forms.gle/zWCSEHZbyxispA3j6" target="_blank" class="btn btn-s" style="display:block; text-align:center; border-color:#BB86FC; color:#BB86FC; margin-bottom:15px;">📝 Informar Pago en el Formulario</a>
-
-                <div style="display:flex; gap:5px;">
-                    <input type="text" id="unlockCode" placeholder="INGRESAR CÓDIGO MES/AÑO" style="margin:0; text-align:center;">
-                    <button class="btn-p" style="margin:0; width:auto;" onclick="unlockPro()">OK</button>
-                </div>
+                <p style="font-size:0.8rem; color:#00e676; text-align:center;">Una vez informado, el administrador validará el pago y extenderá tu suscripción.</p>
             </div>
             <hr style="border-color:#333; margin:20px 0;">
             <button class="btn btn-s" onclick="location.reload()">Cambiar de Grupo</button>
@@ -538,18 +534,10 @@
             </div>
         </div>
         <div class="dash-card" style="text-align:left;">
-            <p><b>Generador de Claves Mensuales</b></p>
-            <div class="admin-controls">
-                <select id="adminMonth">
-                    <option value="0">Enero</option><option value="1">Febrero</option><option value="2">Marzo</option>
-                    <option value="3">Abril</option><option value="4">Mayo</option><option value="5">Junio</option>
-                    <option value="6">Julio</option><option value="7">Agosto</option><option value="8">Septiembre</option>
-                    <option value="9">Octubre</option><option value="10">Noviembre</option><option value="11">Diciembre</option>
-                </select>
-                <select id="adminYear"></select> 
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <p style="margin:0;"><b>Listado de Grupos</b></p>
+                <button class="btn-s" style="width:auto; margin:0; padding:8px 15px;" onclick="renderAdmin()">🔄 Actualizar</button>
             </div>
-            <p style="font-size:0.8rem; color:#aaa;">Selecciona Mes/Año y toca "🔑 Clave" en el usuario.</p>
-            <button class="btn btn-s" onclick="renderAdmin()">🔄 Actualizar Lista</button>
         </div>
         <div id="adminList"></div>
     </div>
@@ -665,6 +653,52 @@
                 <button class="btn btn-s" onclick="closeModal('modRep')">Cerrar</button>
             </div>
             <div id="repResults" style="margin-top:15px; max-height: 40vh; overflow-y:auto; padding-right:5px;"></div>
+        </div>
+    </div>
+
+    <div id="modAdminInspect" class="modal">
+        <div class="modal-box" style="max-width: 600px; border:1px solid #BB86FC;">
+            <h3 id="inspectGroupTitle" style="color:#BB86FC; margin-top:0;">Grupo: </h3>
+            
+            <div style="background:#1e1e1e; padding:10px; margin-bottom:15px; border-radius:5px; border:1px solid #333;">
+                <h4 style="margin:0 0 5px 0; color:#00e676;">Registrar Nuevo Pago</h4>
+                <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+                    <div style="flex:1; min-width:120px;">
+                        <label style="font-size:0.8rem; color:#aaa; margin-bottom:2px; display:block;">Extender Hasta:</label>
+                        <input type="date" id="adminEditValidUntil" style="margin:0; padding:5px; width:100%;">
+                    </div>
+                    <div style="flex:0.8; min-width:110px;">
+                        <label style="font-size:0.8rem; color:#ccc; margin-bottom:2px; display:block;">Fecha de Pago:</label>
+                        <input type="date" id="adminPaymentDate" style="margin:0; padding:5px; width:100%;">
+                    </div>
+                    <div style="flex:1; min-width:100px;">
+                        <label style="font-size:0.8rem; color:#ccc; margin-bottom:2px; display:block;">Monto ($):</label>
+                        <input type="number" id="adminPaymentAmount" placeholder="Ej: 6000" style="margin:0; padding:5px; width:100%;">
+                    </div>
+                    <div style="flex:1.5; min-width:120px;">
+                        <label style="font-size:0.8rem; color:#ccc; margin-bottom:2px; display:block;">Detalle / Ref:</label>
+                        <input type="text" id="adminPaymentNote" placeholder="Ej: Transferencia" style="margin:0; padding:5px; width:100%;">
+                    </div>
+                </div>
+                <button class="btn btn-p" style="margin-top:10px;" onclick="adminUpdateSubscription()">💾 Guardar y Extender</button>
+            </div>
+
+            <h4 style="color:#aaa; border-bottom:1px solid #333; padding-bottom:5px; margin-bottom:10px;">Historial de Pagos (Cta. Cte.)</h4>
+            <div class="table-container" style="max-height: 200px; overflow-y: auto;">
+                <table id="tblAdminPayments" style="width:100%; font-size:0.85rem; border-collapse:collapse;">
+                    <thead>
+                        <tr style="color:#BB86FC; border-bottom:1px solid #333; text-align:left;">
+                            <th style="padding:5px;">Fecha Pago</th>
+                            <th style="padding:5px;">Detalle</th>
+                            <th style="padding:5px;">Extendió hasta</th>
+                            <th style="padding:5px; text-align:right;">Monto</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+            <button class="btn btn-s" style="margin-top:15px;" onclick="closeModal('modAdminInspect')">Cerrar</button>
         </div>
     </div>
 
@@ -990,67 +1024,124 @@
 
     function delCat(id) { if(confirm("¿Eliminar categoría?")) { appData.categories = appData.categories.filter(c => c.id !== id); saveData(); openModalCats(); renderFilters(); } }
 
-    function generateDynamicHash(g, m, y) { let h=0; const s=g+"_"+m+"_"+y+"_CYM_SECURE_2026"; for(let i=0;i<s.length;i++) h=((h<<5)-h)+s.charCodeAt(i)|0; return Math.abs(h).toString(36).toUpperCase().substring(0,6); }
     function unlockPro() {
-        const code = document.getElementById('unlockCode').value.trim().toUpperCase();
-        if(code === "DEMO") { extendValidity(new Date(new Date().setMonth(new Date().getMonth() + 1))); return; }
-        const now = new Date();
-        let foundMatch = false;
-        for(let i=0; i<12; i++) {
-            const checkDate = new Date(now.getFullYear(), now.getMonth() + i, 1);
-            if(code === generateDynamicHash(currentGroup, checkDate.getMonth(), checkDate.getFullYear())) {
-                extendValidity(new Date(checkDate.getFullYear(), checkDate.getMonth() + 1, 0));
-                foundMatch = true;
-                break;
-            }
-        }
-        if(!foundMatch) alert("Código inválido.");
+        const code = prompt("INGRESAR CÓDIGO ESPECIAL");
+        if(code === "DEMO") { db.collection('groups').doc(currentGroup).update({ validUntil: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString() }).then(() => location.reload()); }
     }
-    function extendValidity(d) { db.collection('groups').doc(currentGroup).update({ validUntil: d.toISOString() }).then(() => { alert("¡Pago exitoso!"); location.reload(); }); }
     
     function savePrice() { if(currentUser.email!==ADMIN_EMAIL) return; const val=document.getElementById('adminPriceInput').value; if(val) db.collection('config').doc('pricing').set({val:parseInt(val)}).then(()=>alert("Guardado")); }
+    
+    // --- NUEVO SISTEMA DE GESTION DE SUSCRIPCIONES ADMIN ---
+    let currentAdminInspectId = null;
+
+    function openAdminInspect(id) {
+        if(currentUser.email !== ADMIN_EMAIL) return;
+        currentAdminInspectId = id;
+        document.getElementById('inspectGroupTitle').innerText = "Grupo: " + id;
+        
+        document.getElementById('adminPaymentDate').value = new Date().toISOString().split('T')[0];
+        document.getElementById('adminPaymentAmount').value = globalPrice;
+        document.getElementById('adminPaymentNote').value = 'Transferencia';
+        
+        db.collection('groups').doc(id).get().then(doc => {
+            if(doc.exists) {
+                const g = doc.data();
+                
+                // Pre-calcular próxima fecha de vencimiento (+1 mes)
+                const currentVenc = g.validUntil ? new Date(g.validUntil) : new Date();
+                const nextVenc = new Date(currentVenc.getFullYear(), currentVenc.getMonth() + 1, currentVenc.getDate());
+                document.getElementById('adminEditValidUntil').value = nextVenc.toISOString().split('T')[0];
+                
+                renderAdminHistory(g.paymentHistory || []);
+                document.getElementById('modAdminInspect').style.display = 'flex';
+            }
+        });
+    }
+
+    function renderAdminHistory(historyArray) {
+        const tbody = document.querySelector('#tblAdminPayments tbody');
+        tbody.innerHTML = '';
+        if(!historyArray || historyArray.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#aaa; padding:10px;">No hay pagos registrados</td></tr>';
+            return;
+        }
+        
+        const sorted = historyArray.sort((a,b) => new Date(b.payDate) - new Date(a.payDate));
+        
+        sorted.forEach((h, index) => {
+            tbody.innerHTML += `<tr style="border-bottom:1px solid #333;">
+                <td style="padding:5px;">${new Date(h.payDate + "T00:00:00").toLocaleDateString()}</td>
+                <td style="padding:5px;">${h.note}</td>
+                <td style="padding:5px; color:#00e676;">${new Date(h.extendedTo + "T00:00:00").toLocaleDateString()}</td>
+                <td style="padding:5px; text-align:right;">${formatMoney(h.amount)}</td>
+                <td style="padding:5px; text-align:center;"><span class="icon-btn" style="color:#ff5252; cursor:pointer;" onclick="delAdminHistory(${index})">✖</span></td>
+            </tr>`;
+        });
+    }
+
+    function adminUpdateSubscription() {
+        if(!currentAdminInspectId) return;
+        const validUntil = document.getElementById('adminEditValidUntil').value;
+        const payDate = document.getElementById('adminPaymentDate').value;
+        const amount = document.getElementById('adminPaymentAmount').value;
+        const note = document.getElementById('adminPaymentNote').value;
+        
+        if(!validUntil) return alert("Falta fecha de vencimiento");
+
+        const updateData = {
+            validUntil: new Date(validUntil + "T23:59:59").toISOString()
+        };
+
+        if(payDate && amount) {
+            const newRecord = {
+                payDate: payDate,
+                amount: parseFloat(amount) || 0,
+                note: note,
+                extendedTo: validUntil,
+                timestamp: new Date().toISOString()
+            };
+            updateData.paymentHistory = firebase.firestore.FieldValue.arrayUnion(newRecord);
+        }
+
+        db.collection('groups').doc(currentAdminInspectId).update(updateData).then(() => {
+            alert("Suscripción y Pago guardados correctamente.");
+            openAdminInspect(currentAdminInspectId); 
+            renderAdmin(); 
+        }).catch(e => alert("Error: " + e.message));
+    }
+
+    function delAdminHistory(index) {
+        if(!confirm("¿Eliminar este registro de pago?")) return;
+        db.collection('groups').doc(currentAdminInspectId).get().then(doc => {
+            let history = doc.data().paymentHistory || [];
+            history.splice(index, 1);
+            db.collection('groups').doc(currentAdminInspectId).update({ paymentHistory: history }).then(() => {
+                openAdminInspect(currentAdminInspectId);
+            });
+        });
+    }
+
     function renderAdmin() {
         if(currentUser.email !== ADMIN_EMAIL) return;
         
-        const selY = document.getElementById('adminYear');
-        if(selY.options.length < 2) { 
-            selY.innerHTML = ""; 
-            const cy = new Date().getFullYear(); 
-            for(let i=0; i<=5; i++) { 
-                const o = document.createElement('option'); 
-                o.value = cy + i; 
-                o.text = cy + i; 
-                selY.add(o); 
-            } 
-        }
-        
         document.getElementById('adminPriceInput').value = globalPrice;
-        const selM = document.getElementById('adminMonth').value; 
-        const currentY = selY.value;
         const listDiv = document.getElementById('adminList'); 
         listDiv.innerHTML = '<p style="text-align:center">Cargando datos y contando registros...</p>';
 
         let s = {u:0, g:0, a:0, e:0};
 
-        // Modificamos aquí para usar async/await y poder consultar los datos internos de cada grupo
         db.collection('groups').get().then(async snap => {
-            let h = '<table class="admin-table"><thead><tr><th>Grupo / Datos</th><th>Vence</th><th>Clave</th></tr></thead><tbody>';
+            let h = '<table class="admin-table"><thead><tr><th>Grupo / Datos</th><th>Vence</th><th>Acción</th></tr></thead><tbody>';
             
-            // Creamos un array de promesas para buscar los datos de cada grupo
             const rowPromises = snap.docs.map(async doc => {
                 const g = doc.data(); 
                 const v = new Date(g.validUntil || 0); 
                 const exp = v < new Date();
                 
-                // Estadísticas generales
                 s.g++; 
                 s.u += (g.members ? g.members.length : 0); 
                 if(exp) s.e++; else s.a++;
-
-                // Generar clave
-                const c = generateDynamicHash(doc.id, parseInt(selM), parseInt(currentY));
                 
-                // --- NUEVO: CONSULTA DE CANTIDAD DE REGISTROS ---
                 let statsInfo = '<span style="font-size:0.7rem; color:#777">Verificando datos...</span>';
                 try {
                     const dataSnap = await db.collection('data').doc(doc.id).get();
@@ -1067,12 +1158,10 @@
                 } catch (err) {
                     console.error(err);
                 }
-                // ------------------------------------------------
 
                 let mHtml = g.members.map(m => `<div>${m === g.owner ? '★' : ''} ${m} ${m !== g.owner ? `<span class="del-user" onclick="kickUser('${doc.id}','${m}')">[x]</span>` : ''}</div>`).join('');
                 mHtml += `<div class="add-user" onclick="addUser('${doc.id}')">+ Usr</div>`;
 
-                // Retornamos el HTML de la fila
                 return `<tr>
                     <td>
                         <strong style="color:#fff">${doc.id}</strong>
@@ -1080,20 +1169,19 @@
                         <div style="font-size:0.7rem; margin-top:5px">${mHtml}</div>
                     </td>
                     <td>
-                        <span class="tag-adm" onclick="modDate('${doc.id}','${g.validUntil}')" style="background:${exp ? '#ff5252' : '#00e676'}; color:#000">
-                            ${v.toLocaleDateString()} ✏️
+                        <span class="tag-adm" style="background:${exp ? '#ff5252' : '#00e676'}; color:#000">
+                            ${v.toLocaleDateString()}
                         </span>
                         <div style="margin-top:5px">
-                            <button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252" onclick="deleteGroup('${doc.id}')">🗑️</button>
+                            <button class="btn-s" style="padding:2px 5px; font-size:0.7rem; color:#ff5252; border-color:#ff5252" onclick="deleteGroup('${doc.id}')">🗑️ Borrar</button>
                         </div>
                     </td>
-                    <td>
-                        <button class="btn-s" style="padding:10px; color:#BB86FC; border:1px solid #BB86FC" onclick="prompt('Copia:','${c}')">🔑 ${c}</button>
+                    <td style="vertical-align: middle;">
+                        <button class="btn-s" style="padding:8px 10px; color:#00e676; border:1px solid #00e676; font-weight:bold; cursor:pointer;" onclick="openAdminInspect('${doc.id}')">📝 GESTIONAR</button>
                     </td>
                 </tr>`;
             });
 
-            // Esperamos a que todas las consultas de datos terminen
             const rows = await Promise.all(rowPromises);
             h += rows.join('');
             h += '</tbody></table>';
@@ -1105,7 +1193,7 @@
             document.getElementById('statExpired').innerText = s.e;
         });
     }
-    function modDate(id,c){if(currentUser.email!==ADMIN_EMAIL)return;const n=prompt("Fecha YYYY-MM-DD:",c?c.split('T')[0]:'');if(n){const d=new Date(n);if(!isNaN(d.getTime()))db.collection('groups').doc(id).update({validUntil:d.toISOString()});}}
+
     function kickUser(id,e){if(currentUser.email!==ADMIN_EMAIL)return;if(confirm("¿Sacar usuario?"))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayRemove(e)}).then(()=>renderAdmin());}
     function addUser(id){if(currentUser.email!==ADMIN_EMAIL)return;const e=prompt("Email:");if(e&&e.includes('@'))db.collection('groups').doc(id).update({members:firebase.firestore.FieldValue.arrayUnion(e.trim().toLowerCase())}).then(()=>renderAdmin());}
     function deleteGroup(id){if(confirm("¿Borrar grupo?"))db.collection('groups').doc(id).delete();db.collection('data').doc(id).delete().then(()=>renderAdmin());}
