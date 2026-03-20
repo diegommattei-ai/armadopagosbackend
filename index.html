@@ -1660,9 +1660,9 @@
             // Función auxiliar para obtener la letra de la columna en Excel (A, B, C...)
             const getColLetter = (col) => { let s = ""; while (col >= 0) { s = String.fromCharCode(65 + (col % 26)) + s; col = Math.floor(col / 26) - 1; } return s; };
 
-            let headers = ['Nombre del gasto', 'Fecha'];
+            let headers = ['Nombre del gasto', 'Categoría', 'Fecha'];
             let accMap = {}; 
-            let colIndex = 2;
+            let colIndex = 3; // Ajustado porque ahora tenemos 3 columnas iniciales
             
             appData.accounts.forEach(a => {
                 headers.push(a.name);
@@ -1704,18 +1704,20 @@
                     if (match) {
                         const exp = appData.expenses.find(x => x.id == eid);
                         const expName = exp ? exp.name : 'Desconocido';
+                        const expCat = exp && exp.cat ? exp.cat : 'Sin Categoría';
                         const amtVal = parseFloat(p.amt);
                         
                         let row = new Array(headers.length).fill('');
                         row[0] = expName;
-                        row[1] = pDate.toLocaleDateString();
+                        row[1] = expCat;
+                        row[2] = pDate.toLocaleDateString();
                         
                         let targetIdx = p.accId && accMap[p.accId] ? accMap[p.accId] : sinCuentaIdx;
                         row[targetIdx] = amtVal;
                         
-                        // FÓRMULA DE SUMA PARA LA COLUMNA TOTAL DE ESTA FILA (ej: =SUM(C2:E2))
+                        // FÓRMULA DE SUMA PARA LA COLUMNA TOTAL DE ESTA FILA (ej: =SUM(D2:F2))
                         const excelRow = count + 2; // +2 porque data[0] son los títulos
-                        const startCol = getColLetter(2);
+                        const startCol = getColLetter(3); // Empieza a sumar desde la columna D (índice 3)
                         const endCol = getColLetter(totalIdx - 1);
                         row[totalIdx] = { t: 'n', f: `SUM(${startCol}${excelRow}:${endCol}${excelRow})` };
                         
@@ -1727,8 +1729,8 @@
 
             if (count === 0) return alert("No hay datos para exportar en este periodo.");
 
-            // FÓRMULAS PARA LA FILA FINAL DE TOTALES POR COLUMNA (ej: =SUM(C2:C15))
-            for(let i = 2; i <= totalIdx; i++) {
+            // FÓRMULAS PARA LA FILA FINAL DE TOTALES POR COLUMNA (ej: =SUM(D2:D15))
+            for(let i = 3; i <= totalIdx; i++) {
                 const colL = getColLetter(i);
                 totalsRow[i] = { t: 'n', f: `SUM(${colL}2:${colL}${count + 1})` };
             }
@@ -1737,8 +1739,9 @@
             const ws = XLSX.utils.aoa_to_sheet(data);
             const wb = XLSX.utils.book_new();
             
-            ws['!cols'] = [{wch: 30}, {wch: 12}]; 
-            for(let i = 2; i <= totalIdx; i++) ws['!cols'].push({wch: 15});
+            // Ajustar el ancho de las columnas (añadida la de categoría)
+            ws['!cols'] = [{wch: 30}, {wch: 15}, {wch: 12}]; 
+            for(let i = 3; i <= totalIdx; i++) ws['!cols'].push({wch: 15});
 
             XLSX.utils.book_append_sheet(wb, ws, "Reporte_Pagos");
             XLSX.writeFile(wb, `Reporte_Pagos_${document.getElementById('repFrom').value}_al_${document.getElementById('repTo').value}.xlsx`);
