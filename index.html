@@ -397,7 +397,7 @@
             <h4 style="color:#00B1EA; margin-bottom:5px;">PASO 5: Herramientas Útiles</h4>
             <ul style="font-size:0.85rem; color:#ccc; padding-left:20px;">
                 <li style="margin-bottom:8px;">
-                    <strong>🧮 Sumatoria Rápida:</strong> Mantené presionado cualquier importe (medio segundo) para entrar al modo suma. Luego tocá otros importes para ir sumándolos. El total aparecerá en un panel flotante que podés mover por la pantalla. Para salir, tocá la "✖" negra.
+                    <strong>🧮 Sumatoria Rápida:</strong> Mantené presionado cualquier importe en la planilla, <b>o cualquier cuenta en la pestaña Cuentas</b> (medio segundo) para entrar al modo suma. Luego tocá otros importes o cuentas para ir sumándolos. En las cuentas verás tanto la suma real como la proyectada. El total aparecerá en un panel flotante que podés mover por la pantalla. Para salir, tocá la "✖" negra.
                 </li>
                 <li style="margin-bottom:8px;">
                     <strong>📊 Reporte de Pagos:</strong> En la pestaña <strong>💳 Cuentas</strong>, usá este botón para ver el detalle de todo lo pagado en un periodo. Podés filtrar por cuenta y descargarlo en un Excel interactivo (incluye fórmulas de totales automáticas).
@@ -713,8 +713,8 @@
     </div>
 
     <div id="sumFloater" style="display:none; position:fixed; bottom:95px; left:50%; transform:translateX(-50%); background:#BB86FC; color:#000; padding:10px 20px; border-radius:25px; z-index:9000; font-weight:bold; box-shadow:0 4px 15px rgba(0,0,0,0.6); align-items:center; gap:15px; border: 2px solid #fff; cursor: move; touch-action: none; user-select: none;">
-        <span>Suma: <span id="sumFloaterVal" style="font-size:1.2rem;">$0</span></span>
-        <button onclick="exitSumMode()" style="background:#000; color:#BB86FC; border:none; border-radius:50%; width:30px; height:30px; font-weight:bold; font-size:1rem; cursor:pointer; display:flex; justify-content:center; align-items:center;">✖</button>
+        <div id="sumFloaterText" style="text-align:center; line-height:1.2; font-size:0.9rem;">Suma: <span style="font-size:1.2rem;">$0</span></div>
+        <button onclick="exitSumMode()" style="background:#000; color:#BB86FC; border:none; border-radius:50%; width:30px; height:30px; font-weight:bold; font-size:1rem; cursor:pointer; display:flex; justify-content:center; align-items:center; flex-shrink:0;">✖</button>
     </div>
 
 <script>
@@ -805,16 +805,18 @@
     let pressTimer;
     let isLongPress = false;
     let isSumMode = false;
+    let sumModeType = 'expenses'; // 'expenses' o 'accounts'
     let sumTotal = 0;
+    let sumTotalProj = 0;
     let selectedElements = new Set();
 
-    function startPress(e, amt, el) {
+    function startPress(e, amt, el, type = 'expenses', amtProj = 0) {
         if (isSumMode) return;
         isLongPress = false;
         pressTimer = setTimeout(() => {
             isLongPress = true;
             if (navigator.vibrate) navigator.vibrate(50);
-            toggleSumCell(el, amt);
+            toggleSumCell(el, amt, type, amtProj);
         }, 500);
     }
     function endPress() { clearTimeout(pressTimer); }
@@ -822,27 +824,43 @@
 
     function cellClick(e, eid, m, amt, el) {
         if (isLongPress) { isLongPress = false; return; }
-        if (isSumMode) { toggleSumCell(el, amt); } else { openCell(eid, m); }
+        if (isSumMode && sumModeType === 'expenses') { toggleSumCell(el, amt, 'expenses'); } else { openCell(eid, m); }
     }
 
-    function toggleSumCell(el, amt) {
+    function accClick(e, id, amt, amtProj, el) {
+        if (isLongPress) { isLongPress = false; return; }
+        if (isSumMode && sumModeType === 'accounts') { toggleSumCell(el, amt, 'accounts', amtProj); } else { toggleAcc(id); }
+    }
+
+    function toggleSumCell(el, amt, type = 'expenses', amtProj = 0) {
         if (!isSumMode) {
-            isSumMode = true; sumTotal = 0;
+            isSumMode = true; sumTotal = 0; sumTotalProj = 0; sumModeType = type;
             document.getElementById('sumFloater').style.display = 'flex';
             selectedElements.clear();
         }
+        if (isSumMode && sumModeType !== type) return; // Evita mezclar boletas con cuentas
+
         const val = parseFloat(amt) || 0;
+        const valProj = parseFloat(amtProj) || 0;
+
         if (selectedElements.has(el)) {
-            selectedElements.delete(el); sumTotal -= val; el.classList.remove('cell-selected');
+            selectedElements.delete(el); sumTotal -= val; sumTotalProj -= valProj; el.classList.remove('cell-selected');
             if (selectedElements.size === 0) exitSumMode();
         } else {
-            selectedElements.add(el); sumTotal += val; el.classList.add('cell-selected');
+            selectedElements.add(el); sumTotal += val; sumTotalProj += valProj; el.classList.add('cell-selected');
         }
-        document.getElementById('sumFloaterVal').innerText = formatMoney(sumTotal);
+        
+        if (isSumMode) {
+            if (sumModeType === 'accounts') {
+                document.getElementById('sumFloaterText').innerHTML = `Real: <span style="font-size:1.1rem;">${formatMoney(sumTotal)}</span><br>Proy: <span style="font-size:1.1rem;color:#fff;">${formatMoney(sumTotalProj)}</span>`;
+            } else {
+                document.getElementById('sumFloaterText').innerHTML = `Suma: <span style="font-size:1.2rem;">${formatMoney(sumTotal)}</span>`;
+            }
+        }
     }
 
     function exitSumMode() {
-        isSumMode = false; sumTotal = 0;
+        isSumMode = false; sumTotal = 0; sumTotalProj = 0;
         document.getElementById('sumFloater').style.display = 'none';
         selectedElements.forEach(el => el.classList.remove('cell-selected'));
         selectedElements.clear();
@@ -1321,7 +1339,7 @@
             let h=''; let tot=0;
             appData.expenses.forEach(e=>{ const k=`${e.id}_${now.getFullYear()}_${now.getMonth()}`; const p=appData.payments[k]; if(p&&p.accId==a.id&&!p.paid&&p.amt){ tot+=parseFloat(p.amt); h+=`<div class="det-row"><span>${e.name}</span><span style="color:#ff5252">-${formatMoney(p.amt)}</span></div>`; } });
             const proj=(parseFloat(a.bal)||0)-tot; s.innerHTML+=`<option value="${a.id}">${a.name}</option>`;
-            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onclick="toggleAcc(${a.id})"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: ${formatMoney(proj)}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">${formatMoney(a.bal)}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">${formatMoney(a.bal)}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>${formatMoney(proj)}</span></div></div></div></div>`;
+            l.innerHTML+=`<div class="acc-card"><div class="acc-head" onmousedown="startPress(event, ${a.bal}, this, 'accounts', ${proj})" onmouseup="endPress()" onmouseleave="cancelPress()" ontouchstart="startPress(event, ${a.bal}, this, 'accounts', ${proj})" ontouchend="endPress()" ontouchmove="cancelPress()" onclick="accClick(event, ${a.id}, ${a.bal}, ${proj}, this)"><div><b>${a.name}</b><br><span style="font-size:0.8rem;color:#BB86FC">Proyectado: ${formatMoney(proj)}</span></div><div style="text-align:right"><div style="color:#00e676;font-weight:bold;font-size:1.1rem">${formatMoney(a.bal)}</div><div style="margin-top:5px"><span class="icon-btn" onclick="editAcc(${a.id});event.stopPropagation()">✏️</span> <span class="icon-btn" style="color:red" onclick="delAcc(${a.id});event.stopPropagation()">✖</span></div></div></div><div id="accDet-${a.id}" class="acc-detail"><div class="det-row"><span>Saldo Real</span><span style="color:#fff">${formatMoney(a.bal)}</span></div>${h||'<div style="text-align:center;color:#555;font-style:italic;padding:5px">Sin gastos asignados</div>'}<div class="det-total"><div style="display:flex;justify-content:space-between"><span>FINAL PROYECTADO</span><span>${formatMoney(proj)}</span></div></div></div></div>`;
         });
     }
     function toggleAcc(id){document.getElementById(`accDet-${id}`).classList.toggle('open');}
