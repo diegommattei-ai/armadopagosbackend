@@ -107,6 +107,33 @@
         .filter-icon { min-width: 35px; width: 35px; height: 35px; border-radius: 50%; background: #222; border: 1px solid #555; display: flex; justify-content: center; align-items: center; cursor: pointer; color: #aaa; font-size: 1rem; }
         .filter-icon:hover { color: #fff; border-color: #BB86FC; color: #BB86FC; }
 
+        /* BUSCADOR */
+        .search-pill { 
+            background: #252525; 
+            padding: 2px 10px; 
+            border-radius: 15px; 
+            border: 1px solid #444; 
+            display: flex; 
+            align-items: center; 
+            min-width: 100px;
+            max-width: 200px;
+            transition: 0.3s;
+            flex-shrink: 0;
+        }
+        .search-pill:focus-within { border-color: #BB86FC; box-shadow: 0 0 8px rgba(187, 134, 252, 0.2); }
+        .search-pill input { 
+            background: transparent !important; 
+            border: none !important; 
+            color: #fff !important; 
+            font-size: 0.75rem !important; 
+            padding: 5px !important; 
+            width: 100% !important; 
+            margin: 0 !important; 
+            outline: none !important;
+            box-shadow: none !important;
+        }
+        .search-pill input::placeholder { color: #666; }
+
         /* TABLA SCROLLABLE */
         .grid-con { 
             overflow: auto; 
@@ -307,6 +334,9 @@
         </div>
 
         <div class="filter-row">
+            <div class="search-pill">
+                <input type="text" id="expenseSearch" placeholder="🔍 Buscar..." oninput="setSearch(this.value)">
+            </div>
             <div class="filter-pill active" id="filt-ALL" onclick="setFilter('ALL')">Todos</div>
             <div id="filterList" style="display:flex; gap:10px;"></div>
             <div class="toolbar-right">
@@ -397,6 +427,9 @@
 
             <h4 style="color:#00B1EA; margin-bottom:5px;">PASO 5: Herramientas Útiles</h4>
             <ul style="font-size:0.85rem; color:#ccc; padding-left:20px;">
+                <li style="margin-bottom:8px;">
+                    <strong>🔍 Buscador Dinámico:</strong> Usa el campo de búsqueda en la barra de filtros para encontrar gastos rápidamente por su nombre. La tabla y los totales se filtrarán automáticamente mientras escribes.
+                </li>
                 <li style="margin-bottom:8px;">
                     <strong>🧮 Sumatoria Rápida:</strong> Mantené presionado cualquier importe en la planilla, <b>o cualquier cuenta en la pestaña Cuentas</b> (medio segundo) para entrar al modo suma. Luego tocá otros importes o cuentas para ir sumándolos. En las cuentas verás tanto la suma real como la proyectada. El total aparecerá en un panel flotante que podés mover por la pantalla. Para salir, tocá la "✖" negra.
                 </li>
@@ -810,6 +843,7 @@
     let isExpired = false;
     let globalPrice = 0; 
     let activeCategory = 'ALL'; 
+    let searchTerm = '';
     let showHidden = false;
 
     // --- LÓGICA DE SUMA MULTIPLE ---
@@ -1032,6 +1066,11 @@
     }
 
     function setFilter(catName) { activeCategory = catName; renderFilters(); renderGrid(); }
+
+    function setSearch(val) {
+        searchTerm = val.toLowerCase().trim();
+        renderGrid();
+    }
 
     function toggleShowHidden() {
         showHidden = !showHidden;
@@ -1299,6 +1338,10 @@
         const list = appData.expenses.filter(e => {
             const isCatMatch = activeCategory === 'ALL' || e.cat === activeCategory;
             if (!isCatMatch) return false;
+            
+            const isSearchMatch = !searchTerm || e.name.toLowerCase().includes(searchTerm);
+            if (!isSearchMatch) return false;
+
             if (showHidden) return true;
             return !e.hidden; // Ocultamiento estricto si no está activo el ojo
         });
@@ -1306,8 +1349,12 @@
         let monthTotals = new Array(12).fill(0);
         let hiddenTotals = new Array(12).fill(0);
 
-        // 2. Calcular totales de TODO lo que corresponde a la categoría (incluyendo ocultos)
-        appData.expenses.filter(e => activeCategory === 'ALL' || e.cat === activeCategory).forEach(e => {
+        // 2. Calcular totales de TODO lo que corresponde a la categoría Y BUSQUEDA (incluyendo ocultos)
+        appData.expenses.filter(e => {
+            const isCatMatch = activeCategory === 'ALL' || e.cat === activeCategory;
+            const isSearchMatch = !searchTerm || e.name.toLowerCase().includes(searchTerm);
+            return isCatMatch && isSearchMatch;
+        }).forEach(e => {
             for(let i=0; i<12; i++) {
                 const k = `${e.id}_${year}_${i}`; const p = appData.payments[k] || {};
                 if(p.amt) {
