@@ -527,6 +527,24 @@
                 <div id="confPin" style="font-size:2.5rem; font-weight:bold; color:#00e676; letter-spacing:5px; margin:5px 0;">****</div>
                 <p style="margin:0; font-size:0.8rem; color:#777;">Comparte este PIN.</p>
             </div>
+            <div id="userSubHistory" style="display:none; background:#1e1e1e; padding:12px; border-radius:10px; border:1px solid #333; margin-top:15px;">
+                <h4 style="margin:0 0 10px 0; color:#BB86FC; font-size:0.9rem; display:flex; align-items:center; gap:8px;">
+                    <span style="font-size:1.1rem;">📜</span> Historial de Suscripción (Cta. Cte.)
+                </h4>
+                <div style="max-height: 200px; overflow-y: auto;">
+                    <table style="width:100%; font-size:0.75rem; border-collapse:collapse; text-align:left;">
+                        <thead>
+                            <tr style="color:#aaa; border-bottom:1px solid #444;">
+                                <th style="padding:5px;">Fecha</th>
+                                <th style="padding:5px;">Detalle</th>
+                                <th style="padding:5px; text-align:right;">Monto</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userSubHistoryBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <div style="margin-top:15px; padding-top:15px; border-top:1px solid #333;">
                 <p style="font-size:0.85rem; color:#aaa;">Pagar Suscripción / Canjear:</p>
                 <div class="price-display">Valor Mensual: <span class="uiPriceDisplay">$...</span></div>
@@ -1010,7 +1028,13 @@
         document.getElementById('groupScreen').style.display = 'none';
         document.querySelector('.app-header').style.display = 'flex';
         document.getElementById('headerGroupName').innerText = name;
-        db.collection('groups').doc(name).onSnapshot(doc => { if(doc.exists) updateBadge(doc.data().validUntil); });
+        db.collection('groups').doc(name).onSnapshot(doc => { 
+            if(doc.exists) {
+                const g = doc.data();
+                updateBadge(g.validUntil); 
+                renderUserSubscriptionHistory(g.paymentHistory || []);
+            }
+        });
         updateBadge(info.validUntil);
         document.getElementById('confGName').innerText = name;
         document.getElementById('confPin').innerText = info.pin;
@@ -1110,6 +1134,28 @@
     function unlockPro() {
         const code = prompt("INGRESAR CÓDIGO ESPECIAL");
         if(code === "DEMO") { db.collection('groups').doc(currentGroup).update({ validUntil: new Date(new Date().setMonth(new Date().getMonth() + 1)).toISOString() }).then(() => location.reload()); }
+    }
+
+    function renderUserSubscriptionHistory(history) {
+        const div = document.getElementById('userSubHistory');
+        const tbody = document.getElementById('userSubHistoryBody');
+        tbody.innerHTML = '';
+        
+        if (!history || history.length === 0) {
+            div.style.display = 'none';
+            return;
+        }
+        
+        div.style.display = 'block';
+        const sorted = [...history].sort((a,b) => new Date(b.payDate) - new Date(a.payDate));
+        
+        sorted.forEach(h => {
+            tbody.innerHTML += `<tr style="border-bottom:1px solid #2a2a2a;">
+                <td style="padding:8px 5px;">${new Date(h.payDate + "T00:00:00").toLocaleDateString()}</td>
+                <td style="padding:8px 5px; color:#ccc;">${h.note}</td>
+                <td style="padding:8px 5px; text-align:right; color:#00e676; font-weight:bold;">${formatMoney(h.amount)}</td>
+            </tr>`;
+        });
     }
     
     function savePrice() { if(currentUser.email!==ADMIN_EMAIL) return; const val=document.getElementById('adminPriceInput').value; if(val) db.collection('config').doc('pricing').set({val:parseInt(val)}).then(()=>alert("Guardado")); }
